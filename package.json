@@ -1,0 +1,12 @@
+{
+  "name": "five-minute-stamp-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline Korean stamp modeling experience for a 3D printing booth",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "start": "node scripts/serve.cjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "engines": { "node": ">=18" }
+}

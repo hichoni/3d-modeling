@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f4ed">
+<meta name="description" content="5분 동안 나만의 이름 도장을 디자인하는 오프라인 3D 모델링 공방">
+<title>새김 — 5분 도장 공방</title>
+<style>/* BUNDLED_CSS */</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+<symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+<symbol id="icon-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7Zm0 10L3 7m9 5 9-5m-9 5v10"/></symbol>
+<symbol id="icon-reset" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 3 7M3 4v7h7"/></symbol>
+<symbol id="icon-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+<symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+</defs></svg>
+<div class="app-shell">
+<header class="topbar">
+  <a class="brand" href="#" aria-label="새김 도장 공방"><span class="brand-seal">새<br>김</span><span>새김<span class="brand-sub">나를 새기는 작은 공방</span></span></a>
+  <div class="top-right"><span class="offline-badge"><i></i> 오프라인 공방</span><button class="text-button" id="operatorBtn">운영 안내 <span>↗</span></button><button class="icon-button" id="fullscreenBtn" aria-label="전체 화면"><svg><use href="#icon-expand"/></svg></button></div>
+</header>
+<main>
+  <div class="intro"><div><p class="eyebrow">FIVE MINUTES, ONE OF A KIND.</p><h1>내 이름이, <span>작품이 되는 순간.</span></h1><p class="intro-copy">고르고, 새기고, 입체로. 세상에 하나뿐인 도장을 만들어봐요.</p></div><div class="session-clock"><span class="clock-icon">◷</span><div><span id="timerLabel">나만의 5분</span><strong id="timer">05:00</strong></div></div></div>
+  <nav class="steps" aria-label="만들기 단계">
+    <button class="step active" data-step="0" aria-current="step"><span class="step-number">01</span><span>취향 고르기</span><small>마음에 드는 시작점</small></button>
+    <button class="step" data-step="1"><span class="step-number">02</span><span>나를 새기기</span><small>이름도, 별명도 좋아요</small></button>
+    <button class="step" data-step="2"><span class="step-number">03</span><span>입체로 다듬기</span><small>내 손으로 모델링</small></button>
+    <button class="step" data-step="3" disabled><span class="step-number">04</span><span>작품 완성</span><small>이제 출력할 차례</small></button>
+  </nav>
+  <div class="workspace" id="workspace">
+    <section class="editor" aria-label="도장 만들기">
+      <div class="panel" data-panel="0">
+        <div class="panel-heading"><span class="section-label">01 / YOUR MOOD</span><h2>어떤 내가 좋을까요?</h2><p>마음에 드는 스타일을 골라 시작해요.<br>모든 설정은 나중에 바꿀 수 있어요.</p></div>
+        <div class="preset-grid" id="presets"></div>
+        <div class="little-note"><span>✳</span><p><b>처음이어도 괜찮아요.</b><br>버튼을 누르면 오른쪽 작품이 바로 바뀌어요.</p></div>
+      </div>
+      <div class="panel" data-panel="1" hidden>
+        <div class="panel-heading"><span class="section-label">02 / MAKE YOUR MARK</span><h2>어떤 말을 새길까요?</h2><p>이름, 별명, 좋아하는 짧은 단어까지.</p></div>
+        <label class="field-label" for="textIn">새길 글자 <span id="charCount">3 / 6</span></label>
+        <input class="name-input" id="textIn" type="text" maxlength="12" value="나다움" placeholder="이름이나 별명을 입력하세요" autocomplete="off" spellcheck="false" aria-describedby="textHelp">
+        <p class="field-help" id="textHelp">한글·영문·숫자 1~6자. 2~4자가 또렷하게 나와요.</p>
+        <div class="word-chips" aria-label="추천 단어"><button data-word="나다움">나다움</button><button data-word="행복">행복</button><button data-word="최고">최고</button><button data-word="반짝">반짝</button></div>
+        <div class="field-label">글씨의 분위기</div><div class="font-grid" id="fontTiles" aria-label="글꼴 선택"></div>
+        <div class="field-label">글자 배치</div><div class="seg" id="layoutChoices"><button data-layout="auto" aria-pressed="true">자동</button><button data-layout="trad">전통</button><button data-layout="row">가로</button><button data-layout="col">세로</button></div>
+        <div class="field-label">찍히는 방식 <span>입체의 높낮이가 달라져요</span></div><div class="mode-options"><button data-mode="relief" aria-pressed="true"><span class="mode-preview positive">가</span><span>글자가 볼록<small>글씨에 잉크가 묻어요</small></span></button><button data-mode="engrave"><span class="mode-preview negative">가</span><span>글자가 오목<small>바탕에 잉크가 묻어요</small></span></button></div>
+      </div>
+      <div class="panel" data-panel="2" hidden>
+        <div class="panel-heading"><span class="section-label">03 / SHAPE YOUR IDEA</span><h2>평면에서 입체로!</h2><p>크기를 늘리고, 높이를 올려보세요.<br>지금 하는 것이 바로 3D 모델링이에요.</p></div>
+        <div class="field-label">도장 모양</div><div class="shape-options" id="shapeChoices"></div>
+        <div class="range-group"><label for="wIn" id="widthLabel">도장 크기</label><output id="wOut" for="wIn"></output><input id="wIn" type="range" min="18" max="36" step="1" value="24"><div class="range-ends"><span>작고 아담하게</span><span>크고 시원하게</span></div></div>
+        <div class="range-group" id="hRow" hidden><label for="hIn">세로 길이</label><output id="hOut" for="hIn"></output><input id="hIn" type="range" min="18" max="42" step="1" value="30"></div>
+        <div class="range-group"><label for="reliefIn">새김 높이</label><output id="reliefOut" for="reliefIn"></output><input id="reliefIn" type="range" min="0.8" max="2" step="0.1" value="1.2"><div class="range-ends"><span>낮게</span><span>도드라지게</span></div></div>
+        <div class="field-label">손잡이 <span>판만 만들면 출력량이 줄어요</span></div><div class="seg handles"><button data-handle="none" aria-pressed="true">판만</button><button data-handle="round">둥근 손잡이</button><button data-handle="hex">육각 손잡이</button></div>
+        <div class="range-group" id="handleRow" hidden><label for="hhIn">손잡이 높이</label><output id="hhOut" for="hhIn"></output><input type="range" id="hhIn" min="8" max="20" step="1" value="12"></div>
+        <div class="field-label">미리보기 색상 <span>실제 색은 필라멘트에 따라 달라요</span></div><div class="swatches" id="swatches"></div>
+        <details class="advanced"><summary>조금 더 다듬기 <span>+</span></summary><div class="advanced-body">
+          <div class="range-group"><label for="borderIn">테두리 두께</label><output id="borderOut" for="borderIn"></output><input type="range" id="borderIn" min="0" max="2" step="0.1" value="1.2"></div>
+          <div class="range-group"><label for="boldIn">글자 획 보강</label><output id="boldOut" for="boldIn"></output><input type="range" id="boldIn" min="0" max="0.4" step="0.05" value="0.15"></div>
+          <div class="range-group"><label for="baseIn">바닥 두께</label><output id="baseOut" for="baseIn"></output><input type="range" id="baseIn" min="2" max="5" step="0.5" value="3"></div>
+          <label class="checkbox"><input id="fillIn" type="checkbox" checked>글자를 칸에 꽉 채우기</label>
+        </div></details>
+      </div>
+      <div class="panel" data-panel="3" hidden>
+        <div class="panel-heading"><span class="section-label">04 / MADE BY YOU</span><h2>이건, 내가 만든 거야.</h2><p>축하해요. 첫 번째 3D 작품이 완성됐어요!</p></div>
+        <div class="completion-ticket"><span class="ticket-eyebrow">ONE OF A KIND</span><strong id="resultName">나다움</strong><span class="ticket-line"></span><div class="ticket-detail"><span>제작 번호</span><b id="jobId"></b></div><div class="ticket-detail"><span>디자인 시간</span><b id="elapsedResult"></b></div><div class="ticket-detail"><span>크기</span><b id="resultSize"></b></div><div class="ticket-detail"><span>만든 사람</span><b>바로 나!</b></div></div>
+        <button class="primary save-button" id="packageBtn"><svg><use href="#icon-download"/></svg> 출력용 묶음 저장 <small>ZIP</small></button><p class="save-help">도장 STL + 작품 카드 + 제작 설정이 담겨요.<br>저장한 파일과 제작 번호를 운영자에게 보여주세요.</p>
+        <div class="secondary-downloads"><button id="stlBtn">STL만 저장 ↓</button><button id="cardBtn">작품 카드 저장 ↓</button></div>
+        <div class="print-note"><svg><use href="#icon-cube"/></svg><p><b>이제 실제 도장을 만날 차례</b><br>출력 시간과 수령 방법은 운영자가 안내해드려요.</p></div>
+      </div>
+      <div class="editor-footer"><button class="back-button" id="backBtn" hidden>← 이전</button><span class="step-indicator" id="stepIndicator">STEP 01 / 04</span><button class="primary next-button" id="nextBtn">내 글자 새기기 <svg><use href="#icon-arrow"/></svg></button></div>
+    </section>
+    <section class="preview-area" aria-label="내 작품 미리보기">
+      <div class="preview-toolbar"><div class="view-tabs" role="group" aria-label="미리보기 방식"><button id="view3d" aria-pressed="true"><svg><use href="#icon-cube"/></svg> 입체로 보기</button><button id="viewProof" aria-pressed="false">찍어 보기</button></div><span class="live-label"><i></i> LIVE PREVIEW</span></div>
+      <div class="visual-stage" id="visualStage">
+        <span class="canvas-kicker">YOUR LITTLE MASTERPIECE</span><div class="stage" id="stage" aria-label="드래그로 회전하고 휠로 확대하는 3D 도장"></div>
+        <div class="large-proof" id="largeProof" hidden><div class="proof-paper"><span>오늘의 나를, 여기에.</span><canvas id="largeProofCanvas" aria-label="종이에 찍은 도장"></canvas><small>made by me, made for me.</small></div><button class="stamp-again" id="stampAgain">꾹, 한 번 더 찍기</button></div>
+        <span class="busy" id="busy" role="status" hidden>작품을 다듬는 중…</span>
+        <div class="preview-controls" id="previewControls"><button class="icon-button" id="resetView" aria-label="3D 시점 초기화"><svg><use href="#icon-reset"/></svg></button><button id="rotateBtn" aria-pressed="false">자동 회전</button></div>
+        <div class="proof-inset" id="proofInset"><span>종이에 찍으면</span><canvas id="proofCanvas" aria-label="도장 인영"></canvas><small>이렇게 보여요 ↗</small></div>
+        <div class="axis-mark" aria-hidden="true"><span>Z</span><i></i><b>X</b><em>Y</em></div><span class="drag-hint" id="stageHint">드래그해서 돌려보기 <span>·</span> 휠로 확대</span>
+      </div>
+      <div class="model-meta"><div><span>도장 크기</span><strong id="sizeStat">24 × 24 <small>mm</small></strong></div><div><span>전체 높이</span><strong id="heightStat">4.2 <small>mm</small></strong></div><div><span>출력 형태</span><strong id="handleStat">가벼운 판형</strong></div><span class="scale-tag">1:1 모델 데이터</span></div>
+      <div class="learning-note"><span class="sparkle">✳</span><p id="learningCopy"><b>작은 선택이, 나만의 디자인이 돼요.</b> 같은 이름도 모양과 글꼴에 따라 전혀 다른 작품이 되죠.</p></div>
+      <div class="warnings" id="warnings" role="status" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+<footer class="page-footer"><span>새김 <span class="footer-dot">/</span> 5분 도장 공방</span><span>디자인은 약 5분 · 3D 출력은 별도 진행</span><button id="restartBtn"><svg><use href="#icon-reset"/></svg> 처음부터 만들기</button></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="resetDialog"><form method="dialog"><span class="section-label">A FRESH START</span><h2>새로운 작품을 시작할까요?</h2><p>현재 이름과 디자인 설정이 초기화돼요.<br>완성한 작품은 먼저 파일로 저장해주세요.</p><div class="dialog-actions"><button value="cancel" class="secondary">계속 만들기</button><button value="reset" class="primary">새로 시작</button></div></form></dialog>
+<dialog id="operatorDialog"><form method="dialog"><div class="dialog-heading"><span class="section-label">BOOTH GUIDE</span><button class="icon-button" aria-label="운영 안내 닫기" value="close">×</button></div><h2>5분 체험, 이렇게 진행해요.</h2><ol class="operator-steps"><li><b>0:00–1:00 · 취향 발견</b><span>스타일을 고르고 오른쪽 3D 모델을 돌려봅니다.</span></li><li><b>1:00–2:30 · 나를 새기기</b><span>이름·별명 2~4글자와 글꼴을 선택합니다.</span></li><li><b>2:30–4:00 · 입체로 다듬기</b><span>크기와 새김 높이를 조절하며 모델링을 체험합니다.</span></li><li><b>4:00–5:00 · 저장 & 출력 접수</b><span>출력 묶음을 저장하고 제작 번호로 접수합니다.</span></li></ol><div class="operator-print"><b>프린팅 담당자 확인</b><p>ZIP을 풀고 STL을 슬라이서에서 열어주세요. 단위는 mm, 글자 면이 위입니다. 결합된 파트를 병합하고 레이어 미리보기에서 얇은 획·떠 있는 부분·서포트를 확인하세요. 실제 출력 시간과 색상은 장비 설정에 따라 달라집니다.</p></div><p class="privacy-note">모든 모델링은 이 기기에서 처리됩니다. 이름과 작품을 서버에 전송하거나 자동 보관하지 않습니다. 다운로드한 파일은 기기에 남습니다. 5분이 지나도 작업은 지워지지 않습니다.</p><button class="primary" value="close">확인했어요</button></form></dialog>
+<noscript>이 공방은 JavaScript가 켜진 브라우저에서 사용할 수 있어요.</noscript>
+<!-- LICENSES -->
+<script>/* BUNDLED_JS */</script>
+</body></html>
