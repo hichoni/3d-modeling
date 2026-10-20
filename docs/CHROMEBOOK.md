@@ -63,3 +63,12 @@ GitHub Pages는 HTML/JS를 배포하는 정적 호스팅이고, 브라우저가 
 - GitHub Pages의 새 연결 화면 배포와 HTML 제공을 확인합니다.
 - **실제 ChromeOS 기기와 학교 Wi-Fi의 LNA 권한·방화벽·기기 격리 조합은 아직 실기 검증하지 않았습니다.** 현재 작업 환경의 브라우저 자동화가 비활성화되어 이 부분을 확인했다고 주장하지 않습니다.
 - 백그라운드·자동 시작 스크립트는 구문을 확인했으며, 사용자의 Windows 시작프로그램을 이번 배포에서 변경하지 않았습니다.
+
+## 화면에서 설정 파일 내려받기
+
+[부스 사이트](https://hichoni.github.io/3d-modeling/)의 **부스 연결 → 운영자 처음 설정 → 운영자 설정 파일 받기 (ZIP)**을 누르세요. `configure-booth.cmd`와 실행에 필요한 공방 파일이 함께 들어 있습니다. ZIP을 폴더에 압축 해제한 뒤 `click-workshop/configure-booth.cmd`를 실행합니다.
+
+- [운영자 설정 묶음 ZIP](https://hichoni.github.io/3d-modeling/downloads/booth-setup.zip)
+- [configure-booth.cmd 단독](https://hichoni.github.io/3d-modeling/configure-booth.cmd): 기존 공방 폴더에 넣어 사용하는 파일입니다. 단독 파일만 실행하면 필요한 설정 ZIP을 안내합니다.
+
+설정 묶음은 `node scripts/build.cjs` 실행 시 공개 파일 허용 목록으로 다시 생성합니다. `runtime/`, 학교 프린터 설정, 참가자 출력 파일은 포함하지 않습니다.

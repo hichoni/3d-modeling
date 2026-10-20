@@ -9,5 +9,6 @@ const css = fonts.map(([family,weight,file])=>`@font-face{font-family:'${family}
 const js = ['vendor/three.min.js','vendor/OrbitControls.js','src/state.js','src/engine.js','src/connection.js','src/app.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n;\n').replace(/<\/script/gi,'<\\/script');
 const licenses = fs.readFileSync('vendor/THREE-LICENSE.txt','utf8')+'\n\n'+fs.readdirSync('fonts').filter(f=>f.endsWith('OFL.txt')).map(f=>fs.readFileSync('fonts/'+f,'utf8')).join('\n\n');
 const html = fs.readFileSync('src/index.html','utf8').replace('/* BUNDLED_CSS */',css).replace('/* BUNDLED_JS */',()=>js).replace('<!-- LICENSES -->',()=>`<!-- Bundled font licenses\n${licenses.replace(/-->/g,'')}\n-->`);
-fs.writeFileSync('index.html', html);
+fs.writeFileSync('index.html', html.replace(/\r\n/g,'\n'));
 console.log('Built offline index.html ('+(Buffer.byteLength(html)/1024/1024).toFixed(1)+' MB)');
+require('./package-operator.cjs').packageOperator();

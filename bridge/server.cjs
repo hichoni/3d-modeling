@@ -6,6 +6,7 @@ const net=require('node:net');
 const {Mqtt,Ftps}=require('./transport.cjs');
 const {verifyMini}=require('./discovery.cjs');
 const {makeAccess}=require('./access.cjs');
+const {serveDownload}=require('./downloads.cjs');
 const {validateSTL,sliceSTL,checkReady,checkStart,matchesJob,attention}=require('./core.cjs');
 const root=path.resolve(__dirname,'..'),runtime=process.env.CLICK_RUNTIME?path.resolve(process.env.CLICK_RUNTIME):path.join(root,'runtime');fs.mkdirSync(runtime,{recursive:true});
 const cfgPath=path.join(runtime,'config.json');let config=fs.existsSync(cfgPath)?JSON.parse(fs.readFileSync(cfgPath,'utf8')):{};
@@ -45,6 +46,7 @@ function canStop(){return active&&mqtt?.online&&Date.now()-mqtt.lastReportAt<150
 const server=http.createServer(async(req,res)=>{try{
  if(!access.hosts.has(req.headers.host))return reply(res,403,{error:'설정된 공방 주소로 접속하세요.'});
  const url=new URL(req.url,origin),route=url.pathname;
+ if(serveDownload(req,res,root))return;
  if(route.startsWith('/api/')&&!access.cors(req,res))return reply(res,403,{error:'허용된 부스 사이트에서 연결하세요.'});
  if(req.method==='OPTIONS'&&route.startsWith('/api/')){if(!access.allowedOrigin(req.headers.origin))return reply(res,403,{error:'부스 사이트를 확인하세요.'});res.writeHead(204);return res.end();}
  if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
