@@ -1,0 +1,70 @@
+# 집에서 이어가기 — 2026-10-20
+
+## 지금 열어볼 주소
+
+- 체험 사이트: https://hichoni.github.io/3d-modeling/
+- 저장소: https://github.com/hichoni/3d-modeling
+- 최종 부스 제목: **상상을 클릭하다! — 3D 키캡 클리커 만들기**
+
+이전에 변경 사항이 로컬에만 남아 배포되지 않았던 상태에서 작업을 재개했습니다. 이번 버전은 게임형 3단계 UI, 고정 14mm 모델, 실제 슬라이싱용 로컬 서버, 운영자 대기 목록을 포함합니다.
+
+## 새 컴퓨터에서 시작하기
+
+저장소를 내려받고 Node.js 20 이상과 Bambu Studio를 설치합니다. Windows 기본 Bambu Studio 경로를 지원합니다. `start-workshop.cmd`를 더블클릭하거나 아래 명령을 실행하세요.
+
+```powershell
+node bridge/setup.cjs
+node bridge/server.cjs
+```
+
+- 프린터 없이 작업할 때는 설정 질문의 IP를 비워둡니다. 모델링과 실제 슬라이싱은 가능합니다.
+- 브라우저 주소는 **http://127.0.0.1:5188/** 입니다. `localhost` 대신 이 주소를 사용하세요.
+- 운영자 PIN은 시작 터미널과 비공개 `runtime/config.json`에 있습니다. PIN으로 운영자 화면을 열 수 있습니다.
+- Bambu Studio 설치 위치가 다르면 `runtime/config.json`의 `slicerPath`를 바꿉니다. 필요한 경우 `profilePath`로 `resources/profiles/BBL` 경로도 지정합니다.
+- 서버를 종료하려면 실행한 터미널에서 Ctrl+C를 누릅니다. 서버 종료가 이미 시작된 프린터 출력을 중지하지는 않습니다.
+
+## 학교 프린터 연결 복원
+
+1. 현장 PC와 A1 mini를 같은 Wi-Fi 네트워크에 연결합니다. **Wi-Fi도 LAN 연결입니다.** 유선 케이블을 의미하지 않습니다.
+2. 프린터 본체에서 LAN Only와 Developer Mode를 켭니다. 클라우드/Handy 연결 방식과 달라집니다.
+3. `node bridge/setup.cjs`로 현재 IP와 일련번호를 입력합니다. 학교에서 쓰던 IP를 집에서 그대로 사용하지 마세요.
+4. 접근 코드는 그 PC의 Bambu Studio에 저장된 값을 읽습니다. 없으면 비공개 `runtime/config.json`의 `printer.accessCode`에 입력합니다.
+5. 운영자 화면에서 연결 상태를 확인합니다. 서버는 로컬 검색으로 **A1 mini / LAN 모드**를 확인하고, MQTT·FTPS TLS 인증서를 검증합니다.
+6. 연결 실패 시 같은 네트워크, 본체 모드, IP 변경, 접근 코드, 방화벽의 로컬 검색 허용 여부를 확인합니다. Windows 보안 설정을 앱이 자동으로 바꾸지는 않습니다.
+
+학교 장비의 실제 IP·일련번호·접근 코드와 시험 출력 파일은 **GitHub에 포함하지 않았습니다.** 새 PC에서는 새로 설정해야 합니다. 원래 PC의 비공개 설정과 로그는 `runtime/`, `artifacts/`에만 남아 있습니다.
+
+## 구현 파일
+
+| 위치 | 용도 |
+| --- | --- |
+| `src/index.html`, `src/style.css` | 게임형 3단계 화면·반응형 레이아웃 |
+| `src/state.js` | 14mm 규격·기본값·불러오기 검증 |
+| `src/engine.js` | 텍스트/그림 윤곽, 메쉬, STL, ZIP |
+| `src/app.js` | 3D·단계 전환·실제 경로·대기표·운영자 화면 |
+| `bridge/core.cjs` | STL 검증·공식 프로필 전개·실제 슬라이싱·출력 조건 검사 |
+| `bridge/server.cjs` | 로컬 API·비공개 작업 보관·PIN·출력 상태 |
+| `bridge/transport.cjs`, `bridge/discovery.cjs` | TLS MQTT/FTPS·A1 mini LAN 검색 |
+| `scripts/build.cjs` | 모든 글꼴·코드를 단일 HTML로 묶기 |
+| `design/` | 승인받은 이미지 시안과 생성 프롬프트 |
+
+`node scripts/build.cjs` → `node --test tests/*.test.cjs` → 브라우저 확인 → `git add` / `git commit` / `git push` 순서로 반영하세요. Pages에서 새 제목과 3단계 화면이 나타나는지 확인합니다.
+
+## 확인 완료와 후속 확인
+
+완료: 이름/그림 모델링, 고정 외곽, 볼록/오목, 층 체험, 실제 슬라이싱, 실제 경로, 대기표, 운영자 잠금, 수동 확인 후 전송, 중복 시작 차단, MD 정리.
+
+학교에서 실제 확인: 기존 사용자 STL을 웹에서 보내 A1 mini 출력 완료까지 확인. 새 UI 모델은 실제 슬라이싱까지 확인했고 추가 물리 출력은 시작하지 않았습니다.
+
+현장 후속 확인:
+
+- 완성된 14mm 조각이 제작 중인 받침에 적절히 압입되는지 확인. 받침 외곽을 바꾸는 옵션은 제공하지 않습니다.
+- 작은 이름 4자·작은 장식·음각이 0.4mm 노즐에서 충분히 또렷한지 샘플로 판단.
+- 필요한 경우 전체 새김 높이의 기본값만 0.8→1.0mm로 변경. 바닥과 외곽은 유지.
+- 한 번에 여러 작품을 배치해 출력하는 기능은 아직 없습니다. 현재 한 작품씩 운영자가 시작합니다.
+- 여러 태블릿에서 같은 출력 대기열로 접수하는 기능은 아직 없습니다. 서버는 현장 PC의 loopback 주소에서만 열립니다.
+- 물리 결합 및 새 UI에서 생성한 각 디자인의 실물 품질은 자동 테스트가 보장하지 않습니다.
+
+## 보관과 공개 범위
+
+참가자 이름과 STL은 로컬 작업 폴더에 남습니다. 행사 종료 후 필요한 파일만 비공개로 보관하고, `runtime/jobs`는 서버를 종료한 상태에서 백업·정리하세요. 200개 보관 한도를 두었습니다. GitHub에 올릴 때 `.gitignore`를 유지하고 `git add -f runtime`을 사용하지 마세요.

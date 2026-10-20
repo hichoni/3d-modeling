@@ -14,3 +14,12 @@
 글꼴 원본은 이름이나 내용을 수정하지 않았습니다. Three.js와 OrbitControls는 제공받은 초안과 동일한 버전으로 유지했습니다. 해당 버전으로 로컬 API를 직접 검증했으며 최신 버전으로 자동 교체하지 않습니다.
 
 제공받은 `stamp-maker-2.html`에서 기하 처리, STL 작성, ZIP 작성 로직을 재사용했습니다. 원본 파일은 로컬에서만 참고했고 `.gitignore`로 제외했습니다. 별도 프로젝트 전체 라이선스는 저장소 소유자가 결정하도록 추가하지 않았습니다.
+
+## 로컬 프린터 연결 참고
+
+- Bambu CA 인증서: [ha-bambulab 공개 인증서](https://github.com/greghesp/ha-bambulab/blob/main/custom_components/bambu_lab/pybambu/certs/bambu.cert). 저장소에는 공개 CA 인증서만 포함하며 개인 키·접근 코드는 포함하지 않습니다.
+- LAN 모드: [Bambu 공식 Developer Mode 안내](https://wiki.bambulab.com/en/knowledge-sharing/enable-developer-mode)
+- CLI: [Bambu Studio Command Line Usage](https://github.com/bambulab/BambuStudio/wiki/Command-Line-Usage)
+- MQTT 요청 형식 참고: [ha-bambulab bambu_client.py](https://github.com/greghesp/ha-bambulab/blob/main/custom_components/bambu_lab/pybambu/bambu_client.py)
+
+Bambu Studio 실행 파일과 공식 프리셋은 저장소에 재배포하지 않습니다. 사용자가 설치한 Bambu Studio에서 읽습니다. `bridge/`의 Node.js 전송·서버 코드는 이 프로젝트에서 작성했습니다. 연결 방식은 학교 장비에서 실제 확인한 범위에 한합니다.

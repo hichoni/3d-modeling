@@ -1,7 +1,7 @@
 // Geometry adapted from the supplied stamp-maker-2.html. Units: millimetres.
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const isSquareish = sh => sh==='square'||sh==='rounded'||sh==='circle';
-function dims(){ return isSquareish(S.shape) ? {w:S.w, h:S.w} : {w:S.w, h:S.h}; }
+function dims(){ return {w:14,h:14}; }
 function chars(){ return Array.from((S.text||'').replace(/\s+/g,'')).slice(0,8); }
 function fmt(v, d=1){ return String(Number(v.toFixed(d))); }
 
@@ -82,15 +82,26 @@ function shapePath(ctx, cx, cy, wpx, hpx, shape, inset, ppm){
 function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w)); c.height=Math.max(1,Math.round(h)); return c; }
 
 let lastCellMinMm = 99;
+function drawSymbol(ctx,kind,x,y,size){
+  ctx.save();ctx.translate(x,y);ctx.scale(size/10,size/10);ctx.beginPath();
+  if(kind==='heart'){ctx.moveTo(0,4.5);ctx.bezierCurveTo(-8,-.5,-4.5,-7,0,-2.7);ctx.bezierCurveTo(4.5,-7,8,-.5,0,4.5);ctx.fill();}
+  if(kind==='star'){for(let i=0;i<10;i++){const t=-Math.PI/2+i*Math.PI/5,r=i%2?2.3:5;ctx[i?'lineTo':'moveTo'](Math.cos(t)*r,Math.sin(t)*r);}ctx.closePath();ctx.fill();}
+  if(kind==='smile'){ctx.lineWidth=.9;ctx.arc(0,0,4.4,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(-1.5,-1,.55,0,Math.PI*2);ctx.arc(1.5,-1,.55,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(0,.3,2,0,Math.PI);ctx.stroke();}
+  if(kind==='leaf'){ctx.moveTo(-4,4);ctx.bezierCurveTo(-6,-3,1,-4.5,4.5,-4.5);ctx.bezierCurveTo(5,1,2,6,-4,4);ctx.fill();ctx.globalCompositeOperation='destination-out';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(-3,3);ctx.lineTo(2.6,-2.6);ctx.stroke();}
+  ctx.restore();
+}
 function letterLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
   const {w,h} = dims(); const cx=cw/2, cy=ch/2;
+  lx.fillStyle=lx.strokeStyle='#000';
+  if(S.content==='icon'){drawSymbol(lx,S.icon,cx,cy,9.5*ppm);lastCellMinMm=9.5;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
   const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+gapMm)*ppm, n, S.layout);
   if(!box) return L;
   const g = 0.035*Math.min(box.w, box.h);
-  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h}, g);
+  const decorated=S.decoration!=='none';
+  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*ppm:0)}, g);
   lastCellMinMm = Math.min(...cells.map(c=>Math.min(c.w,c.h)))/ppm;
   lx.fillStyle = '#000';
   if(mirror){ lx.translate(cw,0); lx.scale(-1,1); }
@@ -110,6 +121,7 @@ function letterLayer(cw, ch, ppm, mirror, font, list){
     lx.fillText(chr, -(r-l)/2, -(d-a)/2);
     lx.restore();
   });
+  if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*ppm,2.8*ppm);
   const rad = S.bold*ppm;
   if(rad>=0.4){ // 원형으로 번지게 해서 획을 굵게
     const D = mkCanvas(cw,ch), dx = D.getContext('2d');
@@ -241,6 +253,17 @@ function loopsToShapes(raw, toMm){
 }
 
 /* ---------- 3D 모델 만들기 ---------- */
+function clampToInsert(x,y){
+  // Project raster samples onto the same 14-segment corner polygon as the base.
+  x=clamp(x,-7,7);y=clamp(y,-7,7);
+  const ax=Math.abs(x),ay=Math.abs(y),cx=4.2,cy=4.2,r=2.8;
+  if(ax>cx&&ay>cy){const dx=ax-cx,dy=ay-cy,t=Math.atan2(dy,dx),step=Math.PI/28;
+    const mid=(Math.min(13,Math.floor(t/step))+.5)*step;
+    const maxR=r*Math.cos(step/2)/Math.cos(t-mid),dist=Math.hypot(dx,dy);
+    if(dist>maxR){x=Math.sign(x)*(cx+dx*maxR/dist);y=Math.sign(y)*(cy+dy*maxR/dist);}
+  }
+  return [x,y];
+}
 function plateShape(w,h){
   const pts=[];
   if(S.shape==='circle'||S.shape==='oval'){
@@ -254,6 +277,7 @@ function plateShape(w,h){
   return new THREE.Shape(clean.map(q=>new THREE.Vector2(q[0],q[1])));
 }
 function buildGeometries(){
+  Object.assign(S,{w:14,h:14,base:1.5,shape:'rounded',handle:'none',mirror:false});
   const {w,h}=dims(); const font=fontById(S.font);
   const ppm = clamp(640/Math.max(w,h), 10, 40), margin = 1.5 + S.bold;
   const cw = Math.ceil((w+2*margin)*ppm)+2, ch = Math.ceil((h+2*margin)*ppm)+2;
@@ -265,7 +289,7 @@ function buildGeometries(){
   for(let x=0;x<cw;x++){ alpha[x]=0; alpha[(ch-1)*cw+x]=0; } for(let y=0;y<ch;y++){ alpha[y*cw]=0; alpha[y*cw+cw-1]=0; }
   const loops = traceContours(alpha, cw, ch, 0.5);
   const ox=cw/2, oy=ch/2;
-  const shapes = loopsToShapes(loops, q=>[(q[0]-ox)/ppm, -(q[1]-oy)/ppm]);
+  const shapes = loopsToShapes(loops, q=>clampToInsert((q[0]+.5-ox)/ppm, -(q[1]+.5-oy)/ppm));
 
   const parts = {plate:[], relief:[]}; const EPS=0.02;
   const m = Math.min(w,h);
@@ -301,7 +325,7 @@ function meshStats(list){
 function toSTL(list){
   const arrs=list.map(geomTris); const tris=arrs.reduce((s,a)=>s+a.length/9,0);
   const buf=new ArrayBuffer(84+tris*50), dv=new DataView(buf);
-  const head='Name stamp - made with Ireum Dojang Gongbang'; for(let i=0;i<80;i++) dv.setUint8(i, i<head.length?head.charCodeAt(i):32);
+  const head='Click Imagination | 14mm keycap insert | millimetres'; for(let i=0;i<80;i++) dv.setUint8(i, i<head.length?head.charCodeAt(i):32);
   dv.setUint32(80,tris,true); let o=84;
   for(const p of arrs){ for(let i=0;i<p.length;i+=9){
     const ux=p[i+3]-p[i], uy=p[i+4]-p[i+1], uz=p[i+5]-p[i+2], vx=p[i+6]-p[i], vy=p[i+7]-p[i+1], vz=p[i+8]-p[i+2];

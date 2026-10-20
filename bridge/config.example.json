@@ -1,0 +1,11 @@
+{
+  "port": 5188,
+  "printer": {
+    "name": "공방 A1 mini",
+    "ip": "",
+    "serial": "",
+    "accessCode": ""
+  },
+  "slicerPath": "C:/Program Files/Bambu Studio/bambu-studio.exe",
+  "operatorPin": ""
+}

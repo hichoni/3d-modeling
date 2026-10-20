@@ -1,192 +1,94 @@
-let step=0, preset='soft', view='3d', current=null, rendererState=null;
-let revision=0, builtRevision=-1, rebuildTimer, startedAt=null, finishedAt=null, job=null, exporting=false;
-let modelError='', fontReady=false, toastTimer, rotating=false;
-const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isTextReady=()=>chars().length>0&&chars().length<=6&&validText(S.text);
-const isReady=()=>!!current&&builtRevision===revision&&isTextReady()&&fontReady&&!modelError;
-
-function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
-function startSession(){if(startedAt===null)startedAt=Date.now();}
-function clockText(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
-function tick(){const elapsed=startedAt===null?0:Math.floor(((finishedAt??Date.now())-startedAt)/1000);$('timer').textContent=clockText(Math.max(0,300-elapsed));$('timerLabel').textContent=finishedAt?'디자인 완성':elapsed>=300?'천천히 마무리해요':startedAt?'나만의 5분':'나만의 5분';document.querySelector('.session-clock').classList.toggle('elapsed',elapsed>=300);}
-setInterval(tick,1000);
-
-function setStep(next){
-  if(next===3&&!isReady()){toast('글자와 모델 준비 상태를 확인해주세요.');return;}
-  startSession();
-  if(next<3&&finishedAt!==null){finishedAt=null;job=null;}
-  step=next;
-  document.querySelectorAll('[data-panel]').forEach(el=>el.hidden=+el.dataset.panel!==step);
-  document.querySelectorAll('[data-step]').forEach(el=>{const n=+el.dataset.step;el.classList.toggle('active',n===step);el.classList.toggle('done',n<step);if(n===step)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
-  $('backBtn').hidden=step===0;$('stepIndicator').hidden=step>0;$('stepIndicator').textContent=`STEP 0${step+1} / 04`;
-  $('nextBtn').innerHTML=(['내 글자 새기기','입체로 다듬기','내 작품 완성하기','다음 참가자 시작'][step])+` <svg><use href="#icon-arrow"/></svg>`;
-  $('restartBtn').innerHTML=`<svg><use href="#icon-reset"/></svg> ${step===3?'다음 참가자 시작':'처음부터 만들기'}`;
-  const tips=[['작은 선택이, 나만의 디자인이 돼요.','같은 이름도 모양과 글꼴에 따라 전혀 다른 작품이 되죠.'],['거꾸로 새겨야, 바르게 찍혀요.','3D 도장의 글자는 자동으로 좌우 반전됩니다. 찍힌 모양도 확인해보세요.'],['높이를 더하면, 평면이 입체가 돼요.','슬라이더를 움직여 새김 높이가 어떻게 달라지는지 관찰해보세요.'],['디자인 끝! 이제 손으로 만날 차례예요.','운영자가 출력 파일을 확인한 뒤 제작과 수령 방법을 안내합니다.']][step];
-  $('learningCopy').replaceChildren();const b=document.createElement('b');b.textContent=tips[0];$('learningCopy').append(b,document.createTextNode(' '+tips[1]));
-  if(step===3){finishedAt=finishedAt??Date.now();job=job||makeJobId();$('resultName').textContent=chars().join('');$('jobId').textContent=job;$('elapsedResult').textContent=clockText(Math.round((finishedAt-startedAt)/1000));$('resultSize').textContent=`${dims().w} × ${dims().h} × ${fmt(current.totalH)} mm`;tick();}
-  updateReadiness();
-  if(window.innerWidth<=650){document.querySelector('.editor').scrollIntoView({behavior:reducedMotion?'instant':'smooth',block:'start'});}
+let step=0,current=null,R=null,revision=0,built=-1,buildTimer,startedAt=null,finishedAt=null;
+let toastTimer,sound=false,audioCtx,layerTimer,local=null,job=null,jobTimer,operatorToken='',selectedJob=null,pollBusy=false;
+const symbols={heart:'♥',star:'★',smile:'☺',leaf:'♧'},symbolNames={heart:'하트',star:'별',smile:'웃는 얼굴',leaf:'잎사귀'};
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const contentOK=()=>S.content==='icon'||(validText(S.text)&&Array.from(S.text.replace(/\s/g,'')).length<=4);
+const ready=()=>current&&built===revision&&contentOK();
+const modelName=()=>S.content==='icon'?symbolNames[S.icon]:S.text;
+const geometries=()=>current.parts.plate.concat(current.parts.relief);
+function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,6500);}
+function beep(f=560){if(!sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.connect(gain);gain.connect(audioCtx.destination);osc.type='sine';osc.frequency.setValueAtTime(f,audioCtx.currentTime);gain.gain.setValueAtTime(.07,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.12);osc.start();osc.stop(audioCtx.currentTime+.13);}catch{}}
+function begin(){if(!startedAt)startedAt=Date.now();}
+function tick(){const elapsed=startedAt?Math.floor(((finishedAt||Date.now())-startedAt)/1000):0,seconds=Math.max(0,300-elapsed);$('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');$('timer').parentElement.querySelector('span').textContent=finishedAt?'디자인 완성!':seconds?'나만의 5분':'천천히 마무리';}
+function sync(){
+ $('textIn').value=S.content==='icon'?symbolNames[S.icon]:S.text;$('textIn').disabled=S.content==='icon';$('charCount').hidden=S.content==='icon';$('textHelp').textContent=S.content==='icon'?'아래에서 좋아하는 그림을 골라요. 하나의 입체 조각이 돼요.':'한글·영문·숫자 1~4자. 짧을수록 또렷해요.';$('charCount').textContent=Array.from(S.text).length+' / 4';$('heightIn').value=S.relief;$('heightOut').textContent=fmt(S.relief)+' mm';
+ for(const key of ['content','mode','font','color'])document.querySelectorAll('[data-'+key+']').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset[key]===S[key])));
+ $('fontRow').hidden=S.content==='icon';$('symbolLabel').textContent=S.content==='icon'?'내 그림 고르기':'작은 포인트';
+ $('symbols').replaceChildren();for(const [id,label] of [['none','없음'],...Object.entries(symbols)]){if(id==='none'&&S.content==='icon')continue;const b=document.createElement('button');b.textContent=label;b.title=id==='none'?'꾸밈 없음':symbolNames[id];b.setAttribute('aria-label',b.title);b.setAttribute('aria-pressed',String((S.content==='icon'?S.icon:S.decoration)===id));b.onclick=()=>{S[S.content==='icon'?'icon':'decoration']=id;change();};$('symbols').append(b);}
+ $('assemblyKey').textContent=S.content==='icon'?symbols[S.icon]:S.text;$('assemblyKey').style.background=S.color;
+ $('textIn').setAttribute('aria-invalid',String(!contentOK()));
+ const error=!contentOK()?'한글·영문·숫자 1~4자를 입력해주세요.':(S.content!=='icon'&&Array.from(S.text).length===4?'작은 획은 뭉칠 수 있어요. 운영자가 슬라이싱 결과를 확인해요.':'');
+ $('warnings').textContent=error;$('warnings').hidden=!error;$('nextBtn').disabled=!ready();$('sliceBtn').disabled=!ready()||!!(job&&job.state==='slicing');
 }
-function changed({tiles=false,interact=true}={}){
-  if(interact)startSession();
-  if(finishedAt!==null){finishedAt=null;job=null;}
-  revision++;const mine=revision;builtRevision=-1;fontReady=false;modelError='';clearTimeout(rebuildTimer);
-  $('busy').hidden=false;syncUI();updateReadiness();
-  ensureFont(fontById(S.font),chars().join('')||'가').then(ok=>{
-    if(mine!==revision)return;
-    fontReady=ok;
-    if(!ok)modelError='글꼴을 불러오지 못했어요. 파일을 다시 열어주세요.';
-    drawProofs();
-    rebuildTimer=setTimeout(()=>rebuild(mine),120);
-  });
+function change(interact=true){if(interact){begin();try{sessionStorage.removeItem('click-current-job');}catch{}}revision++;built=-1;finishedAt=null;job=null;clearInterval(jobTimer);clearInterval(layerTimer);$('playBtn').textContent='▶';$('busy').hidden=false;sync();const mine=revision;clearTimeout(buildTimer);buildTimer=setTimeout(async()=>{
+ try{if(!contentOK())throw Error('글자를 입력하면 입체가 나타나요.');const ok=await ensureFont(fontById(S.font),S.text);if(mine!==revision)return;if(!ok&&S.content!=='icon')throw Error('글꼴을 준비하지 못했어요. 페이지를 다시 열어주세요.');const next=buildGeometries();if(!next.parts.relief.length)throw Error('이 모양은 만들 수 없어요. 글자나 그림을 바꿔주세요.');const old=current;current=next;built=mine;showModel();if(old)old.parts.plate.concat(old.parts.relief).forEach(g=>g.dispose());try{localStorage.setItem('click-design-v2',JSON.stringify(S));}catch{}
+ }catch(e){if(mine===revision){$('warnings').hidden=false;$('warnings').textContent=e.message;}}
+ if(mine===revision){$('busy').hidden=true;$('nextBtn').disabled=!ready();renderSlice();}
+ },100);}
+function init3D(){try{
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;renderer.domElement.setAttribute('aria-label','드래그해서 회전하는 14mm 키캡 모델');$('stage').append(renderer.domElement);
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(31,1,.1,300);camera.up.set(0,0,1);scene.add(new THREE.HemisphereLight(0xffffff,0xa6a4b9,1.1));const light=new THREE.DirectionalLight(0xfff2df,1.15);light.position.set(-25,-30,55);light.castShadow=true;light.shadow.mapSize.set(2048,2048);Object.assign(light.shadow.camera,{left:-25,right:25,top:25,bottom:-25,near:1,far:150});light.shadow.bias=-.001;scene.add(light);const fill=new THREE.DirectionalLight(0xffffff,.45);fill.position.set(30,15,30);scene.add(fill);
+ const grid=new THREE.GridHelper(60,30,0xb9c7c5,0xd9ded6);grid.rotation.x=Math.PI/2;grid.position.z=-.16;grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.ShadowMaterial({opacity:.13}));ground.position.z=-.1;ground.receiveShadow=true;scene.add(ground);
+ const group=new THREE.Group(),paths=new THREE.Group();scene.add(group,paths);const clip=new THREE.Plane(new THREE.Vector3(0,0,-1),5);const plate=new THREE.MeshStandardMaterial({color:S.color,roughness:.52,clippingPlanes:[clip]}),relief=new THREE.MeshStandardMaterial({color:S.color,roughness:.65,clippingPlanes:[clip]});const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=21;controls.maxDistance=90;controls.maxPolarAngle=Math.PI*.49;
+ R={renderer,scene,camera,group,paths,clip,plate,relief,controls};resetCamera();const resize=()=>{const box=$('stage').getBoundingClientRect();if(!box.width||!box.height)return;renderer.setSize(box.width,box.height,false);camera.aspect=box.width/box.height;camera.updateProjectionMatrix();};new ResizeObserver(resize).observe($('stage'));resize();
+ (function animate(){requestAnimationFrame(animate);if(document.hidden)return;controls.update();renderer.render(scene,camera);})();
+}catch{R=null;$('fallback').hidden=false;$('stageHint').textContent='평면 미리보기 · WebGL을 켜면 입체로 볼 수 있어요.';}}
+function resetCamera(top=false){if(!R)return;R.camera.position.set(top?0:13,top?-.01:-20,top?35:28);R.controls.target.set(0,0,1);R.controls.update();}
+function showModel(){if(R){R.group.clear();R.plate.color.set(S.color).convertSRGBToLinear();R.relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();for(const type of ['plate','relief'])current.parts[type].forEach(g=>{const mesh=new THREE.Mesh(g,R[type]);mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});updateLayer();}else{const cv=$('fallback'),ctx=cv.getContext('2d');ctx.clearRect(0,0,500,500);ctx.fillStyle=S.color;shapePath(ctx,250,250,350,350,'rounded',0,25);ctx.fill();const face=mkCanvas(500,500);drawFace(face.getContext('2d'),500,500,25,false,'#a54465',fontById(S.font));ctx.drawImage(face,0,0);}}
+function setStep(next){if(next>0&&!ready()){toast('먼저 내 이름이나 그림을 완성해주세요.');return;}begin();step=next;beep([520,660,780][step]);clearInterval(layerTimer);$('playBtn').textContent='▶';
+ const titles=[['MISSION 01 · 나만의 작은 작품','어떤 상상을 새겨볼까?','이름도, 좋아하는 모양도. 작은 네모 안에 나를 담아요.'],['MISSION 02 · 프린터의 비밀','한 층씩, 이렇게 만들어져요!','납작한 층이 차곡차곡. 슬라이더로 입체의 속을 살펴봐요.'],['MISSION 03 · 손으로 만나는 상상','내 작품이 태어날 준비 완료!','만들기는 끝! 출력과 조립은 운영자와 함께해요.']][step];['eyebrow','headline','subtitle'].forEach((id,i)=>$(id).textContent=titles[i]);
+ document.querySelectorAll('[data-step]').forEach(b=>{if(+b.dataset.step===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+ ['assemblyCard','sliceCard','printCard'].forEach((id,i)=>$(id).hidden=i!==step);['designControls','sliceLesson','resultPanel'].forEach((id,i)=>$(id).hidden=i!==step);
+ $('layerTools').hidden=step!==1;$('backBtn').hidden=step===0;$('importBtn').hidden=step!==0;$('nextBtn').textContent=['다음! 층층이 쌓아보기 →','내 작품 출력 준비 →','다음 참가자 시작 →'][step];$('stageBadge').textContent=['MY LITTLE KEYCAP',job?.slice?'REAL TOOLPATH':'LAYER LAB · 원리 체험','YOU MADE IT!'][step];
+ if(step===2){finishedAt=Date.now();$('resultName').textContent='「'+modelName()+'」, 내가 만든 작품!';renderTicket();}renderSlice();updateLayer();tick();if(innerWidth<700)window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});
 }
-function rebuild(mine){
-  if(mine!==revision)return;
-  try{
-    if(typeof THREE==='undefined')throw Error('3D 엔진을 불러오지 못했어요. 완전한 HTML 파일을 다시 열어주세요.');
-    const next=buildGeometries();
-    if(!next.parts.relief.length&&chars().length)throw Error('새김 면을 만들 수 없어요. 글자나 크기를 바꿔주세요.');
-    next.stats=meshStats(next.parts.plate.concat(next.parts.relief));
-    const old=current;current=next;builtRevision=mine;
-    show3D(next);
-    if(old)old.parts.plate.concat(old.parts.relief).forEach(g=>g.dispose());
-  }catch(error){modelError=error.message||'모델을 만들지 못했어요. 설정을 바꿔주세요.';builtRevision=-1;}
-  $('busy').hidden=true;updateReadiness();
+function renderSlice(){const actual=job?.slice;const layers=actual?.layers||Math.ceil((current?.totalH||2.3)/.2);$('layerRange').max=layers;$('layerRange').value=layers;
+ $('sliceKind').textContent=actual?'✓ 실제 Bambu Studio 슬라이싱':'층 쌓기 원리 미리보기';$('sliceTime').textContent=actual?duration(actual.seconds):'슬라이싱 후 확인';$('sliceWeight').textContent=actual?actual.weightG.toFixed(2)+' g · PLA':'PLA · 단색';
+ $('sliceBtn').hidden=!local;$('sliceBtn').disabled=!ready()||job?.state==='slicing';$('sliceBtn').textContent=job?.state==='slicing'?'층과 경로를 계산하는 중…':actual?'다시 계산 완료 ✓':'실제 슬라이싱하기';
+ $('sliceHelp').textContent=actual?'준비·보정 시간을 포함한 예상값이며 실제 시간은 달라질 수 있어요.':local?'현장 PC의 Bambu Studio로 실제 노즐 경로를 계산해요.':'여기는 원리 체험이에요. 실제 출력 시간과 경로는 현장 PC에서 계산해요.';
+ $('lessonCopy').textContent=actual?'주황색 선이 실제 슬라이싱한 노즐의 이동 경로예요. 층을 바꾸며 바닥과 글자를 어떻게 채우는지 관찰해봐요.':'슬라이더로 바닥부터 글자까지 쌓아봐요. 이 미리보기는 모델을 잘라 보여주는 원리 체험이며 실제 노즐 경로는 아니에요.';
+ if(step===1)$('stageBadge').textContent=actual?'REAL TOOLPATH':'LAYER LAB · 원리 체험';updateLayer();}
+function duration(sec){const n=Math.round(sec);return Math.floor(n/60)+'분 '+String(n%60).padStart(2,'0')+'초';}
+function updateLayer(){const n=Number($('layerRange').value),total=Number($('layerRange').max);$('layerLabel').textContent=n+' / '+total+'층';if(!R)return;const layer=job?.slice?.paths?.[n-1];R.clip.constant=step===1?(layer?.z||n*.2)+.001:10;
+ for(const c of [...R.paths.children]){c.geometry.dispose();c.material.dispose();R.paths.remove(c);}if(step!==1)return;
+ if(layer?.segments?.length){const points=[];for(const s of layer.segments)points.push(s[0],s[1],layer.z+.02,s[2],s[3],layer.z+.02);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));R.paths.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xff9d1e})));}
+ else{const temp=new THREE.ExtrudeGeometry(plateShape(14,14),{depth:.015,bevelEnabled:false}),edges=new THREE.EdgesGeometry(temp);temp.dispose();const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:0x219df8,transparent:true,opacity:.4}));line.position.z=Math.min(n*.2,current?.totalH||2.3);R.paths.add(line);}}
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+function exportSTL(){if(!ready())return;download(new Blob([toSTL(geometries())],{type:'model/stl'}),safeName(modelName())+'_14mm.stl');beep();}
+function exportPackage(){if(!ready())return;const name=safeName(modelName()),enc=new TextEncoder();const note='# 상상을 클릭하다!\n\n작품: '+name+'\n크기: 14 × 14 × '+fmt(current.totalH)+' mm\n바닥 1.5 mm / 둥근 모서리 R2.8 / 새김 '+S.relief+' mm\n\nSTL을 mm 단위로 불러오세요. 배율 100%, 평평한 바닥이 베드 쪽입니다.\nA1 mini / 0.4mm 노즐 / Generic PLA / Textured PEI / 0.20mm Standard.\nSTL 색은 포함되지 않습니다. 슬라이싱·얇은 획·결합 공차를 확인 후 출력하세요.\n작품.json은 웹의 작품 불러오기로 다시 편집할 수 있습니다.\n';download(makeZip([{name:name+'_14mm.stl',data:toSTL(geometries())},{name:'작품.json',data:enc.encode(JSON.stringify({version:2,design:S},null,2))},{name:'제작안내.md',data:enc.encode(note)}]),name+'_작품.zip');toast('STL, 다시 편집할 작품 설정, 제작 안내를 저장했어요.');}
+async function api(url,body,operator=false){const headers={'X-Click-Token':local?.csrf||''};if(operator)headers['X-Operator-Token']=operatorToken;if(body!==undefined)headers['Content-Type']='application/json';const res=await fetch(url,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(30000)});const data=await res.json();if(!res.ok)throw Error(data.error||'요청을 처리하지 못했어요.');return data;}
+async function discoverLocal(){if(!['127.0.0.1','localhost'].includes(location.hostname))return;try{const data=await api('/api/bootstrap');if(data.app!=='click-workshop')return;local=data;$('connection').textContent='● 현장 PC 공방';$('operatorInfo').textContent='슬라이싱 → 파일 검증 → 운영자 확인 → 프린터 전송 순서로 진행합니다.';$('operatorLocal').hidden=false;$('localInstructions').hidden=true;renderSlice();renderTicket();try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();jobTimer=setInterval(pollJob,2000);}}catch{}}catch{}}
+async function slice(){if(!local||!ready())return;if(job?.slice)return;const mine=revision;$('sliceBtn').disabled=true;$('sliceBtn').textContent='슬라이싱 요청 중…';try{const res=await fetch('/api/slice',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Click-Token':local.csrf,'X-Model-Name':encodeURIComponent(modelName())},body:toSTL(geometries()),signal:AbortSignal.timeout(15000)});const data=await res.json();if(!res.ok)throw Error(data.error);if(mine!==revision)return;job=data;try{sessionStorage.setItem('click-current-job',JSON.stringify({id:job.id,design:JSON.stringify(S)}));}catch{}renderSlice();clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);toast('진짜 프린터 경로를 계산하고 있어요. 잠시만 기다려요.');}catch(e){toast(e.message);renderSlice();}}
+async function pollJob(){if(!job||pollBusy)return;pollBusy=true;const id=job.id;try{const data=await api('/api/jobs/'+id);if(job?.id!==id)return;const becameReady=!job.slice&&data.slice;job=data;if(becameReady){renderSlice();beep(850);toast('슬라이싱 완료! 실제 노즐 경로를 살펴봐요.');}if(data.state==='failed'){clearInterval(jobTimer);toast(data.error||'슬라이싱 실패. STL을 저장해 Studio에서 확인해주세요.');$('sliceBtn').textContent='다시 슬라이싱';$('sliceBtn').disabled=false;job=null;}renderTicket();}catch{$('printState').textContent='현장 PC와 연결이 끊겼어요.';$('printDetail').textContent='재전송하지 말고 운영자가 프린터 본체를 확인해주세요.';}finally{pollBusy=false;}}
+async function queue(){if(!local)return;if(!job?.slice){setStep(1);await slice();return;}if(job.ticket)return;try{job=await api('/api/jobs/'+job.id+'/queue',{});beep(900);renderTicket();toast('대기표를 받았어요. 운영자에게 번호를 알려주세요.');}catch(e){toast(e.message);}}
+const stateLabel={slicing:'슬라이싱 중',ready:'슬라이싱 완료',queued:'운영자 확인 대기',uploading:'프린터로 전송 중',sent:'시작 명령 전송 · 응답 확인 중',accepted:'프린터 준비 중',printing:'내 작품을 출력하고 있어요',paused:'프린터 본체 확인 필요',complete:'출력 완료! 운영자와 함께 꺼내요',failed:'작업 확인 필요',uncertain:'전송 결과를 확인해주세요',cancelled:'대기 취소'};
+function renderTicket(){const queued=!!job?.ticket;$('ticketNumber').textContent=queued?'NO. '+String(job.ticket).padStart(3,'0'):'READY!';$('ticketTitle').textContent=queued?'나의 작품 대기표':'출력을 기다리는 나의 작은 상상';$('printState').textContent=job?stateLabel[job.state]||job.state:'운영자에게 작품을 보여주세요.';$('printProgress').value=job?.progress||0;
+ $('printDetail').textContent=job?.attention|| (job?.state==='complete'?'완성품이 식으면 받침에 끼우고 스위치를 눌러봐요!':queued?'진행 상황이 이 화면에 표시돼요. 출력 시작은 운영자가 확인해요.':'실제 출력에는 준비와 보정 시간이 더해져요.');
+ $('queueBtn').hidden=!local;$('queueBtn').disabled=queued;$('queueBtn').textContent=queued?'대기표 발급 완료 ✓':job?.slice?'출력 대기표 받기 →':'슬라이싱하고 대기표 받기 →';$('resultCopy').textContent=local?'대기표를 받으면 운영자가 베드와 재료를 확인한 뒤 출력을 시작해요.':'STL을 저장해서 운영자에게 전달해요. 현장 PC에서는 실제 슬라이싱과 출력 대기표까지 이어집니다.';}
+async function operatorRefresh(){if(!operatorToken)return;try{const data=await api('/api/operator',undefined,true);$('operatorStatus').textContent=(data.printer.online?'연결됨':'연결 안 됨')+' · '+(data.printer.state||'대기')+' · '+(data.printer.fresh?'최신 상태':'상태 확인 필요')+'\n'+(data.printer.attention||data.error||'');$('jobList').replaceChildren();if(!data.jobs.length)$('jobList').textContent='아직 받은 대기표가 없습니다.';for(const item of data.jobs){const b=document.createElement('button');b.className='job-row';const title=document.createElement('b');title.textContent='#'+String(item.ticket).padStart(3,'0')+' '+item.name;const status=document.createElement('small');status.textContent=stateLabel[item.state]||item.state;b.append(title,status);b.onclick=()=>{selectedJob=item;$('bedCheck').checked=$('plaCheck').checked=false;renderReview();};$('jobList').append(b);if(selectedJob?.id===item.id)selectedJob=item;}renderReview();$('stopPrintBtn').hidden=!data.canStop;}catch(e){$('operatorMessage').textContent=e.message;}}
+function renderReview(){const j=selectedJob;$('jobReview').hidden=!j;if(!j)return;$('reviewTitle').textContent='#'+String(j.ticket).padStart(3,'0')+' '+j.name;$('reviewInfo').textContent=(j.slice?duration(j.slice.seconds)+' · '+j.slice.weightG.toFixed(2)+'g · '+j.slice.layers+'층 · ':'')+'A1 mini / 0.4mm / 외부 PLA / 텍스처 PEI / '+(stateLabel[j.state]||j.state);$('startPrintBtn').disabled=j.state!=='queued'||!$('bedCheck').checked||!$('plaCheck').checked;$('cancelJobBtn').disabled=j.state!=='queued';$('download3mfBtn').disabled=!j.slice;$('resolveJobBtn').hidden=j.state!=='uncertain';$('resolveJobBtn').disabled=!$('bedCheck').checked||!$('plaCheck').checked;}
+function lock(){operatorToken='';selectedJob=null;$('pinIn').value='';$('operatorUnlocked').hidden=true;$('lockBtn').hidden=true;$('unlockBtn').hidden=false;$('operatorMessage').textContent='';}
+function reset(){try{sessionStorage.removeItem('click-current-job');}catch{}clearInterval(jobTimer);clearInterval(layerTimer);job=null;startedAt=null;finishedAt=null;Object.assign(S,DEFAULTS);change(false);step=0;setStep(0);startedAt=null;tick();resetCamera();}
+function bind(){
+ document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>setStep(+b.dataset.step));document.querySelectorAll('[data-content]').forEach(b=>b.onclick=()=>{S.content=b.dataset.content;if(S.content==='initials'){S.text='SM';S.layout='row';}else S.layout='auto';change();});document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;change();});
+ $('textIn').addEventListener('input',e=>{S.text=e.target.value;change();});$('heightIn').oninput=e=>{S.relief=+e.target.value;change();};
+ for(const f of FONTS){const b=document.createElement('button');b.className='font-choice';b.dataset.font=f.id;b.style.fontFamily='"'+f.family+'"';b.textContent=f.label;b.onclick=()=>{S.font=f.id;change();};$('fontTiles').append(b);}
+ for(const [color,label] of [['#ff7b92','딸기'],['#ffd45f','레몬'],['#65baff','하늘'],['#77cbb6','민트'],['#b7a0e9','포도'],['#f5f0e5','크림']]){const b=document.createElement('button');b.dataset.color=color;b.style.setProperty('--swatch',color);b.setAttribute('aria-label',label);b.title=label;b.onclick=()=>{S.color=color;sync();if(ready())showModel();try{localStorage.setItem('click-design-v2',JSON.stringify(S));}catch{}};$('colors').append(b);}
+ $('nextBtn').onclick=()=>step<2?setStep(step+1):$('resetDialog').showModal();$('backBtn').onclick=()=>setStep(Math.max(0,step-1));$('restartBtn').onclick=()=>$('resetDialog').showModal();$('resetDialog').onclose=()=>{if($('resetDialog').returnValue==='reset')reset();};document.querySelector('.brand').onclick=e=>{e.preventDefault();setStep(0);};
+ $('topViewBtn').onclick=()=>resetCamera(true);$('resetViewBtn').onclick=()=>resetCamera();$('layerRange').oninput=()=>{clearInterval(layerTimer);$('playBtn').textContent='▶';updateLayer();};$('playBtn').onclick=()=>{if($('playBtn').textContent==='Ⅱ'){clearInterval(layerTimer);$('playBtn').textContent='▶';return;}$('playBtn').textContent='Ⅱ';$('layerRange').value=1;updateLayer();layerTimer=setInterval(()=>{const input=$('layerRange');if(+input.value>=+input.max){clearInterval(layerTimer);$('playBtn').textContent='▶';return;}input.value=+input.value+1;updateLayer();beep(400+Number(input.value)*25);},650);};
+ $('sliceBtn').onclick=slice;$('queueBtn').onclick=queue;$('stlBtn').onclick=exportSTL;$('packageBtn').onclick=exportPackage;
+ $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').setAttribute('aria-pressed',String(sound));$('soundBtn').setAttribute('aria-label',sound?'효과음 끄기':'효과음 켜기');beep();};
+ $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>10000)throw Error('작품 설정 JSON 파일을 선택해주세요.');const data=JSON.parse(await f.text());if(data.version!==2||!data.design)throw Error('이 공방에서 저장한 작품.json이 아닙니다.');Object.assign(S,restoreDesign(data.design));change();toast('저장했던 상상을 불러왔어요.');}catch(e){toast(e.message);}e.target.value='';};
+ $('operatorBtn').onclick=()=>{$('operatorDialog').showModal();operatorRefresh();};$('operatorDialog').onclose=lock;$('lockBtn').onclick=lock;
+ $('unlockBtn').onclick=async()=>{try{const data=await api('/api/unlock',{pin:$('pinIn').value});operatorToken=data.token;$('pinIn').value='';$('operatorUnlocked').hidden=false;$('lockBtn').hidden=false;$('unlockBtn').hidden=true;$('operatorMessage').textContent='';await operatorRefresh();}catch(e){$('operatorMessage').textContent=e.message;}};
+ $('connectBtn').onclick=async()=>{try{await api('/api/connect',{},true);await operatorRefresh();}catch(e){$('operatorMessage').textContent=e.message;}};
+ $('bedCheck').onchange=$('plaCheck').onchange=renderReview;
+ $('startPrintBtn').onclick=async()=>{if(!selectedJob)return;$('startPrintBtn').disabled=true;try{await api('/api/jobs/'+selectedJob.id+'/start',{bedClear:$('bedCheck').checked,plaReady:$('plaCheck').checked,sha256:selectedJob.sha256},true);$('operatorMessage').textContent='출력 시작 명령을 전송했습니다. 프린터의 확인을 기다립니다.';}catch(e){$('operatorMessage').textContent=e.message;}$('bedCheck').checked=$('plaCheck').checked=false;await operatorRefresh();};
+ $('download3mfBtn').onclick=async()=>{if(!selectedJob)return;try{const res=await fetch('/api/jobs/'+selectedJob.id+'/file',{headers:{'X-Operator-Token':operatorToken}});if(!res.ok)throw Error('잠금 해제 후 다시 시도하세요.');download(await res.blob(),'click_'+selectedJob.ticket+'.gcode.3mf');}catch(e){toast(e.message);}};
+ $('cancelJobBtn').onclick=async()=>{try{await api('/api/jobs/'+selectedJob.id+'/cancel',{},true);await operatorRefresh();}catch(e){$('operatorMessage').textContent=e.message;}};
+ $('resolveJobBtn').onclick=async()=>{try{await api('/api/jobs/'+selectedJob.id+'/resolve',{bedClear:$('bedCheck').checked,plaReady:$('plaCheck').checked},true);await operatorRefresh();}catch(e){$('operatorMessage').textContent=e.message;}};
+ $('stopPrintBtn').onclick=async()=>{try{await api('/api/stop',{},true);$('operatorMessage').textContent='중지 명령을 전송했습니다. 본체 상태를 확인하세요.';}catch(e){$('operatorMessage').textContent=e.message;}};
+ setInterval(()=>{if($('operatorDialog').open&&operatorToken)operatorRefresh();},3000);
 }
-function updateReadiness(){
-  const list=[];
-  if(!chars().length)list.push('새길 이름이나 별명을 입력해주세요.');
-  else if(!validText(S.text))list.push('한글, 영문, 숫자로 입력해주세요. 이모지와 특수기호는 지원하지 않아요.');
-  if(chars().length>6)list.push('글자는 6자까지 새길 수 있어요.');
-  if(modelError)list.push(modelError);
-  if(lastCellMinMm<4&&isTextReady())list.push('글자 칸이 작아요. 이름을 줄이거나 도장 크기를 키우면 더 또렷하게 나와요.');
-  if(['myeongjo','gaegu'].includes(S.font)&&S.bold<.15)list.push('가는 획이 있는 글꼴이에요. ‘글자 획 보강’을 0.15 mm 이상 권장해요.');
-  if(S.handle!=='none')list.push('손잡이를 더하면 출력량이 늘어요. 운영자가 판 아래의 서포트 필요 여부를 확인해주세요.');
-  if(S.mode==='engrave'&&S.border<.6)list.push('오목한 글씨는 테두리를 0.6 mm 이상 두는 것이 좋아요.');
-  $('warnings').replaceChildren(...list.map(text=>{const p=document.createElement('div');p.className='warning';p.textContent=text;return p;}));
-  $('nextBtn').disabled=(step===1&&!isTextReady())||(step===2&&!isReady());
-  document.querySelector('[data-step="3"]').disabled=!isReady();
-  ['packageBtn','stlBtn','cardBtn'].forEach(id=>$(id).disabled=!isReady()||exporting);
-  const invalid=!!S.text&&!isTextReady();$('textIn').setAttribute('aria-invalid',String(invalid));$('textHelp').classList.toggle('error',invalid);
-  $('textHelp').textContent=invalid?'한글·영문·숫자를 최대 6자까지 입력해주세요.':'한글·영문·숫자 1~6자. 2~4자가 또렷하게 나와요.';
-}
-function syncUI(){
-  $('charCount').textContent=chars().length+' / 6';
-  ['layout','shape','mode','handle'].forEach(key=>document.querySelectorAll(`[data-${key}]`).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset[key]===S[key]))));
-  document.querySelectorAll('[data-font]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.font===S.font)));
-  document.querySelectorAll('[data-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===S.color)));
-  document.querySelectorAll('[data-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.preset===preset)));
-  const rangeKeys={w:'w',h:'h',relief:'relief',hh:'handleH',border:'border',bold:'bold',base:'base'};
-  for(const [id,key] of Object.entries(rangeKeys)){$(id+'In').value=S[key];$(id+'Out').textContent=fmt(S[key],2)+' mm';}
-  $('hRow').hidden=isSquareish(S.shape);$('handleRow').hidden=S.handle==='none';$('widthLabel').textContent=S.shape==='circle'?'도장 지름':isSquareish(S.shape)?'도장 크기':'가로 길이';
-  $('fillIn').checked=S.fill;
-  const {w,h}=dims();$('sizeStat').innerHTML=`${w} × ${h} <small>mm</small>`;
-  $('handleStat').textContent=S.handle==='none'?'가벼운 판형':S.handle==='hex'?'육각 손잡이':'둥근 손잡이';
-}
-function choosePreset(p){preset=p.id;for(const k of ['shape','font','layout','mode','color'])S[k]=p[k];S.border=1.2;S.bold=.15;changed();}
-function buildChoices(){
-  PRESETS.forEach(p=>{const b=document.createElement('button');b.className='preset-card';b.dataset.preset=p.id;b.setAttribute('aria-pressed',String(p.id===preset));const c=document.createElement('canvas');c.width=200;c.height=210;c.setAttribute('aria-hidden','true');const t=document.createElement('b');t.textContent=p.title;const desc=document.createElement('small');desc.textContent=p.desc;b.append(c,t,desc);b.addEventListener('click',()=>choosePreset(p));$('presets').append(b);});
-  FONTS.forEach(f=>{const b=document.createElement('button');b.className='font-tile';b.dataset.font=f.id;b.style.fontFamily=`'${f.family}'`;b.style.fontWeight=f.weight;b.innerHTML=`<strong>가나다</strong><small>${f.label}</small>`;b.addEventListener('click',()=>{S.font=f.id;preset=null;changed();});$('fontTiles').append(b);});
-  for(const [shape,label] of Object.entries(SHAPE_LABELS)){const b=document.createElement('button');b.dataset.shape=shape;b.innerHTML=`<span class="shape-icon ${shape}" aria-hidden="true"></span><small>${label}</small>`;$('shapeChoices').append(b);}
-  [['#b7a5dc','라일락'],['#e9b17e','살구'],['#9abb9f','세이지'],['#cd8d8a','로즈'],['#e3d6b6','크림'],['#9aafc7','블루']].forEach(([color,label])=>{const b=document.createElement('button');b.dataset.color=color;b.setAttribute('aria-label',label);b.style.setProperty('--swatch',color);b.title=label;b.addEventListener('click',()=>{startSession();S.color=color;syncUI();if(rendererState)rendererState.mats.plate.color.set(color);});$('swatches').append(b);});
-}
-function drawPresetCards(){
-  const saved={...S},keep=lastCellMinMm;
-  PRESETS.forEach(p=>{Object.assign(S,DEFAULTS,p,{text:'나다움'});const cv=document.querySelector(`[data-preset="${p.id}"] canvas`);const ctx=cv.getContext('2d');const {w,h}=dims();drawFace(ctx,cv.width,cv.height,Math.min(155/w,165/h),false,'#b9554d',fontById(p.font));});
-  Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,saved);lastCellMinMm=keep;
-}
-function drawProofs(){
-  for(const id of ['proofCanvas','largeProofCanvas']){const c=$(id);c.width=400;c.height=400;drawFace(c.getContext('2d'),400,400,310/Math.max(dims().w,dims().h),false,'#bf4b43',fontById(S.font));}
-}
-function setView(next){view=next;$('view3d').setAttribute('aria-pressed',String(next==='3d'));$('viewProof').setAttribute('aria-pressed',String(next==='proof'));$('largeProof').hidden=next!=='proof';$('stage').hidden=next!=='3d';$('proofInset').hidden=next!=='3d';$('previewControls').hidden=next!=='3d';$('stageHint').hidden=next!=='3d';if(next==='proof')stampAgain();}
-function stampAgain(){const c=$('largeProofCanvas');c.classList.remove('stamping');void c.offsetWidth;c.classList.add('stamping');}
-
-function init3D(){
-  try{
-    if(typeof THREE==='undefined')throw Error('3D 라이브러리를 불러오지 못했어요.');
-    const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-    renderer.domElement.setAttribute('aria-label','내 도장 3D 미리보기');$('stage').append(renderer.domElement);
-    const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(32,1,.1,2000);camera.up.set(0,0,1);
-    scene.add(new THREE.HemisphereLight(0xffffff,0x8d8694,1.0));const key=new THREE.DirectionalLight(0xfff8ee,1.1);key.position.set(-40,-40,90);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-50;key.shadow.camera.right=50;key.shadow.camera.top=50;key.shadow.camera.bottom=-50;key.shadow.camera.near=1;key.shadow.camera.far=200;key.shadow.bias=-.0004;scene.add(key);
-    const fill=new THREE.DirectionalLight(0xece1ff,.4);fill.position.set(40,40,50);scene.add(fill);
-    const grid=new THREE.GridHelper(180,36,0xc9c7be,0xdedbd0);grid.rotation.x=Math.PI/2;grid.position.z=-.15;grid.material.transparent=true;grid.material.opacity=.55;scene.add(grid);
-    const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.1}));ground.position.z=-.1;ground.receiveShadow=true;scene.add(ground);
-    const group=new THREE.Group();scene.add(group);
-    const mats={plate:new THREE.MeshStandardMaterial({color:S.color,roughness:.62,metalness:0}),relief:new THREE.MeshStandardMaterial({color:0x8a5b79,roughness:.65})};
-    const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.enablePan=false;controls.minDistance=25;controls.maxDistance=220;controls.maxPolarAngle=Math.PI*.48;controls.autoRotateSpeed=1.3;
-    rendererState={renderer,scene,camera,controls,group,mats,fitKey:''};
-    const resize=()=>{const box=$('stage').getBoundingClientRect();if(!box.width||!box.height)return;renderer.setSize(box.width,box.height,false);camera.aspect=box.width/box.height;camera.updateProjectionMatrix();};new ResizeObserver(resize).observe($('stage'));resize();
-    (function animate(){requestAnimationFrame(animate);if(document.hidden||view!=='3d')return;controls.update();renderer.render(scene,camera);})();
-  }catch(e){const p=document.createElement('div');p.className='fallback3d';p.textContent='이 브라우저에서 3D 화면을 열 수 없어요. ‘찍어 보기’로 디자인을 확인하거나 Chrome / Edge에서 다시 열어주세요.';$('stage').append(p);$('previewControls').hidden=true;}
-}
-function show3D(model){
-  $('heightStat').innerHTML=`${fmt(model.totalH)} <small>mm</small>`;
-  if(!rendererState)return;
-  const R=rendererState;R.group.clear();R.mats.plate.color.set(S.color);
-  model.parts.plate.forEach(g=>{const mesh=new THREE.Mesh(g,R.mats.plate);mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});
-  model.parts.relief.forEach(g=>{const mesh=new THREE.Mesh(g,R.mats.relief);mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});
-  const key=[model.w,model.h,model.totalH].join('|');if(key!==R.fitKey){R.fitKey=key;resetCamera();}
-}
-function resetCamera(){
-  if(!current||!rendererState)return;const R=rendererState,c=new THREE.Vector3(0,0,current.totalH*.4);
-  const size=Math.max(current.w,current.h,current.totalH*1.15);const dist=size*2.7*(R.camera.aspect<.9?1.25:1);
-  const dir=new THREE.Vector3(.48,-.85,1.15).normalize();R.camera.position.copy(c).addScaledVector(dir,dist);R.controls.target.copy(c);R.controls.update();
-}
-
-function makeJobId(){const d=new Date();const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d).replaceAll('-','');const nonce=new Uint32Array(1);crypto.getRandomValues(nonce);return `SG-${date}-${nonce[0].toString(36).toUpperCase().padStart(7,'0')}`;}
-function metadata(){return {schemaVersion:1,jobId:job,createdAt:new Date().toISOString(),units:'mm',text:chars().join(''),design:{...S},dimensions:{...dims(),height:current.totalH},designSeconds:Math.round(((finishedAt??Date.now())-(startedAt??Date.now()))/1000),geometry:{triangles:current.stats.tris,volumeMm3:Math.round(current.stats.vol),representation:'overlapping closed shells; merge in slicer'},printing:{orientation:'letter face up, Z=0 on build plate',color:'Preview only. Choose the physical filament separately.',status:'not sliced; operator review required'}};}
-function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
-function cardCanvas(){
-  const c=mkCanvas(1200,1600),ctx=c.getContext('2d');ctx.fillStyle='#f7f2e7';ctx.fillRect(0,0,1200,1600);
-  ctx.fillStyle='#bd5148';ctx.font='700 25px sans-serif';ctx.textAlign='center';ctx.fillText('SAEGIM / MADE BY ME',600,120);
-  ctx.fillStyle='#48383b';ctx.font='400 70px Jua';ctx.fillText('이건, 내가 만든 거야.',600,260);
-  ctx.fillStyle='#a89487';ctx.font='25px sans-serif';ctx.fillText('세상에 하나뿐인 나의 첫 번째 3D 작품',600,325);
-  const face=mkCanvas(720,720);drawFace(face.getContext('2d'),720,720,530/Math.max(dims().w,dims().h),false,'#bd5148',fontById(S.font));ctx.drawImage(face,240,410);
-  ctx.strokeStyle='#d6c7b3';ctx.setLineDash([8,8]);ctx.beginPath();ctx.moveTo(150,1190);ctx.lineTo(1050,1190);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#715e54';ctx.font='500 30px sans-serif';ctx.fillText(`${chars().join('')}  ·  ${dims().w} × ${dims().h} mm`,600,1280);
-  ctx.fillStyle='#ab9685';ctx.font='22px monospace';ctx.fillText(job||'MY FIRST STAMP',600,1350);
-  ctx.font='22px sans-serif';ctx.fillText('나를 새기는 작은 공방, 새김',600,1490);return c;
-}
-async function pngBytes(){const blob=await new Promise(resolve=>cardCanvas().toBlob(resolve,'image/png'));if(!blob)throw Error('작품 카드를 만들지 못했어요.');return new Uint8Array(await blob.arrayBuffer());}
-async function exportWork(kind){
-  if(!isReady()||exporting){toast('모델을 다듬고 있어요. 잠시 뒤 다시 저장해주세요.');return;}
-  exporting=true;updateReadiness();const exportRevision=revision;job=job||makeJobId();
-  try{
-    const name=job+'_'+safeName(chars().join(''));
-    const stl=kind!=='card'?toSTL(current.parts.plate.concat(current.parts.relief)):null;
-    if(kind==='stl')download(new Blob([stl],{type:'model/stl'}),name+'.stl');
-    else{
-      const png=await pngBytes();if(exportRevision!==revision)throw Error('설정이 변경됐어요. 완성 후 다시 저장해주세요.');
-      if(kind==='card')download(new Blob([png],{type:'image/png'}),name+'_작품카드.png');
-      else{
-        const info=metadata();const readme=['새김 — 현장 출력 접수','제작 번호: '+job,'글자: '+info.text,`크기: ${info.dimensions.w} × ${info.dimensions.h} × ${fmt(info.dimensions.height)} mm`,'글꼴: '+fontById(S.font).label,'손잡이: '+HANDLE_LABELS[S.handle],'새김: '+(S.mode==='relief'?'볼록한 글씨 (양각)':'오목한 글씨 (음각)'),'', '1. STL을 슬라이서에서 mm 단위로 엽니다. 글자 면이 위, 바닥이 Z=0입니다.','2. 여러 닫힌 메쉬가 겹치는 모델입니다. 슬라이서의 겹치는 볼륨 결합/병합을 적용하고 오류를 검사합니다.','3. 프린터와 소재에 맞는 프로필로 슬라이스하고 레이어 미리보기에서 획과 바닥의 연결을 확인합니다.','4. 손잡이 모델은 판 아래 서포트와 오버행을 확인합니다.','5. 예상 출력 시간과 수령 방법을 안내한 후 출력합니다.','6. 미리보기 색상은 STL에 저장되지 않습니다. 실제 색상은 장착한 필라멘트로 결정됩니다.','','5분은 디자인 체험 시간입니다. 출력 시간은 크기·장비·설정에 따라 달라집니다.','실제 출력 품질은 사전 테스트가 필요합니다. 작품 카드는 결과 이미지이며 실물 크기 견본이 아닙니다.','제작설정.json은 기록용이며 현재 앱에서 다시 불러오는 기능은 없습니다.'].join('\r\n');
-        const zip=makeZip([{name:name+'.stl',data:stl},{name:'작품카드.png',data:png},{name:'제작설정.json',data:new TextEncoder().encode(JSON.stringify(info,null,2))},{name:'출력안내.txt',data:new TextEncoder().encode('\uFEFF'+readme)}]);download(zip,name+'.zip');
-      }
-    }
-    toast('다운로드를 요청했어요. 브라우저 다운로드 목록을 확인해주세요.');
-  }catch(e){toast(e.message||'저장 중 문제가 생겼어요. 다시 시도해주세요.');}
-  finally{exporting=false;updateReadiness();}
-}
-function resetSession(){
-  Object.assign(S,DEFAULTS);preset='soft';startedAt=null;finishedAt=null;job=null;rotating=false;
-  if(rendererState){rendererState.controls.autoRotate=false;rendererState.fitKey='';}$('rotateBtn').setAttribute('aria-pressed','false');$('textIn').value=S.text;document.querySelector('.advanced').open=false;
-  setView('3d');step=0;setStep(0);startedAt=null;changed({interact:false});tick();toast('새로운 작품을 시작해볼까요?');
-}
-
-buildChoices();
-document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>setStep(+b.dataset.step)));
-$('nextBtn').addEventListener('click',()=>step===3?$('resetDialog').showModal():setStep(step+1));$('backBtn').addEventListener('click',()=>setStep(Math.max(0,step-1)));
-$('restartBtn').addEventListener('click',()=>$('resetDialog').showModal());$('resetDialog').addEventListener('close',()=>{if($('resetDialog').returnValue==='reset')resetSession();});
-$('operatorBtn').addEventListener('click',()=>$('operatorDialog').showModal());
-$('fullscreenBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('전체 화면이 지원되지 않아요. 브라우저의 F11 키를 사용해주세요.');}});
-function readText(){const input=$('textIn');const normalized=Array.from(input.value.normalize('NFC').replace(/\s/g,'')).slice(0,6).join('');S.text=normalized;if(input.value!==normalized)input.value=normalized;changed();}
-$('textIn').addEventListener('input',e=>{if(!e.isComposing)readText();});$('textIn').addEventListener('compositionend',readText);
-document.querySelectorAll('[data-word]').forEach(b=>b.addEventListener('click',()=>{$('textIn').value=b.dataset.word;readText();}));
-['shape','layout','mode','handle'].forEach(key=>document.querySelectorAll(`[data-${key}]`).forEach(b=>b.addEventListener('click',()=>{S[key]=b.dataset[key];preset=null;changed();})));
-for(const [id,key] of Object.entries({w:'w',h:'h',relief:'relief',hh:'handleH',border:'border',bold:'bold',base:'base'}))$(id+'In').addEventListener('input',e=>{S[key]=Number(e.target.value);changed();});
-$('fillIn').addEventListener('change',e=>{S.fill=e.target.checked;changed();});
-$('view3d').addEventListener('click',()=>setView('3d'));$('viewProof').addEventListener('click',()=>setView('proof'));$('stampAgain').addEventListener('click',stampAgain);
-$('resetView').addEventListener('click',resetCamera);$('rotateBtn').addEventListener('click',()=>{if(!rendererState)return;rotating=!rotating;rendererState.controls.autoRotate=rotating;$('rotateBtn').setAttribute('aria-pressed',String(rotating));});
-$('packageBtn').addEventListener('click',()=>exportWork('package'));$('stlBtn').addEventListener('click',()=>exportWork('stl'));$('cardBtn').addEventListener('click',()=>exportWork('card'));
-init3D();changed({interact:false});
-Promise.all(FONTS.map(f=>ensureFont(f,'나다움가나다'))).then(()=>{drawPresetCards();});
+try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
+bind();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();

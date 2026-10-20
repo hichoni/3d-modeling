@@ -1,0 +1,12 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const readline=require('node:readline/promises');
+const crypto=require('node:crypto');
+const dir=path.join(__dirname,'..','runtime'),file=path.join(dir,'config.json');
+(async()=>{fs.mkdirSync(dir,{recursive:true});const old=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{};const rl=readline.createInterface({input:process.stdin,output:process.stdout});
+ console.log('상상을 클릭하다! 로컬 공방 설정\nLAN Only + Developer Mode를 켠 A1 mini의 본체 설정에서 IP와 일련번호를 확인하세요.\n프린터 없이도 실제 슬라이싱은 사용할 수 있습니다. 빈칸이면 기존 값을 유지합니다.');
+ const ip=(await rl.question('프린터 IP (미연결이면 Enter): ')).trim()||old.printer?.ip||'';
+ const serial=ip?(await rl.question('프린터 일련번호: ')).trim()||old.printer?.serial||'':'';
+ const slicer=(await rl.question('Bambu Studio 실행 파일 경로 (기본 설치는 Enter): ')).trim()||old.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe';
+ const config={port:5188,slicerPath:slicer,printer:{name:'공방 A1 mini',ip,serial,accessCode:old.printer?.accessCode||''},operatorPin:old.operatorPin||String(crypto.randomInt(100000,1000000))};fs.writeFileSync(file,JSON.stringify(config,null,2));
+ console.log('\n설정 저장: runtime/config.json\n운영자 PIN: '+config.operatorPin+'\n접근 코드는 Bambu Studio에 저장된 코드를 자동으로 읽습니다. 없으면 runtime/config.json의 accessCode에 직접 입력하세요.\n시작: node bridge/server.cjs\n비공개 설정은 GitHub에 올리지 마세요.');rl.close();})().catch(e=>{console.error(e.message);process.exitCode=1;});

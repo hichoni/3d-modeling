@@ -1,12 +1,8 @@
 {
-  "name": "five-minute-stamp-studio",
-  "version": "1.0.0",
+  "name": "click-imagination-workshop",
+  "version": "2.0.0",
   "private": true,
-  "description": "Offline Korean stamp modeling experience for a 3D printing booth",
-  "scripts": {
-    "build": "node scripts/build.cjs",
-    "start": "node scripts/serve.cjs",
-    "test": "node --test tests/*.test.cjs"
-  },
-  "engines": { "node": ">=18" }
+  "description": "14mm keycap clicker workshop with an offline game UI and local A1 mini bridge",
+  "scripts": {"build":"node scripts/build.cjs","start":"node bridge/server.cjs","preview":"node scripts/serve.cjs","setup":"node bridge/setup.cjs","test":"node --test tests/*.test.cjs"},
+  "engines": {"node":">=20"}
 }
