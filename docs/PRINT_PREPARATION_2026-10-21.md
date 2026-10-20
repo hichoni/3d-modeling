@@ -72,3 +72,23 @@ v3 실물의 글씨 채움·실 끌림·치수·받침 결합은 후속 확인�
 ![보정 체크와 필라멘트 표시 — 격리 가짜 프린터](images/a1-mini-print-preparation.png)
 
 상태 재확인 시 이미 동일 IP·일련번호·인증으로 연결되어 있고 보고가 최신이면 그 연결을 유지한다. 자격 증명이 바뀌거나 보고가 오래된 경우는 기존 discovery·인증서 검증을 다시 거친다. 이 동작도 격리 검사에 포함했다.
+
+## GitHub 배포 확인
+
+기능 커밋 `a32e1d3e32f3b19514d5f33870cd3a27e9159912`, 연결 보완 커밋 `4826bb2ef10473af856023c60a9260f1157c6d86`을 main에 업로드했다. 이 절은 그 기능 파일의 배포 검증을 후속 문서 커밋으로 기록한다.
+
+| 항목 | 확인 결과 |
+| --- | --- |
+| Pages 빌드·배포 | [39506689387](https://github.com/hichoni/3d-modeling/actions/runs/39506689387) · success |
+| Windows 앱 빌드·MSIX·격리 시작/종료/UI 검사 | [39506690767](https://github.com/hichoni/3d-modeling/actions/runs/39506690767) · success |
+| 자동 검사 | 54개 통과·실패 0 |
+| 공개 HTML / ZIP | 모두 HTTP 200·아래 SHA-256과 일치 |
+| 공개 Chromium | 0.16mm·Bambu PLA Matte로 수민 양각 계산: 14층·작품 약 3분 04초·0.37g. console error 0 |
+| 실제 중계기 | API v7·A1 mini online/fresh·FINISH·오류 없음·외부 PLA/흰색 등록값 수신 |
+| 비공개 값 검사 | 공개 변경 파일 및 ZIP 압축 해제 내용의 실제 접근 코드·IP·일련번호·PIN 일치 0 |
+
+HTML SHA-256: `8221cd25426b3546465e0b53f88c8542dda71d2d454c9ecc05c0955283bf7d76`
+
+ZIP SHA-256: `4827a3a834f26c095d47c49ce23da3e16b1d0d1773a93b60052de7841c0b5360`
+
+Windows 산출물은 기존과 같은 미서명 검토용 패키지다. Store 정식 출시는 하지 않았다. 실제 프린터 출력·가열 없이 검증했으며, v3 실물 품질은 아직 확인 전이다.
