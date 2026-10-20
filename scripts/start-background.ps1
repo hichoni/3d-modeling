@@ -12,7 +12,8 @@ try {
   $probe = Invoke-RestMethod -Uri 'http://127.0.0.1:5188/api/bootstrap' -TimeoutSec 2
   $running = $probe.app -eq 'click-workshop'
 } catch {}
-if ($running -and ($probe.version -lt 3 -or [bool]$probe.booth -ne [bool]$config.booth.enabled -or $probe.boothOrigin -ne $expectedBoothOrigin)) {
+$expectedPrinterCount = if ($config.printers.Count -gt 0) { $config.printers.Count } else { 1 }
+if ($running -and ($probe.version -lt 4 -or [bool]$probe.booth -ne [bool]$config.booth.enabled -or $probe.boothOrigin -ne $expectedBoothOrigin -or $probe.printers.Count -ne $expectedPrinterCount)) {
   throw 'An older workshop or different booth configuration is still running. Close its server first, then run start-booth.cmd. Check the printer before restarting.'
 }
 if (-not $running) {

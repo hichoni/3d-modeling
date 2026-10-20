@@ -8,5 +8,5 @@ test('downloadable operator package is complete, current, and contains no runtim
  assert.deepEqual(entries.get(prefix+'index.html')(),fs.readFileSync('index.html'));
  assert.equal(entries.get(prefix+'configure-booth.cmd')().toString().replace(/\r\n/g,'\n'),fs.readFileSync('configure-booth.cmd','utf8').replace(/\r\n/g,'\n'));
  assert.ok(entries.has(prefix+'scripts/start-background.ps1'));assert.ok(entries.has(prefix+'scripts/install-autostart.ps1'));assert.ok(entries.has(prefix+'먼저 읽어주세요.txt'));
- const config=JSON.parse(entries.get(prefix+'bridge/config.example.json')());assert.equal(config.printer.accessCode,'');assert.equal(config.printer.serial,'');assert.equal(config.printer.ip,'');assert.equal(config.operatorPin,'');assert.equal(config.booth.enabled,false);assert.equal(config.booth.key,'');
+ const config=JSON.parse(entries.get(prefix+'bridge/config.example.json')());for(const p of config.printers){assert.equal(p.accessCode,'');assert.equal(p.serial,'');assert.equal(p.ip,'');}assert.equal(config.operatorPin,'');assert.equal(config.booth.enabled,false);assert.equal(config.booth.key,'');
 });

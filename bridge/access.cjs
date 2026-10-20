@@ -17,7 +17,7 @@ function makeAccess(config,port){
   if(source&&source!==origin){if(!booth||![PAGES,lanOrigin].includes(source))return false;
    res.setHeader('Access-Control-Allow-Origin',source);res.setHeader('Vary','Origin');
    res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
-   res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Click-Token, X-Booth-Key, X-Model-Name');
+   res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Click-Token, X-Booth-Key, X-Client-Token, X-Operator-Token, X-Model-Name');
    res.setHeader('Access-Control-Max-Age','600');
    // Compatibility for older Chrome PNA preflights; current Chrome also requires LNA permission.
    res.setHeader('Access-Control-Allow-Private-Network','true');

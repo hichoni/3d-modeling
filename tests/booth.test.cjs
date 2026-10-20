@@ -2,7 +2,7 @@ const test=require('node:test');const assert=require('node:assert/strict');const
 const {makeAccess}=require('../bridge/access.cjs');
 const key='b'.repeat(64),pin='345678',port=15889,hub='http://192.168.60.9:'+port,pages='https://hichoni.github.io';
 function req(headers={},remote='192.168.60.10'){return {headers,socket:{remoteAddress:remote}};}
-test('participant links never authorize operator access and reject foreign origins/hosts',()=>{
+test('booth keys alone cannot grant central operator access and foreign origins are rejected',()=>{
  const a=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port);
  assert.equal(a.bind,'0.0.0.0');assert.ok(a.hosts.has('192.168.60.9:'+port));assert.equal(a.hosts.has('evil.test:'+port),false);
  const remote=req({host:'192.168.60.9:'+port,origin:pages,'x-booth-key':key});assert.equal(a.participant(remote),true);assert.equal(a.isOperator(remote),false);
@@ -11,7 +11,7 @@ test('participant links never authorize operator access and reject foreign origi
  assert.equal(a.isOperator(req({host:'127.0.0.1:'+port,origin:pages},'127.0.0.1')),false);
  const local=req({host:'127.0.0.1:'+port},'127.0.0.1');assert.equal(a.isOperator(local),true);assert.equal(a.participant(local),true);
  assert.equal(a.allowedOrigin(pages),true);assert.equal(a.allowedOrigin(hub),true);assert.equal(a.allowedOrigin('https://evil.test'),false);
- const headers={};assert.equal(a.cors(remote,{setHeader:(k,v)=>headers[k]=v}),true);assert.equal(headers['Access-Control-Allow-Origin'],pages);assert.ok(!headers['Access-Control-Allow-Headers'].includes('Operator'));
+ const headers={};assert.equal(a.cors(remote,{setHeader:(k,v)=>headers[k]=v}),true);assert.equal(headers['Access-Control-Allow-Origin'],pages);assert.ok(headers['Access-Control-Allow-Headers'].includes('X-Client-Token'));assert.ok(headers['Access-Control-Allow-Headers'].includes('X-Operator-Token'));
  assert.throws(()=>makeAccess({booth:{enabled:true,host:'8.8.8.8',key}},port));assert.throws(()=>makeAccess({booth:{enabled:true,host:'192.168.1.1',key:'short'}},port));
  assert.ok(a.links().pages.startsWith(pages+'/3d-modeling/#'));assert.equal(new URL(a.links().pages).search,'');assert.ok(!a.links().pages.includes(pin));
 });
@@ -26,7 +26,7 @@ function request(route,{method='GET',headers={},body}={}){return new Promise((re
 test('browser connection attaches the booth key and keeps loopback operator mode on return',async()=>{
  const dom=new Map(),get=id=>{if(!dom.has(id))dom.set(id,{textContent:'',hidden:false,value:'',open:false});return dom.get(id);};
  const memory=new Map(),storage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)||null,removeItem:k=>memory.delete(k)};
- const calls=[];const c=vm.createContext({URL,URLSearchParams,$:get,local:null,job:null,jobTimer:null,operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
+ const calls=[];const c=vm.createContext({URL,URLSearchParams,crypto:require('node:crypto').webcrypto,$:get,local:null,job:null,jobTimer:null,operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
  vm.runInContext(fs.readFileSync('src/connection.js','utf8'),c);
  c.api=async()=>({app:'click-workshop',csrf:'request-token',operator:false});
  const link=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port).links().pages,target=c.parseBoothLink(link);
@@ -34,28 +34,39 @@ test('browser connection attaches the booth key and keeps loopback operator mode
  await c.backendFetch('/api/slice',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:'data'});assert.equal(calls[0].url,hub+'/api/slice');assert.equal(calls[0].options.headers['X-Booth-Key'],key);assert.equal(calls[0].options.headers['X-Click-Token'],'request-token');assert.equal(calls[0].options.targetAddressSpace,'local');
  c.api=async()=>({app:'click-workshop',csrf:'other',operator:true});await c.discoverLocal();assert.equal(get('operatorLocal').hidden,false);assert.equal(vm.runInContext('boothTarget',c),null);
 });
-test('booth HTTP supports Pages preflight, pairing and shared queue while operators stay local',async()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'click-booth-'));fs.writeFileSync(path.join(dir,'config.json'),JSON.stringify({operatorPin:pin,booth:{enabled:true,host:'192.168.60.9',key},slicerPath:path.join(dir,'missing.exe')}));
- // A completed slice fixture tests participant queueing without starting a slicer or printer.
- const id='c'.repeat(24),jobDir=path.join(dir,'jobs',id);fs.mkdirSync(jobDir,{recursive:true});fs.writeFileSync(path.join(jobDir,'job.json'),JSON.stringify({id,name:'별',state:'ready',slice:{seconds:300,weightG:.4,layers:10,paths:[]},sha256:'hash'}));
+test('two Chromebooks pair independently and scoped PINs cannot operate the other mini',async()=>{
+ const {clientId}=require('../bridge/pairings.cjs'),clientA='a'.repeat(64),clientB='d'.repeat(64),deviceA=clientId(clientA),deviceB=clientId(clientB),first='c'.repeat(24),second='e'.repeat(24);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'click-booth-'));fs.writeFileSync(path.join(dir,'config.json'),JSON.stringify({operatorPin:pin,booth:{enabled:true,host:'192.168.60.9',key},printers:[{id:'mini-01',name:'미니 01'},{id:'mini-02',name:'미니 02',operatorPin:'456789'}],slicerPath:path.join(dir,'missing.exe')}));
+ fs.writeFileSync(path.join(dir,'pairings.json'),JSON.stringify([{id:deviceA,name:'크롬북 01',printerId:'mini-01',revision:1},{id:deviceB,name:'크롬북 02',printerId:'mini-02',revision:1}]));
+ for(const [id,owner,printerId]of [[first,deviceA,'mini-01'],[second,deviceB,'mini-02']]){const folder=path.join(dir,'jobs',id);fs.mkdirSync(folder,{recursive:true});fs.writeFileSync(path.join(folder,'job.json'),JSON.stringify({id,name:'별',clientId:owner,printerId,pairingRevision:1,state:'ready',slice:{seconds:300,weightG:.4,layers:10,paths:[]},sha256:'hash'}));}
  const child=cp.spawn(process.execPath,['bridge/server.cjs'],{cwd:path.resolve(__dirname,'..'),env:{...process.env,CLICK_PORT:String(port),CLICK_RUNTIME:dir},windowsHide:true,stdio:['ignore','pipe','pipe']});
  try{
   await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Startup timeout')),8000);child.stdout.once('data',()=>{clearTimeout(t);resolve();});child.once('exit',()=>{clearTimeout(t);reject(Error('Exited'));});});
-  const guest={Host:'192.168.60.9:'+port,Origin:pages,'X-Booth-Key':key};
-  const pre=await request('/api/bootstrap',{method:'OPTIONS',headers:{Host:guest.Host,Origin:pages,'Access-Control-Request-Method':'GET','Access-Control-Request-Headers':'x-booth-key'}});assert.equal(pre.status,204);assert.equal(pre.headers['access-control-allow-origin'],pages);
-  assert.equal((await request('/api/bootstrap',{headers:{Host:guest.Host,Origin:pages}})).status,403);
-  assert.equal((await request('/api/bootstrap',{headers:{...guest,Origin:'https://evil.test'}})).status,403);
-  const boot=(await request('/api/bootstrap',{headers:guest})).json();assert.equal(boot.operator,false);assert.equal(boot.booth,true);assert.ok(!JSON.stringify(boot).includes(key));
-  const post={...guest,'X-Click-Token':boot.csrf,'Content-Type':'application/json'};
-  assert.equal((await request('/api/unlock',{method:'POST',headers:post,body:JSON.stringify({pin})})).status,403);
-  const queued=(await request('/api/jobs/'+id+'/queue',{method:'POST',headers:post,body:'{}'}));assert.equal(queued.status,200);assert.equal(queued.json().ticket,1);assert.equal(queued.json().state,'queued');
+  const guest={Host:'192.168.60.9:'+port,Origin:pages,'X-Booth-Key':key,'X-Client-Token':clientA},guestB={...guest,'X-Client-Token':clientB};
+  const pre=await request('/api/bootstrap',{method:'OPTIONS',headers:{Host:guest.Host,Origin:pages,'Access-Control-Request-Method':'GET','Access-Control-Request-Headers':'x-booth-key,x-client-token,x-operator-token'}});assert.equal(pre.status,204);assert.equal(pre.headers['access-control-allow-origin'],pages);
+  assert.equal((await request('/api/bootstrap',{headers:{Host:guest.Host,Origin:pages}})).status,403);assert.equal((await request('/api/bootstrap',{headers:{...guest,Origin:'https://evil.test'}})).status,403);
+  const boot=(await request('/api/bootstrap',{headers:guest})).json();assert.equal(boot.operator,false);assert.equal(boot.pairing.printerId,'mini-01');assert.ok(!JSON.stringify(boot).includes(key));assert.ok(!JSON.stringify(boot).includes('operatorPin'));
+  assert.equal((await request('/api/bootstrap',{headers:guestB})).json().pairing.printerId,'mini-02');
+  const post={...guest,'X-Click-Token':boot.csrf,'Content-Type':'application/json'},postB={...post,'X-Client-Token':clientB};
+  assert.equal((await request('/api/pair',{method:'POST',headers:postB,body:JSON.stringify({printerId:'mini-01'})})).status,409);
+  assert.equal((await request('/api/jobs/'+second,{headers:guest})).status,404);
+  for(const [headers,id]of [[post,first],[postB,second]]){const queued=await request('/api/jobs/'+id+'/queue',{method:'POST',headers,body:'{}'});assert.equal(queued.status,200);assert.equal(queued.json().state,'queued');}
+  const loginA=(await request('/api/unlock',{method:'POST',headers:post,body:JSON.stringify({pin})})).json();assert.ok(loginA.token);assert.equal(loginA.printerId,'mini-01');
+  assert.equal((await request('/api/unlock',{method:'POST',headers:postB,body:JSON.stringify({pin})})).status,401);
+  const loginB=(await request('/api/unlock',{method:'POST',headers:postB,body:'{"pin":"456789"}'})).json();assert.ok(loginB.token);
+  const opA=(await request('/api/operator',{headers:{...guest,'X-Operator-Token':loginA.token}})).json();assert.equal(opA.jobs.length,1);assert.equal(opA.printer.id,'mini-01');assert.equal(opA.admin,false);
+  assert.equal((await request('/api/operator',{headers:{...guestB,'X-Operator-Token':loginA.token}})).status,401);
+  assert.equal((await request('/api/booth-links',{headers:{...guest,'X-Operator-Token':loginA.token}})).status,403);
+  assert.equal((await request('/api/jobs/'+second+'/start',{method:'POST',headers:{...post,'X-Operator-Token':loginA.token},body:'{}'})).status,404);
   const localHeaders={Origin:'http://127.0.0.1:'+port,'X-Click-Token':boot.csrf,'Content-Type':'application/json'};
-  const token=(await request('/api/unlock',{method:'POST',headers:localHeaders,body:JSON.stringify({pin})})).json().token;assert.ok(token);
-  assert.equal((await request('/api/operator',{headers:{...guest,'X-Operator-Token':token}})).status,401);
-  assert.equal((await request('/api/booth-links',{headers:{...guest,'X-Operator-Token':token}})).status,401);
-  assert.equal((await request('/api/jobs/'+id+'/start',{method:'POST',headers:{...post,'X-Operator-Token':token},body:'{}'})).status,401);
-  const operator=(await request('/api/operator',{headers:{'X-Operator-Token':token}})).json();assert.equal(operator.jobs[0].ticket,1);
-  const shared=(await request('/api/booth-links',{headers:{'X-Operator-Token':token}})).json();assert.ok(shared.links.pages.includes('#booth='));
+  const admin=(await request('/api/unlock',{method:'POST',headers:localHeaders,body:JSON.stringify({pin})})).json();assert.ok(admin.token);
+  const all=(await request('/api/operator',{headers:{'X-Operator-Token':admin.token}})).json();assert.equal(all.jobs.length,2);assert.equal(all.printers.length,2);assert.equal(all.admin,true);
+  const shared=(await request('/api/booth-links',{headers:{'X-Operator-Token':admin.token}})).json();assert.ok(shared.links.pages.includes('#booth='));
+  assert.equal((await request('/api/unpair',{method:'POST',headers:post,body:'{}'})).status,409);
+  assert.equal((await request('/api/unpair',{method:'POST',headers:post,body:'{"discardPending":true}'})).status,200);
+  assert.equal((await request('/api/operator',{headers:{...guest,'X-Operator-Token':loginA.token}})).status,401);
+  assert.equal((await request('/api/pair',{method:'POST',headers:postB,body:'{"printerId":"mini-01","discardPending":true}'})).status,200);
+  assert.equal((await request('/api/jobs/'+second+'/queue',{method:'POST',headers:postB,body:'{}'})).status,409);
   assert.equal((await request('/runtime/config.json',{headers:guest})).status,404);
  }finally{child.kill();if(child.exitCode===null)await new Promise(r=>child.once('exit',r));}
 });
