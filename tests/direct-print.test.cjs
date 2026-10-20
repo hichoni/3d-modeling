@@ -54,6 +54,12 @@ test('public telemetry contains finite current readings, and stale values become
  const f=fixture(t);await f.fleet.connect('mini-01');const s=f.fleet.state('mini-01');assert.equal(s.bedTemperature,23);assert.equal(s.nozzleTemperature,25);assert.equal(s.nozzleTarget,0);assert.equal(s.layer,null);assert.ok(!JSON.stringify(s).includes('accessCode'));assert.ok(!JSON.stringify(s).includes('TESTMINI'));
  f.p().mqtt.state.nozzle_temper='not a number';assert.equal(f.fleet.state('mini-01').nozzleTemperature,null);f.p().mqtt.lastReportAt=0;const stale=f.fleet.state('mini-01');assert.equal(stale.fresh,false);assert.equal(stale.bedTemperature,null);assert.equal(stale.bedTarget,null);
 });
+test('a status reconnect preserves an already verified fresh connection, but stale or changed credentials require verification',async t=>{
+ const f=fixture(t);await f.fleet.connect('mini-01');const mqtt=f.p().mqtt;f.fleet.verify=async()=>{throw Error('discovery unavailable');};f.p().error='previous discovery timeout';
+ await f.fleet.connect('mini-01');assert.equal(f.p().mqtt,mqtt);assert.equal(f.p().error,'');
+ f.p().config.accessCode='changed';await assert.rejects(f.fleet.connect('mini-01'));assert.equal(f.p().mqtt,mqtt);
+ f.p().config.accessCode='test';mqtt.lastReportAt=0;await assert.rejects(f.fleet.connect('mini-01'));assert.equal(f.p().connecting,false);
+});
 test('tutorial follows observed heating, layers, pause, loss of connection and completion',()=>{
  const job={state:'accepted'},t={fresh:true,bedTemperature:30,bedTarget:65,nozzleTemperature:25,nozzleTarget:0};
  assert.equal(lessons.phase(null,t),'idle');assert.equal(lessons.phase(job,t),'bed');t.bedTemperature=65;t.nozzleTarget=220;assert.equal(lessons.phase(job,t),'nozzle');t.nozzleTemperature=220;assert.equal(lessons.phase(job,t),'prepare');
