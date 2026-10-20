@@ -76,3 +76,9 @@ node bridge/server.cjs
 ## Windows 실행 차단 · 2026-10-20
 
 확인한 PC에서 Smart App Control이 켜져 있으며 cmd.exe에 서명 수준 제한이 적용된 로그를 확인했습니다. 현재 운영자 ZIP은 서명 전 개발용입니다. 사이트와 ZIP에 [차단 안내](SMART_APP_CONTROL.md)를 추가했고, 학교 정책을 우회하는 실행 방법은 제공하지 않습니다. 정식 서명 배포에 필요한 배포자 인증과 서명 자격 증명이 없어 이 PC의 실행 차단 해결은 완료되지 않았습니다. 공개 웹 모델링·STL 저장과 승인된 Bambu Studio의 수동 출력은 별도로 가능합니다.
+
+## Windows 설치 앱 · 개인 명의 Store · 2026-10-20
+
+사용자는 Store 설치가 가능하다고 확인했고, 학교·기관 명의 대신 개인 명의 배포를 최종 선택했습니다. `desktop/`에 .NET 10 네이티브 설정 앱과 Node 포함 MSIX 빌드를 추가했습니다. [사용자 준비물과 빌드](WINDOWS_APP.md), [Store 제출 초안](STORE_SUBMISSION.md), [개인정보 안내 초안](PRIVACY.md)을 참고하세요.
+
+실제 Partner Center 계정 본인 확인·앱 이름 예약과 공개 식별값 세 개가 필요합니다. 이름을 추측하거나 임시 Publisher를 정식 신원처럼 사용하지 않습니다. 계정 인증이 끝나기 전에는 정식 서명 앱이나 Store 설치 링크를 제공할 수 없습니다. 초기 시험 MSIX는 설치용 공개 링크로 연결하지 않습니다.

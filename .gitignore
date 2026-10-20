@@ -7,3 +7,9 @@ node_modules/
 runtime/
 *.local.json
 result.json
+desktop/ClickBooth/bin/
+desktop/ClickBooth/obj/
+desktop/ClickBooth/Resources/payload-manifest.json
+*.pfx
+*.p12
+*.key

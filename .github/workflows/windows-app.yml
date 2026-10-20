@@ -1,0 +1,85 @@
+name: Windows operator app
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', 'bridge/**', 'src/**', 'index.html', 'tests/**', 'scripts/**', '.github/workflows/windows-app.yml']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview builds are unsigned; Store builds require your Partner Center identity
+        type: choice
+        options: [Preview, Store]
+        default: Preview
+      identity_name:
+        description: Package/Identity/Name from Partner Center (Store only)
+        type: string
+      publisher:
+        description: Package/Identity/Publisher from Partner Center, including CN= (Store only)
+        type: string
+      publisher_display_name:
+        description: Publisher display name from Partner Center (Store only)
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_GENERATE_ASPNET_CERTIFICATE: 'false'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      BUILD_MODE: ${{ inputs.mode || 'Preview' }}
+      PACKAGE_NAME: ${{ inputs.identity_name }}
+      PACKAGE_PUBLISHER: ${{ inputs.publisher }}
+      PACKAGE_PUBLISHER_DISPLAY: ${{ inputs.publisher_display_name }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.402'
+      - name: Verify official runtime and packaging tools
+        id: tools
+        run: ./desktop/bootstrap-tools.ps1
+      - name: Build public web and test bridge without printers
+        env:
+          NODE_BINARY: ${{ steps.tools.outputs.node }}
+        run: |
+          & $env:NODE_BINARY scripts/build.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:NODE_BINARY --test tests/*.test.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build native app and validate MSIX
+        env:
+          NODE_BINARY: ${{ steps.tools.outputs.node }}
+          MAKEAPPX_BINARY: ${{ steps.tools.outputs.makeappx }}
+        run: |
+          $arguments=@{NodePath=$env:NODE_BINARY;MakeAppxPath=$env:MAKEAPPX_BINARY;OutputRoot=(Join-Path $env:GITHUB_WORKSPACE 'artifacts/ci');Mode=$env:BUILD_MODE}
+          if ($env:BUILD_MODE -eq 'Store') {
+            if (-not $env:PACKAGE_NAME -or -not $env:PACKAGE_PUBLISHER -or -not $env:PACKAGE_PUBLISHER_DISPLAY) { throw 'Enter all three exact Partner Center identity values. This workflow does not create or verify your Store account.' }
+            $arguments.IdentityName=$env:PACKAGE_NAME; $arguments.Publisher=$env:PACKAGE_PUBLISHER; $arguments.PublisherDisplayName=$env:PACKAGE_PUBLISHER_DISPLAY
+          }
+          ./desktop/build.ps1 @arguments
+      - name: Isolated app start-stop test and UI rendering
+        run: |
+          $report=Join-Path $env:GITHUB_WORKSPACE 'artifacts/desktop-self-test'
+          $program=Join-Path $env:GITHUB_WORKSPACE 'artifacts/ci/app/ClickBooth.exe'
+          $test=Start-Process -FilePath $program -ArgumentList @('--self-test',('"'+$report+'"')) -WindowStyle Hidden -PassThru
+          if (-not $test.WaitForExit(90000)) { throw 'Self-test timeout. No printers are configured in this test.' }
+          if ($test.ExitCode -ne 0) { Get-Content (Join-Path $report 'self-test-error.txt') -ErrorAction SilentlyContinue; throw 'Native app self-test failed.' }
+          Get-Content (Join-Path $report 'self-test.json')
+      - name: Upload review package (not a signed public release)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClickBooth-${{ env.BUILD_MODE }}-${{ github.sha }}
+          retention-days: 30
+          path: |
+            artifacts/ci/*.msix
+            artifacts/ci/*.json
+            artifacts/desktop-self-test/self-test.json
+            artifacts/desktop-self-test/self-test-error.txt
+            artifacts/desktop-self-test/operator-app.png

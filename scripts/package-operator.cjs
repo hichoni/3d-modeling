@@ -7,7 +7,7 @@ function crc32(bytes){let c=0xffffffff;for(const b of bytes)c=TABLE[(c^b)&255]^(
 function packageOperator(){
  // Deliberate allowlist: never archive the working directory or private runtime settings.
  const files=['configure-booth.cmd','start-booth.cmd','install-booth-autostart.cmd','start-workshop.cmd','index.html',
-  'bridge/access.cjs','bridge/core.cjs','bridge/discovery.cjs','bridge/downloads.cjs','bridge/fleet.cjs','bridge/pairings.cjs','bridge/printers.cjs','bridge/server.cjs','bridge/setup.cjs','bridge/transport.cjs','bridge/bambu-ca.pem','bridge/config.example.json',
+  'bridge/access.cjs','bridge/desktop.cjs','bridge/core.cjs','bridge/discovery.cjs','bridge/downloads.cjs','bridge/fleet.cjs','bridge/pairings.cjs','bridge/printers.cjs','bridge/server.cjs','bridge/setup.cjs','bridge/transport.cjs','bridge/bambu-ca.pem','bridge/config.example.json',
   'scripts/start-background.ps1','scripts/install-autostart.ps1','docs/CHROMEBOOK.md','docs/FLEET.md','docs/SMART_APP_CONTROL.md','docs/THIRD_PARTY.md','vendor/THREE-LICENSE.txt',
   ...fs.readdirSync(path.join(root,'fonts')).filter(f=>f.endsWith('OFL.txt')).map(f=>'fonts/'+f)];
  const entries=files.map(name=>{const text=fs.readFileSync(path.join(root,name),'utf8').replace(/\r\n/g,'\n');return {name:'click-workshop/'+name,data:Buffer.from(/\.(cmd|ps1)$/.test(name)?text.replace(/\n/g,'\r\n'):text)};});
