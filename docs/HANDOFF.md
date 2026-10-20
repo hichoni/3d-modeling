@@ -1,5 +1,13 @@
 # 집에서 이어가기 — 2026-10-20
 
+## 최신 변경: 실제 웹 슬라이싱
+
+GitHub Pages의 2단계에서 설치 없이 실제 경로를 계산합니다. 웹 엔진 → 중계기 검증·3MF 작성 → 1:1 미니 대기표까지 구현했습니다. 중계기에는 Node.js만 필요하고 Bambu Studio는 선택 대체 계산용입니다. [현재 구조·미검증 범위](WEB_FIRST.md)와 [엔진 재빌드](../tools/slicer/README.md)를 먼저 읽으세요.
+
+실제 브라우저에서 볼록 ‘하늘’, 오목 ‘풍천풍서’를 계산하고, Bambu Studio 경로가 없는 격리 서버에서 ‘수민’의 매칭·접수·운영자 검토를 확인했습니다. 새 웹 엔진으로 실제 프린터를 시작하지 않았습니다. 다음 현장 작업은 한 대에서 첫 층·종료·글자·압입 확인, 그 뒤 실제 ChromeOS와 6대 동시 시험입니다. 기존 실물 FINISH 기록은 Bambu CLI 출력입니다.
+
+최신 변경은 `src/browser-slice-worker.js`, `src/browser-slicer.js`, `src/toolpaths.js`, `bridge/browser-job.cjs`, `bridge/profiles/`, `tools/slicer/`에 있습니다. 기본 앱 수정은 `node scripts/build.cjs`, 엔진 설정 변경은 그 전에 `node tools/slicer/build.cjs`가 필요합니다. 개인정보·프린터 접근 코드는 계속 `runtime/`에만 둡니다.
+
 ## 지금 열어볼 주소
 
 - 체험 사이트: https://hichoni.github.io/3d-modeling/
@@ -14,7 +22,7 @@
 
 ## 새 컴퓨터에서 시작하기
 
-저장소를 내려받고 Node.js 20 이상과 Bambu Studio를 설치합니다. Windows 기본 Bambu Studio 경로를 지원합니다. `start-workshop.cmd`를 더블클릭하거나 아래 명령을 실행하세요.
+저장소를 내려받고 Node.js 20 이상을 설치합니다. Windows 기본 Bambu Studio 경로를 지원합니다. `start-workshop.cmd`를 더블클릭하거나 아래 명령을 실행하세요.
 
 ```powershell
 node bridge/setup.cjs
@@ -32,7 +40,7 @@ node bridge/server.cjs
 1. 현장 PC와 A1 mini를 같은 Wi-Fi 네트워크에 연결합니다. **Wi-Fi도 LAN 연결입니다.** 유선 케이블을 의미하지 않습니다.
 2. 프린터 본체에서 LAN Only와 Developer Mode를 켭니다. 클라우드/Handy 연결 방식과 달라집니다.
 3. `node bridge/setup.cjs`로 현재 IP와 일련번호를 입력합니다. 학교에서 쓰던 IP를 집에서 그대로 사용하지 마세요.
-4. 접근 코드는 그 PC의 Bambu Studio에 저장된 값을 읽습니다. 없으면 비공개 `runtime/config.json`의 `printer.accessCode`에 입력합니다.
+4. 접근 코드는 그 PC의 Bambu Studio에 저장된 값을 읽습니다. 없으면 비공개 `runtime/config.json`의 `printers` 항목의 `accessCode`에 입력합니다.
 5. 운영자 화면에서 연결 상태를 확인합니다. 서버는 로컬 검색으로 **A1 mini / LAN 모드**를 확인하고, MQTT·FTPS TLS 인증서를 검증합니다.
 6. 연결 실패 시 같은 네트워크, 본체 모드, IP 변경, 접근 코드, 방화벽의 로컬 검색 허용 여부를 확인합니다. Windows 보안 설정을 앱이 자동으로 바꾸지는 않습니다.
 

@@ -10,14 +10,14 @@
 공방 PC 한 대: 슬라이싱 + 각 프린터의 개별 연결 관리
 ```
 
-크롬북마다 PC나 Bambu Studio를 설치하는 구조가 아닙니다. 공방 PC 한 대가 여러 미니에 각각 연결합니다. 슬라이싱 계산은 순서대로 처리하고, 서로 다른 미니의 실제 출력은 독립적으로 진행할 수 있습니다.
+크롬북마다 PC나 Bambu Studio를 설치하는 구조가 아닙니다. 공방 PC 한 대가 여러 미니에 각각 연결합니다. 웹 슬라이싱 계산은 각 브라우저가 처리하고, 서로 다른 미니의 실제 출력은 독립적으로 진행할 수 있습니다.
 
 ## 출력 PC 최초 준비
 
 현재 설정 ZIP은 서명 전 개발용입니다. Windows가 실행을 차단한다면 [보안 차단 안내](SMART_APP_CONTROL.md)를 확인하고 학교의 승인된 배포 절차를 사용해야 합니다.
 
 1. [운영자 설정 ZIP](https://hichoni.github.io/3d-modeling/downloads/booth-setup.zip)을 내려받아 폴더에 압축 해제합니다.
-2. Windows 출력 PC에 Node.js 20 이상과 Bambu Studio를 준비합니다.
+2. Windows 출력 PC에 Node.js 20 이상을 준비합니다.
 3. `configure-booth.cmd`를 실행하고 **등록할 미니 대수**를 입력합니다. 최대 32대를 등록할 수 있습니다.
 4. 각 미니의 표시 이름·IP·일련번호를 차례로 입력합니다. 실제 본체에도 같은 번호를 붙여주세요.
 5. 각 미니에서 LAN Only와 Developer Mode를 켭니다. 접근 코드는 PC의 Bambu Studio에서 읽거나 비공개 `runtime/config.json`의 `printers`별 `accessCode`에 입력합니다.

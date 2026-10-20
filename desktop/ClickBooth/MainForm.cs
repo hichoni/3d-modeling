@@ -48,7 +48,7 @@ public sealed class MainForm : Form
         var settings = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3 };
         settings.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130)); settings.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); settings.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
         settings.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); settings.RowStyles.Add(new RowStyle(SizeType.Absolute, 48)); settings.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
-        settings.Controls.Add(new Label { Text = "Bambu Studio", AutoSize = true }, 0, 0); slicer.Dock = DockStyle.Fill;
+        settings.Controls.Add(new Label { Text = "대체 계산 (선택)", AutoSize = true }, 0, 0); slicer.Dock = DockStyle.Fill;
         settings.Controls.Add(slicer, 1, 0); var browse = ActionButton("실행 파일 찾기", BrowseSlicer); settings.Controls.Add(browse, 2, 0);
         settings.Controls.Add(new Label { Text = "공방 PC 주소", AutoSize = true }, 0, 1); host.Dock = DockStyle.Fill; host.DropDownStyle = ComboBoxStyle.DropDownList;
         settings.Controls.Add(host, 1, 1); var refresh = ActionButton("주소 새로고침", RefreshAddresses); settings.Controls.Add(refresh, 2, 1);
@@ -116,7 +116,7 @@ public sealed class MainForm : Form
         grid.EndEdit(); (BindingContext?[minis] as CurrencyManager)?.EndCurrentEdit();
         config.Printers = minis.ToList(); config.SlicerPath = slicer.Text.Trim(); config.OperatorPin = pin.Text.Trim();
         config.Booth.Enabled = booth.Checked; config.Booth.Host = host.SelectedItem as string ?? "";
-        Configuration.Validate(config, true); Configuration.Save(data, config);
+        Configuration.Validate(config); Configuration.Save(data, config);
     }
     private async Task StartServer()
     {

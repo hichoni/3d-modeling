@@ -1,5 +1,6 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {makeAccess,equalSecret}=require('./access.cjs');const {serveDownload}=require('./downloads.cjs');const {validateSTL,sliceSTL}=require('./core.cjs');const {printerDefinitions}=require('./printers.cjs');const {Pairings,clientId}=require('./pairings.cjs');const {Fleet}=require('./fleet.cjs');
+const {prepareBrowserJob}=require('./browser-job.cjs');
 const root=path.resolve(__dirname,'..'),runtime=process.env.CLICK_RUNTIME?path.resolve(process.env.CLICK_RUNTIME):path.join(root,'runtime');fs.mkdirSync(runtime,{recursive:true});
 const cfgPath=path.join(runtime,'config.json'),config=fs.existsSync(cfgPath)?JSON.parse(fs.readFileSync(cfgPath,'utf8')):{};
 if(!/^\d{6,12}$/.test(config.operatorPin||'')){config.operatorPin=String(crypto.randomInt(100000,1000000));fs.writeFileSync(cfgPath,JSON.stringify(config,null,2));}
@@ -27,10 +28,10 @@ const server=http.createServer(async(req,res)=>{try{
  if(!access.hosts.has(req.headers.host))return reply(res,403,{error:'설정된 공방 주소로 접속하세요.'});const url=new URL(req.url,origin),route=url.pathname;if(serveDownload(req,res,root))return;
  if(route.startsWith('/api/')&&!access.cors(req,res))return reply(res,403,{error:'허용된 부스 사이트에서 연결하세요.'});
  if(req.method==='OPTIONS'&&route.startsWith('/api/')){if(!access.allowedOrigin(req.headers.origin))return reply(res,403,{error:'부스 사이트를 확인하세요.'});res.writeHead(204);return res.end();}
- if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
+ if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
  if(req.method==='GET'&&route==='/favicon.ico'){res.writeHead(204);return res.end();}
  if(route.startsWith('/api/')&&!access.participant(req))return reply(res,403,{error:'운영자가 공유한 부스 링크로 접속하세요.'});
- if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:4,desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:5,studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/printers')return reply(res,200,{pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/booth-links'){admin(req);return reply(res,200,{enabled:access.booth,links:access.links()});}
  if(req.method==='GET'&&route==='/api/operator'){const s=auth(req),list=publicPrinters(device(req),s.admin).filter(p=>s.admin||p.id===s.printerId);const selected=list.find(p=>p.id===url.searchParams.get('printer'))||list[0];return reply(res,200,{admin:s.admin,printers:list,printer:selected,error:selected?.error||'',jobs:[...jobs.values()].filter(j=>j.ticket&&(s.admin||j.printerId===s.printerId&&j.clientId===s.clientId)).sort((a,b)=>b.ticket-a.ticket).map(j=>summary(j)),canStop:selected?.canStop||false});}
@@ -39,6 +40,15 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method==='GET'&&match&&!match[2])return reply(res,200,summary(j,true));
  if(req.method==='GET'&&match?.[2]==='file'){auth(req,j);if(!j.slice)throw Error('슬라이싱 결과가 없습니다.');res.writeHead(200,{'Content-Type':'application/octet-stream','Cache-Control':'no-store','Content-Disposition':'attachment; filename="click.gcode.3mf"'});return fs.createReadStream(path.join(jobRoot,j.id,'print.gcode.3mf')).pipe(res);}
  if(req.method!=='POST')return reply(res,404,{error:'Not found'});if(!access.allowedOrigin(req.headers.origin)||req.headers['x-click-token']!==csrf)return reply(res,403,{error:'공방 연결 세션이 필요합니다.'});
+ if(route==='/api/browser-jobs'){
+  const d=pairingRequired(req);if(jobs.size+uploads>=200||uploads>=6)throw Error('접수 중인 작품이 많아요. 잠시 뒤 다시 시도해주세요.');if(req.headers['content-type']!=='application/json')throw Error('JSON required');
+  uploads++;try{const body=JSON.parse((await readBody(req,11*1024*1024)).toString()),result=prepareBrowserJob(body),now=currentPair(req);
+   if(!now||now.revision!==d.revision||now.printerId!==d.printerId)throw Error('매칭이 변경됐습니다. 새 미니를 확인하고 다시 접수해주세요.');
+   const id=crypto.randomBytes(12).toString('hex'),name=String(body.name||'나의 작품').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9 ]/g,'').slice(0,16)||'나의 작품';
+   const j={id,name,state:'ready',createdAt:new Date().toISOString(),dimensions:result.dimensions,bytes:result.bytes.length,sha256:result.sha256,slice:result.slice,clientId:d.id,printerId:d.printerId,printerSerial:fleet.item(d.printerId).config.serial,pairingRevision:d.revision};
+   const dir=path.join(jobRoot,id);fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'model.stl'),result.stl);fs.writeFileSync(path.join(dir,'print.gcode.3mf'),result.bytes);save(j);jobs.set(id,j);return reply(res,201,summary(j,true));
+  }finally{uploads--;}
+ }
  if(route==='/api/slice'){
   const d=pairingRequired(req);if(sliceQueue.length+(slicing?1:0)+uploads>=12)throw Error('계산 대기 중인 작품이 많아요. 잠시 뒤 다시 눌러주세요.');if(jobs.size+uploads>=200)throw Error('작업 보관함이 가득 찼습니다. 운영자가 runtime/jobs를 백업하고 정리하세요.');if(req.headers['content-type']!=='application/octet-stream')throw Error('바이너리 STL이 필요합니다.');uploads++;let bytes,info;try{bytes=await readBody(req,6*1024*1024);info=validateSTL(bytes);}finally{uploads--;}
   const now=currentPair(req);if(!now||now.revision!==d.revision||now.printerId!==d.printerId)throw Error('매칭이 변경됐습니다. 새 미니를 확인하고 다시 계산해주세요.');

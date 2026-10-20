@@ -23,13 +23,19 @@ node bridge/server.cjs
 
 기본 새김 높이는 0.8mm입니다. 0.6/0.8/1mm 선택을 제공합니다. 글자는 1~4자, Jua/Do Hyeon/Gaegu 3종. 글씨는 키캡 위에서 읽는 방향이며 도장용 반전을 적용하지 않습니다. 이전 프로젝트의 손잡이·크기·형태 값은 JSON 불러오기 시 허용하지 않습니다.
 
-## 슬라이싱
+## 브라우저 슬라이싱 · 기본 경로
+
+`src/browser-slice-worker.js`가 고정 Kiri:Moto FDM worker의 slice/prepare/export를 호출합니다. `vendor/kiri/fdm-worker.js`를 HTML에 포함하고 Blob Worker에서 실행하므로 외부 엔진 요청이 없습니다. 재빌드는 [tools/slicer](../tools/slicer/README.md)를 참고하세요.
+
+`src/browser-slicer.js`가 진행·취소·모델 변경 시 무효화를 관리하고, `src/toolpaths.js`가 경로를 해석·검증합니다. 같은 검증기를 중계기에서도 사용합니다. `bridge/browser-job.cjs`는 STL·경로 검증 후 고정 A1 mini 기계 절차를 추가하고 3MF와 해시를 생성합니다. Bambu Studio를 실행하지 않습니다. 시간·무게는 모델 경로 기준이며 준비 동작은 별도입니다. 새 조합의 실물 출력은 검증 전입니다.
+
+## Bambu Studio 슬라이싱 · 선택 대체 경로
 
 `bridge/core.cjs`는 설치된 Bambu Studio의 공식 BBL 프로필에서 `inherits`, `include`를 전개합니다. A1 mini 0.4 / 0.20mm Standard / Generic PLA / Textured PEI로 CLI를 실행합니다. 실행 파일과 인수는 shell 문자열이 아닌 인수 배열로 전달하고 창은 숨깁니다.
 
 서버는 업로드된 바이너리 STL의 파일 길이·좌표·외곽·높이를 검증합니다. CLI 반환값과 `result.json`, 출력물 1개, 크기, 3MF 내 G-code, 시간·재료량을 확인합니다. ZIP의 `Metadata/plate_1.gcode`에서 실제 압출 선분을 추출해 층별 미리보기에 사용합니다. 교정·퍼지 선분은 제외하고 모델 중앙(90,90)의 경로만 시각화합니다. 이 파서는 현재 A1 mini 중앙 배치 / G0·G1 경로에 맞춰져 있으며 범용 G-code 뷰어가 아닙니다.
 
-Pages의 층 미리보기는 메쉬 절단에 의한 교육용 화면입니다. 실제 슬라이싱과 명확히 구분하며 임의의 출력 시간을 생성하지 않습니다. 실제 예상 시간은 Bambu Studio 계산값이고 본체 대기·현장 확인 등에 따라 달라집니다.
+Pages에서 계산 전 층 미리보기는 교육용 메쉬 절단입니다. 웹 엔진 계산 후에는 실제 노즐 경로와 경로 시간으로 전환합니다. 선택 대체 계산을 사용한 작업은 Bambu Studio 결과로 구분하며 해당 시간에는 준비 동작이 포함됩니다.
 
 ## 현장 서버
 

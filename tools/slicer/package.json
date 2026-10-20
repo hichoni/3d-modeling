@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@gridspace/raster-path": "1.1.1",
+    "@tweenjs/tween.js": "16.6.0",
+    "earcut": "3.2.4",
+    "esbuild": "0.28.2",
+    "jszip": "3.10.2",
+    "quickjs-emscripten": "0.20.0",
+    "three": "0.182.0",
+    "three-mesh-bvh": "0.7.6"
+  },
+  "name": "click-browser-slicer-build",
+  "private": true,
+  "scripts": {
+    "build": "node build.cjs"
+  }
+}

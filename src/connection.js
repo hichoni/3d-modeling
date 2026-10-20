@@ -16,7 +16,7 @@ function syncConnection(){
  const connected=!!local;
  $('boothBtn').textContent=connected?'● '+(local.operator?'출력 PC':'부스 연결됨'):'부스 연결';
  $('connection').textContent=connected?'● 공방 연결됨':'온라인 체험';
- $('boothStatus').textContent=connected?'연결됐어요. 이 기기에서 만든 작품을 부스 PC가 슬라이싱해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 출력 대기표까지 받을 수 있어요.';
+ $('boothStatus').textContent=connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 출력 대기표까지 받을 수 있어요.';
  $('disconnectBoothBtn').hidden=!boothTarget;
  $('operatorLocal').hidden=!(local?.operator||pairing?.printerId);
  $('localInstructions').hidden=connected;
@@ -30,7 +30,7 @@ function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.pri
 async function connectWorkshop(target,{save=false,showError=false}={}){
  prepareDevice();clearInterval(jobTimer);job=null;pairing=null;boothTarget=target;local=null;lock();syncConnection();
  try{
-  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(data.version<4)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;
+  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(data.version<5)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;
   if(save&&target)try{localStorage.setItem('click-booth-v1',JSON.stringify(target));}catch{}
   syncConnection();renderSlice();renderTicket();
   try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}

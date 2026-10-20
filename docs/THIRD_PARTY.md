@@ -22,4 +22,9 @@
 - CLI: [Bambu Studio Command Line Usage](https://github.com/bambulab/BambuStudio/wiki/Command-Line-Usage)
 - MQTT 요청 형식 참고: [ha-bambulab bambu_client.py](https://github.com/greghesp/ha-bambulab/blob/main/custom_components/bambu_lab/pybambu/bambu_client.py)
 
-Bambu Studio 실행 파일과 공식 프리셋은 저장소에 재배포하지 않습니다. 사용자가 설치한 Bambu Studio에서 읽습니다. `bridge/`의 Node.js 전송·서버 코드는 이 프로젝트에서 작성했습니다. 연결 방식은 학교 장비에서 실제 확인한 범위에 한합니다.
+Bambu Studio 실행 파일은 재배포하지 않습니다. 선택 대체 계산은 사용자가 설치한 공식 프리셋을 읽습니다. 웹 엔진 결과를 프린터 파일로 묶는 고정 A1 mini 시작·종료 절차와 해당 원본 두 필드는 `bridge/profiles/`에 포함하며, 출처·변경 내용과 Bambu Studio의 AGPL-3.0 원문을 함께 제공합니다. `bridge/`의 Node.js 전송·서버 코드는 이 프로젝트에서 작성했습니다. 연결 방식은 학교 장비에서 실제 확인한 범위에 한합니다.
+
+
+## 브라우저 FDM 엔진
+
+Kiri:Moto 4.7.0, GridSpace 커밋 d138275bbe9d4e4030d8cb8b2dcf66607da9295a에서 FDM worker를 자체 번들했습니다. [MIT 원본](https://github.com/GridSpace/grid-apps/blob/d138275bbe9d4e4030d8cb8b2dcf66607da9295a/license.md), [전체 고지](../vendor/kiri/LICENSES.txt), [고정 의존성과 재빌드](../tools/slicer/README.md)를 제공합니다. Three 0.182.0, three-mesh-bvh 0.7.6, earcut 3.2.4, JSZip 3.10.2, QuickJS/quickjs-emscripten 0.20.0, raster-path 1.1.1, Tween 16.6.0 및 포함된 코드의 MIT/ISC/Boost 고지를 보존합니다. 엔진 파일은 HTML에도 포함합니다.

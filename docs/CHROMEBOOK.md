@@ -11,7 +11,7 @@
 - [운영자 설정 묶음 ZIP](https://hichoni.github.io/3d-modeling/downloads/booth-setup.zip)
 - [configure-booth.cmd 단독](https://hichoni.github.io/3d-modeling/configure-booth.cmd): 기존 공방 폴더용입니다. 단독 파일만 실행하면 필요한 ZIP을 안내합니다.
 
-Windows 출력 PC 한 대에 Node.js 20 이상과 Bambu Studio를 준비합니다. 설정 시 등록할 미니 대수와 각 미니의 이름·IP·일련번호를 입력합니다. PC의 운영자 화면에서 부스 링크를 공유하세요.
+Windows 출력 PC 한 대에 Node.js 20 이상을 준비합니다. 설정 시 등록할 미니 대수와 각 미니의 이름·IP·일련번호를 입력합니다. PC의 운영자 화면에서 부스 링크를 공유하세요.
 
 ## 참가자 크롬북
 
@@ -26,7 +26,7 @@ Windows 출력 PC 한 대에 Node.js 20 이상과 Bambu Studio를 준비합니�
 
 `start-booth.cmd`는 공방 PC의 서버를 백그라운드에서 실행하고 운영자 화면을 엽니다. `install-booth-autostart.cmd`를 PC에서 한 번 실행하면 현재 Windows 사용자 로그인 시 공방을 자동 시작하는 바로가기를 등록합니다. 자동 시작을 취소하려면 시작프로그램 폴더의 **Click Imagination Booth** 바로가기를 제거합니다.
 
-PC 전원·로그인·Wi-Fi와 Bambu Studio 설치는 필요합니다. 행사 중 PC가 절전 상태에 들어가면 연결이 끊깁니다. 앱이 이번 배포 과정에서 시작프로그램이나 방화벽을 임의로 바꾸지는 않았습니다. Smart App Control이나 학교 정책이 실행을 막으면 실행을 멈추고 담당자와 승인된 배포 방식을 확인하세요. 다른 명령으로 차단을 우회하도록 안내하지 않습니다.
+PC 전원·로그인·Wi-Fi는 필요합니다. Bambu Studio는 대체 계산용 선택 사항입니다. 행사 중 PC가 절전 상태에 들어가면 연결이 끊깁니다. 앱이 이번 배포 과정에서 시작프로그램이나 방화벽을 임의로 바꾸지는 않았습니다. Smart App Control이나 학교 정책이 실행을 막으면 실행을 멈추고 담당자와 승인된 배포 방식을 확인하세요. 다른 명령으로 차단을 우회하도록 안내하지 않습니다.
 
 로그는 `runtime/server.log`, 오류는 `runtime/server-error.log`, 실행 PID는 `runtime/server.pid`입니다. 구버전 서버가 실행 중이면 종료한 뒤 새로 실행하세요. 서버 종료가 이미 시작된 프린터의 출력을 중지하지는 않습니다.
 
