@@ -80,3 +80,5 @@ Smart App Control On 상태, Code Integrity 3033의 cmd.exe 실행 제한 기록
 ## Windows 네이티브 앱과 MSIX · 2026-10-20
 
 CMD/PowerShell 실행 체인을 사용하지 않는 네이티브 설정 앱을 컴파일하고 Microsoft MakeAppx의 구조 검사를 통과했습니다. 포함된 Node 공식 배포본의 SHA256과 OpenJS 서명, Microsoft 빌드 도구의 서명을 확인했습니다. 웹·서버 자동 검사 25개와 PowerShell 빌드 스크립트 구문 검사를 통과했습니다. 새 앱의 서명 전 EXE를 현재 PC에서 시험하던 중 앱 제어 정책이 실행을 차단해 로컬 실행 시험을 중단했습니다. 격리 Windows 빌드 작업에서 앱의 자체 시험을 진행하며, 실제 프린터 출력 명령은 보내지 않습니다. 정식 서명·Store 심사·학교 설치 검증은 아직 완료되지 않았습니다.
+
+후속 Windows 격리 검사 성공: 커밋 d0d8ff2, GitHub Actions 39363912741. 자체 시험 결과 configuration/duplicateDeviceGuard/payloadHashes/isolatedServerStartStop 모두 pass, printerCommands=0. 이 검사는 Store 서명 설치 또는 학교 PC 정책 통과의 증거가 아닙니다. 사용자의 최종 웹 중심 요구는 WEB_FIRST.md에 별도로 기록했습니다.
