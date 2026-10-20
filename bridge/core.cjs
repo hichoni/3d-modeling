@@ -47,7 +47,7 @@ async function sliceSTL(dir,config={}){
  return {sha256:crypto.createHash('sha256').update(bytes).digest('hex'),slice:{seconds,weightG,layers:paths.length,layerHeight:result.layer_height,paths},bytes:bytes.length};
 }
 function checkReady(mqtt){if(!mqtt?.online||Date.now()-mqtt.lastReportAt>15000)throw Error('프린터의 최신 상태를 확인할 수 없습니다.');const s=mqtt.state;if(!['IDLE','FINISH'].includes(s.gcode_state))throw Error('프린터가 대기 상태가 아닙니다.');if(s.sdcard!==true)throw Error('SD 카드를 확인하세요.');if(Number(s.print_error)!==0)throw Error('프린터 본체의 안내를 확인하세요.');if(String(s.nozzle_diameter)!=='0.4')throw Error('0.4mm 노즐 설정이 필요합니다.');}
-function attention(s={}){if(Number(s.print_error)===134184967)return '노즐에서 필라멘트가 나오는지 현장에서 확인 후 본체의 계속 또는 재시도를 선택하세요.';if(s.gcode_state==='PAUSE')return '출력이 일시 정지됐습니다. 운영자가 본체 안내를 확인하세요.';if(Number(s.print_error)>0)return '프린터에 확인이 필요한 오류가 있습니다. 본체 안내를 확인하세요.';return '';}
+function attention(s={}){if(Number(s.print_error)===50364437)return '외부 스풀 필라멘트가 감지되지 않습니다. 본체에서 외부 PLA를 로드한 뒤 다시 시작(Resume)을 선택하세요.';if(Number(s.print_error)===134184967)return '노즐에서 필라멘트가 나오는지 현장에서 확인 후 본체의 계속 또는 재시도를 선택하세요.';if(s.gcode_state==='PAUSE')return '출력이 일시 정지됐습니다. 운영자가 본체 안내를 확인하세요.';if(Number(s.print_error)>0)return '프린터에 확인이 필요한 오류가 있습니다. 본체 안내를 확인하세요.';return '';}
 function checkStart(job,body,mqtt,active){
  if(job.state!=='queued'||job.startAttempted)throw Error('이 작업은 시작할 수 없습니다. 시작 명령은 반복 전송하지 않습니다.');
  if(active&&!['complete','failed','cancelled'].includes(active.state))throw Error('이전 출력 결과를 먼저 확인하세요.');

@@ -16,8 +16,8 @@ async function sliceInBrowser(){
   });
   if(mine!==revision)return;
   const details=analyzeToolpaths(result.gcode,{height:current.totalH,strict:true});
-  browserSlice={revision:mine,gcode:result.gcode,profile:result.profile,elapsedMs:performance.now()-beginAt,slice:{...details,moves:undefined,seconds:Math.max(details.seconds,Number(result.summary?.time)||0),layerHeight:.2,source:'browser',timeScope:'model'}};
-  toast('이 브라우저에서 실제 슬라이싱 완료! 주황색 노즐 경로를 살펴봐요.');beep(850);
+  browserSlice={revision:mine,gcode:result.gcode,profile:result.profile,elapsedMs:performance.now()-beginAt,slice:{...details,moves:undefined,profile:result.profile,seconds:Math.max(details.seconds,Number(result.summary?.time)||0),layerHeight:.2,source:'browser',timeScope:'model'}};
+  toast('슬라이싱 완료! 슬라이더로 밑판부터 쌓아봐요.');beep(850);
  }catch(error){if(mine===revision)toast(error.message);}
  finally{clearTimeout(timer);if(url)URL.revokeObjectURL(url);worker?.terminate();if(browserSliceWorker===worker){browserSliceWorker=null;browserSliceCancel=null;}if(mine===revision){browserSliceBusy=false;renderSlice();renderTicket();}}
 }

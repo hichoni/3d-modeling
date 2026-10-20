@@ -7,6 +7,17 @@ test('local bridge protects private files, operator actions and malformed STL re
  const boot=(await request('/api/bootstrap')).json();assert.equal(boot.app,'click-workshop');assert.equal((await request('/runtime/config.json')).status,404);assert.equal((await request('/artifacts/lan-devices.local.json')).status,404);assert.equal((await request('/api/operator')).status,401);assert.equal((await request('/api/bootstrap',{headers:{Host:'evil.test'}})).status,403);
  const cmd=await request('/configure-booth.cmd');assert.equal(cmd.status,200);assert.match(cmd.headers['content-disposition'],/attachment.*configure-booth\.cmd/);assert.match(cmd.text,/bridge\\setup\.cjs/);assert.equal((await request('/downloads/../runtime/config.json')).status,404);
  const good={Origin:origin,'X-Click-Token':boot.csrf,'Content-Type':'application/json'};
+ const experience={experiences:[{id:'c'.repeat(64),at:new Date().toISOString()}]},visitor={...good,'X-Client-Token':'a'.repeat(64)};
+ assert.equal((await request('/api/experiences',{method:'POST',headers:good,body:JSON.stringify(experience)})).status,409);
+ assert.equal((await request('/api/experiences',{method:'POST',headers:{...visitor,'X-Click-Token':'wrong'},body:JSON.stringify(experience)})).status,403);
+ assert.equal((await request('/api/experiences',{method:'POST',headers:visitor,body:JSON.stringify(experience)})).json().totalParticipants,1);
+ assert.equal((await request('/api/experiences',{method:'POST',headers:visitor,body:JSON.stringify(experience)})).json().totalParticipants,1);
+ const totals=await request('/api/statistics');assert.equal(totals.json().todayParticipants,1);assert.ok(!totals.text.includes('cccccccc'));assert.ok(!totals.text.includes('experiences'));
+ const settings=await request('/api/connection-settings');assert.equal(settings.status,200);assert.equal(settings.json().printers[0].hasAccessCode,false);assert.ok(!settings.text.includes('234567'));
+ assert.equal((await request('/api/connection-settings',{method:'POST',headers:{...good,'X-Click-Token':'wrong'},body:'{}'})).status,403);
+ assert.equal((await request('/api/connection-settings',{method:'POST',headers:{...good,Origin:'https://evil.test'},body:'{}'})).status,403);
+ assert.equal((await request('/api/connection-settings',{method:'POST',headers:good,body:JSON.stringify({printerId:'mini-01',ip:'8.8.8.8',serial:'TESTMINI01',accessCode:'TestCd01'})})).status,409);
+ assert.equal(JSON.parse(fs.readFileSync(path.join(dir,'config.json'))).printers,undefined);
  assert.equal((await request('/api/unlock',{method:'POST',headers:{...good,Origin:'https://evil.test'},body:'{"pin":"234567"}'})).status,403);
  assert.equal((await request('/api/unlock',{method:'POST',headers:good,body:'{"pin":"wrong"}'})).status,401);
  const unlock=(await request('/api/unlock',{method:'POST',headers:good,body:'{"pin":"234567"}'})).json();assert.ok(unlock.token);const op=await request('/api/operator',{headers:{'X-Operator-Token':unlock.token}});assert.equal(op.status,200);assert.equal(op.json().printer.online,false);assert.ok(!op.text.includes('234567'));

@@ -1,6 +1,6 @@
 {
   "id": "a1-mini-external-pla-220-65-20260513-v1",
-  "origin": "Bambu Studio 02.07.01.62, official A1 mini 0.4 profile dated 20260513; expanded 14mm PLA/Textured PEI output, physically completed 2026-10-19. New Kiri body + wrapper not yet printed.",
+  "origin": "Bambu Studio 02.07.01.62 official A1 mini 0.4 profile dated 20260513. Wrapper physically completed 2026-10-19; Kiri v1 body + wrapper completed SM on 2026-10-20 with surface gaps. The corrected v2 body awaits physical validation.",
   "license": "AGPL-3.0; see BAMBU-LICENSE.txt and a1-mini-source.json",
   "changes": "Removed comments and static M73 progress; fixed centered 14mm leveling rectangle; 2.8mm end lift valid for all supported <=2.5mm inserts. No object toolpaths or personal settings retained.",
   "start": [

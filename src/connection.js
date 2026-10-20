@@ -1,6 +1,7 @@
 // The participant browser only needs HTTP. Printer credentials stay on the booth PC.
 let boothTarget=null;
 let pairing=null,deviceToken='';
+let printerConnectionSettings=[];
 function prepareDevice(){if(deviceToken)return;try{deviceToken=localStorage.getItem('click-device-token-v1')||'';}catch{}if(!/^[a-f0-9]{64}$/.test(deviceToken)){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);deviceToken=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('click-device-token-v1',deviceToken);}catch{}}}
 function parseBoothLink(value){
  const url=new URL(value),p=new URLSearchParams(url.hash.slice(1));
@@ -16,13 +17,15 @@ function syncConnection(){
  const connected=!!local;
  $('boothBtn').textContent=connected?'● '+(local.operator?'출력 PC':'부스 연결됨'):'부스 연결';
  $('connection').textContent=connected?'● 공방 연결됨':'온라인 체험';
- $('boothStatus').textContent=connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 출력 대기표까지 받을 수 있어요.';
- $('disconnectBoothBtn').hidden=!boothTarget;
+ $('boothStatus').textContent=local?.operator?'출력 PC에 연결됐어요. 아래에서 A1 mini의 액세스 코드를 입력하고 바로 연결하세요.':connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 바로 출력할 수 있어요.';
+ $('printerConnectionPanel').hidden=!local?.operator||!!boothTarget;
+ $('boothLinkSection').open=!local?.operator;
+ $('disconnectBoothBtn').hidden=!boothTarget;$('disconnectBoothBtn').disabled=typeof printActive==='function'&&printActive();
  $('operatorLocal').hidden=!(local?.operator||pairing?.printerId);
  $('localInstructions').hidden=connected;
- $('pairBtn').hidden=!connected;$('pairBtn').textContent=pairing?.printerId?'↔ '+pairedPrinterName():'미니 매칭';$('pairingBadge').hidden=!connected;
- $('pairingBadge').textContent=pairing?.printerId?(pairing.name+' ↔ '+pairedPrinterName()):'먼저 이 기기에서 사용할 미니를 선택해주세요.';
- if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 운영자 PIN으로 이 미니의 출력만 시작할 수 있어요.':'미니를 먼저 매칭하면 이 크롬북에서 운영자 PIN으로 출력을 시작할 수 있어요.';
+ $('pairBtn').hidden=!connected;$('pairBtn').textContent=pairing?.printerId?'↔ '+pairedPrinterName():'프린터 선택';$('pairingBadge').hidden=!connected;
+ $('pairingBadge').textContent=pairing?.printerId?('출력할 프린터 · '+pairedPrinterName()):'출력 화면에서 사용할 프린터를 골라요.';
+ if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 바로 출력 버튼으로 이 미니에 작품을 보낼 수 있어요.':'출력할 미니를 고르면 바로 출력 버튼으로 시작할 수 있어요.';
  else if(connected)$('operatorInfo').textContent='현장에서 크롬북과 미니를 1:1 매칭하고 필요할 때 해제·재매칭하세요.';
  $('boothSetupHint').hidden=!local?.operator||local?.booth;
 }
@@ -30,10 +33,10 @@ function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.pri
 async function connectWorkshop(target,{save=false,showError=false}={}){
  prepareDevice();clearInterval(jobTimer);job=null;pairing=null;boothTarget=target;local=null;lock();syncConnection();
  try{
-  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(data.version<5)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;
+  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(data.version<5)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;workshopStats.connected(data.statistics);
   if(save&&target)try{localStorage.setItem('click-booth-v1',JSON.stringify(target));}catch{}
   syncConnection();renderSlice();renderTicket();
-  try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
+  try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();if(printActive()&&ready())setStep(2);clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
   $('boothError').textContent='';$('boothFallback').hidden=true;return true;
  }catch(e){
   local=null;syncConnection();renderSlice();renderTicket();
@@ -54,10 +57,44 @@ async function discoverLocal(){
  syncConnection();
 }
 function bindBoothConnection(){
- $('boothBtn').onclick=()=>{$('boothLinkIn').value='';syncConnection();$('boothDialog').showModal();};
- $('joinBoothBtn').onclick=async()=>{try{const target=$('boothLinkIn').value.trim()?parseBoothLink($('boothLinkIn').value.trim()):boothTarget;if(!target)throw Error('운영자의 부스 링크를 붙여넣어 주세요.');$('joinBoothBtn').disabled=true;if(await connectWorkshop(target,{save:true,showError:true})){$('boothDialog').close();toast('부스와 연결됐어요! 설치 없이 만들고 출력 대기표를 받아요.');}}catch(e){$('boothError').textContent=e.message;}finally{$('joinBoothBtn').disabled=false;}};
- $('disconnectBoothBtn').onclick=()=>{clearInterval(jobTimer);job=null;pairing=null;local=null;boothTarget=null;lock();try{localStorage.removeItem('click-booth-v1');sessionStorage.removeItem('click-current-job');}catch{}history.replaceState(null,'',location.pathname+location.search);$('boothError').textContent='';$('boothFallback').hidden=true;syncConnection();renderSlice();renderTicket();};
+ $('boothBtn').onclick=async()=>{$('boothLinkIn').value='';syncConnection();$('boothDialog').showModal();await loadPrinterConnection();};
+ $('printerConnectionSelect').onchange=fillPrinterConnection;
+ $('showPrinterCodeBtn').onclick=()=>{const show=$('printerAccessCodeIn').type==='password';$('printerAccessCodeIn').type=show?'text':'password';$('showPrinterCodeBtn').textContent=show?'숨기기':'보기';$('showPrinterCodeBtn').setAttribute('aria-pressed',String(show));};
+ $('printerConnectionForm').onsubmit=savePrinterConnection;
+ $('boothDialog').addEventListener('close',()=>{$('printerAccessCodeIn').value='';$('printerAccessCodeIn').type='password';$('showPrinterCodeBtn').textContent='보기';$('showPrinterCodeBtn').setAttribute('aria-pressed','false');});
+ $('joinBoothBtn').onclick=async()=>{try{const target=$('boothLinkIn').value.trim()?parseBoothLink($('boothLinkIn').value.trim()):boothTarget;if(!target)throw Error('운영자의 부스 링크를 붙여넣어 주세요.');$('joinBoothBtn').disabled=true;if(await connectWorkshop(target,{save:true,showError:true})){$('boothDialog').close();toast('부스와 연결됐어요! 설치 없이 만들고 바로 출력해요.');}}catch(e){$('boothError').textContent=e.message;}finally{$('joinBoothBtn').disabled=false;}};
+ $('disconnectBoothBtn').onclick=()=>{if(printActive())return;clearInterval(jobTimer);job=null;pairing=null;local=null;boothTarget=null;lock();try{localStorage.removeItem('click-booth-v1');sessionStorage.removeItem('click-current-job');}catch{}history.replaceState(null,'',location.pathname+location.search);$('boothError').textContent='';$('boothFallback').hidden=true;syncConnection();renderSlice();renderTicket();};
  $('copyBoothLinkBtn').onclick=async()=>{try{await navigator.clipboard.writeText($('boothShareLink').value);toast('참가자 부스 링크를 복사했어요. 같은 Wi-Fi의 크롬북에 공유하세요.');}catch{$('boothShareLink').select();toast('선택된 링크를 복사해서 공유하세요.');}};
+}
+async function loadPrinterConnection(){
+ if(!local?.operator||boothTarget)return;
+ try{
+  const data=await api('/api/connection-settings'),selected=$('printerConnectionSelect').value;
+  printerConnectionSettings=data.printers;$('printerConnectionSelect').replaceChildren();
+  for(const p of data.printers){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;$('printerConnectionSelect').append(option);}
+  if(data.printers.some(p=>p.id===selected))$('printerConnectionSelect').value=selected;
+  fillPrinterConnection();if($('boothDialog').open)$('printerAccessCodeIn').focus();
+ }catch{$('printerConnectionError').textContent='프린터 연결 설정을 불러오지 못했어요. 출력 PC 중계기를 최신 버전으로 실행해주세요.';}
+}
+function fillPrinterConnection(){
+ const p=printerConnectionSettings.find(p=>p.id===$('printerConnectionSelect').value);if(!p)return;
+ $('printerIpIn').value=p.ip;$('printerSerialIn').value=p.serial;$('printerAccessCodeIn').value='';
+ $('printerIpIn').closest('details').open=!p.ip||!p.serial;
+ $('printerAccessCodeIn').required=!p.hasAccessCode;
+ $('printerAccessCodeIn').placeholder=p.hasAccessCode?'변경할 때만 새 코드 입력':'프린터에 표시된 8자리 코드';
+ $('printerConnectionState').textContent=p.online&&p.fresh?'● 연결됨 · 실시간 상태 수신 중':p.online?'● 인증됨 · 실시간 상태 확인 필요':'○ 프린터 연결 안 됨';
+ $('printerConnectionError').textContent=p.error||'';
+}
+async function savePrinterConnection(event){
+ event.preventDefault();if(!local?.operator||boothTarget)return;
+ const body={printerId:$('printerConnectionSelect').value,ip:$('printerIpIn').value,serial:$('printerSerialIn').value,accessCode:$('printerAccessCodeIn').value};
+ $('printerAccessCodeIn').value='';$('printerConnectionFields').disabled=true;$('savePrinterConnectionBtn').textContent='연결 확인 중…';
+ $('printerConnectionState').textContent='설정을 저장하고 A1 mini의 인증·실시간 상태를 확인하고 있어요…';$('printerConnectionError').textContent='';
+ try{
+  const data=await api('/api/connection-settings',body);local.printers=data.printers;
+  await loadPrinterConnection();syncConnection();$('printerConnectionState').textContent='● 연결 완료 · 액세스 코드 인증 및 실시간 상태 수신 확인';toast('A1 mini 연결을 확인했어요.');
+ }catch(e){await loadPrinterConnection();$('printerConnectionError').textContent=e.message;$('printerConnectionState').textContent='연결을 완료하지 못했어요.';}
+ finally{body.accessCode='';$('printerConnectionFields').disabled=false;$('savePrinterConnectionBtn').textContent='저장하고 연결 테스트';}
 }
 async function showBoothLinks(){
  if(!local?.operator)return;
@@ -66,7 +103,7 @@ async function showBoothLinks(){
 async function refreshPairing(){
  if(!local)return;const source=local,data=await api('/api/printers');if(local!==source)return;const before=pairing;pairing=data.pairing;local.printers=data.printers;
  if(before&&(before.printerId!==pairing?.printerId||before.revision!==pairing?.revision)){lock();clearInterval(jobTimer);job=null;try{sessionStorage.removeItem('click-current-job');}catch{}renderSlice();renderTicket();}
- syncConnection();return data;
+ syncConnection();renderTicket();return data;
 }
 async function showPairing(){if(!local){$('boothDialog').showModal();return;}if(!$('pairDialog').open)$('pairDialog').showModal();$('pairError').textContent='';try{const data=await refreshPairing();$('deviceNameIn').value=pairing?.name||localStorage.getItem('click-device-name')||'크롬북';$('unpairBtn').hidden=!pairing?.printerId;$('pairCurrent').textContent=pairing?.printerId?'현재: '+pairing.name+' ↔ '+pairedPrinterName():'아직 매칭되지 않았어요. 현장의 미니 번호를 확인해 골라주세요.';$('printerChoices').replaceChildren();for(const p of data.printers){const b=document.createElement('button');b.className='printer-choice';const title=document.createElement('b');title.textContent=p.name;const status=document.createElement('small');status.textContent=(p.mine?'이 기기에 매칭됨':p.paired?'다른 크롬북이 사용 중':p.busy?'출력/확인 중':'매칭 가능')+' · '+(p.online?p.state||'연결됨':'연결 대기');b.append(title,status);b.disabled=p.paired&&!p.mine||p.busy&&!p.mine;b.setAttribute('aria-pressed',String(p.mine));b.onclick=()=>p.mine?$('pairDialog').close():setPairing(p.id);$('printerChoices').append(b);}}catch(e){$('pairError').textContent=e.message;}}
 async function setPairing(printerId){try{const data=await api(printerId?'/api/pair':'/api/unpair',{printerId,name:$('deviceNameIn').value,discardPending:$('discardPendingIn').checked});pairing=data.pairing;local.printers=data.printers;lock();clearInterval(jobTimer);job=null;sessionStorage.removeItem('click-current-job');localStorage.setItem('click-device-name',$('deviceNameIn').value);syncConnection();renderSlice();renderTicket();$('discardPendingIn').checked=false;await showPairing();toast(printerId?'이 기기 ↔ '+pairedPrinterName()+' 매칭 완료!':'미니 매칭을 해제했어요.');}catch(e){$('pairError').textContent=e.message;}}

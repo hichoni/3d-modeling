@@ -26,7 +26,7 @@ function request(route,{method='GET',headers={},body}={}){return new Promise((re
 test('browser connection attaches the booth key and keeps loopback operator mode on return',async()=>{
  const dom=new Map(),get=id=>{if(!dom.has(id))dom.set(id,{textContent:'',hidden:false,value:'',open:false});return dom.get(id);};
  const memory=new Map(),storage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)||null,removeItem:k=>memory.delete(k)};
- const calls=[];const c=vm.createContext({URL,URLSearchParams,crypto:require('node:crypto').webcrypto,$:get,local:null,job:null,jobTimer:null,operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
+ const calls=[];const c=vm.createContext({URL,URLSearchParams,crypto:require('node:crypto').webcrypto,$:get,local:null,job:null,jobTimer:null,workshopStats:{connected:()=>{}},operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
  vm.runInContext(fs.readFileSync('src/connection.js','utf8'),c);
  c.api=async()=>({app:'click-workshop',csrf:'request-token',operator:false});
  const link=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port).links().pages,target=c.parseBoothLink(link);
@@ -48,6 +48,8 @@ test('two Chromebooks pair independently and scoped PINs cannot operate the othe
   const boot=(await request('/api/bootstrap',{headers:guest})).json();assert.equal(boot.operator,false);assert.equal(boot.pairing.printerId,'mini-01');assert.ok(!JSON.stringify(boot).includes(key));assert.ok(!JSON.stringify(boot).includes('operatorPin'));
   assert.equal((await request('/api/bootstrap',{headers:guestB})).json().pairing.printerId,'mini-02');
   const post={...guest,'X-Click-Token':boot.csrf,'Content-Type':'application/json'},postB={...post,'X-Client-Token':clientB};
+  assert.equal((await request('/api/connection-settings',{headers:guest})).status,403);
+  assert.equal((await request('/api/connection-settings',{method:'POST',headers:post,body:'{}'})).status,403);
   assert.equal((await request('/api/pair',{method:'POST',headers:postB,body:JSON.stringify({printerId:'mini-01'})})).status,409);
   assert.equal((await request('/api/jobs/'+second,{headers:guest})).status,404);
   for(const [headers,id]of [[post,first],[postB,second]]){const queued=await request('/api/jobs/'+id+'/queue',{method:'POST',headers,body:'{}'});assert.equal(queued.status,200);assert.equal(queued.json().state,'queued');}

@@ -3,10 +3,11 @@
 function analyzeToolpaths(text,{height=2.5,strict=false}={}){
  if(typeof text!=='string'||text.length>2500000)throw Error('경로 파일 크기를 확인해주세요.');
  if(!Number.isFinite(height)||height<2||height>2.51)throw Error('지원하지 않는 모델 높이입니다.');
- let x=90,y=90,z=0,e=0,relativeE=false,feed=0,extruded=0,retract=0,debt=0,seconds=0,layer=null;
+ let x=90,y=90,z=0,e=0,relativeE=false,feed=0,extruded=0,retract=0,debt=0,seconds=0,layer=null,feature='path';
  const layers=[],moves=[],commands=new Set();const round=n=>Math.round(n*10000)/10000;
  const inside=(px,py)=>Math.abs(px-90)<=7.03&&Math.abs(py-90)<=7.03&&Math.hypot(Math.max(0,Math.abs(px-90)-4.2),Math.max(0,Math.abs(py-90)-4.2))<=2.84;
  for(const source of text.split(/\r?\n/)){
+  const tag=/^\s*;\s*feature\s+(.+?)\s*$/i.exec(source);if(tag)feature=({'shells':'shell','solid fill':'solid','thin fill':'solid','sparse infill':'infill'})[tag[1].toLowerCase()]||'path';
   const line=source.split(';')[0].trim();if(!line)continue;
   const words=line.split(/\s+/),command=words.shift().toUpperCase(),v={};commands.add(command);
   for(const word of words){const match=/^([A-Z])(-?(?:\d+(?:\.\d*)?|\.\d+))$/i.exec(word);if(!match||v[match[1].toUpperCase()]!==undefined)throw Error('경로에 해석할 수 없는 명령이 있어요.');v[match[1].toUpperCase()]=Number(match[2]);}
@@ -23,8 +24,8 @@ function analyzeToolpaths(text,{height=2.5,strict=false}={}){
   if(delta < -1.21 || delta>1.21&&distance<.001)throw Error('압출 또는 리트랙션 양을 확인해주세요.');
   if(delta>0&&distance>.001){
    if(nz<=0||nz>height+.11||Math.abs(nz-z)>.001||delta/distance>.09||delta/distance*feed/60*Math.PI*(1.75/2)**2>12.01||debt>.001||!inside(x,y))throw Error('압출 경로 또는 재료량이 올바르지 않아요.');
-   extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-.2)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('0.2mm 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[]};layers.push(layer);}
-   if(layer.segments.length>=20000)throw Error('한 층의 경로가 너무 많아요.');layer.segments.push([x-90,y-90,nx-90,ny-90].map(round));
+   extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-.2)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('0.2mm 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[],features:[]};layers.push(layer);}
+   if(layer.segments.length>=20000)throw Error('한 층의 경로가 너무 많아요.');layer.segments.push([x-90,y-90,nx-90,ny-90].map(round));layer.features.push(feature);
   }else if(delta<0){retract-=delta;debt-=delta;if(debt>1.22||feed>1800)throw Error('리트랙션 양 또는 속도가 너무 커요.');}
   else if(delta>0){debt-=delta;if(debt<-.001||feed>1800)throw Error('재료 복원량 또는 압출 속도가 올바르지 않아요.');}
   if(feed>0)seconds+=(travel||Math.abs(delta))*60/feed;

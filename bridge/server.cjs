@@ -1,16 +1,21 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {makeAccess,equalSecret}=require('./access.cjs');const {serveDownload}=require('./downloads.cjs');const {validateSTL,sliceSTL}=require('./core.cjs');const {printerDefinitions}=require('./printers.cjs');const {Pairings,clientId}=require('./pairings.cjs');const {Fleet}=require('./fleet.cjs');
 const {prepareBrowserJob}=require('./browser-job.cjs');
+const {connectionSettings,saveConnection}=require('./connection-settings.cjs');
+const {directPrint,stopOwnJob}=require('./direct-print.cjs');
+const {Statistics}=require('./statistics.cjs');
 const root=path.resolve(__dirname,'..'),runtime=process.env.CLICK_RUNTIME?path.resolve(process.env.CLICK_RUNTIME):path.join(root,'runtime');fs.mkdirSync(runtime,{recursive:true});
+const statistics=new Statistics(path.join(runtime,'statistics.json'));
 const cfgPath=path.join(runtime,'config.json'),config=fs.existsSync(cfgPath)?JSON.parse(fs.readFileSync(cfgPath,'utf8')):{};
 if(!/^\d{6,12}$/.test(config.operatorPin||'')){config.operatorPin=String(crypto.randomInt(100000,1000000));fs.writeFileSync(cfgPath,JSON.stringify(config,null,2));}
 const port=Number(process.env.CLICK_PORT||config.port||5188);if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Invalid local port');
 const access=makeAccess(config,port),origin=access.origin,csrf=crypto.randomBytes(32).toString('hex'),printers=printerDefinitions(config),sessions=new Map(),jobs=new Map(),attempts=new Map(),sliceQueue=[];let slicing=false,uploads=0;
 const jobRoot=path.join(runtime,'jobs');fs.mkdirSync(jobRoot,{recursive:true});
-function save(j){const dir=path.join(jobRoot,j.id);fs.mkdirSync(dir,{recursive:true});const temp=path.join(dir,'job.tmp');fs.writeFileSync(temp,JSON.stringify(j));fs.renameSync(temp,path.join(dir,'job.json'));}
+function save(j){const dir=path.join(jobRoot,j.id);fs.mkdirSync(dir,{recursive:true});const temp=path.join(dir,'job.tmp');fs.writeFileSync(temp,JSON.stringify(j));fs.renameSync(temp,path.join(dir,'job.json'));if(j.state==='complete')try{statistics.complete(j);}catch{log('statistics_save_failed');}}
 function log(type,detail={}){fs.appendFileSync(path.join(runtime,'events.jsonl'),JSON.stringify({at:new Date().toISOString(),type,...detail})+'\n');}
 const fleet=new Fleet(printers,{jobRoot,save,log});
 for(const entry of fs.readdirSync(jobRoot)){if(!/^[a-f0-9]{24}$/.test(entry))continue;try{const j=JSON.parse(fs.readFileSync(path.join(jobRoot,entry,'job.json'),'utf8'));if(['slice_wait','slicing'].includes(j.state)){j.state='failed';j.error='공방이 종료되어 슬라이싱이 중단됐습니다.';}if(['uploading','sent','accepted','printing','paused'].includes(j.state)){j.state='uncertain';j.attention='공방이 재시작됐습니다. 이 미니의 본체를 확인하세요. 자동 재전송하지 않습니다.';}if(!j.printerId&&['ready','queued'].includes(j.state)){j.state='cancelled';j.attention='1:1 프린터 매칭 후 다시 접수해주세요.';}jobs.set(j.id,j);if(j.state==='uncertain'&&fleet.items.has(j.printerId))fleet.item(j.printerId).active=j;}catch{}}
+statistics.reconcile([...jobs.values()].map(j=>j.state==='complete'?{...j,completedRecordAt:fs.statSync(path.join(jobRoot,j.id,'job.json')).mtime.toISOString()}:j));
 const pairings=new Pairings(path.join(runtime,'pairings.json'),printers,{busy:id=>fleet.busy(id),pending:id=>[...jobs.values()].filter(j=>j.clientId===id&&['slice_wait','slicing','ready','queued'].includes(j.state)),cancel:j=>{j.state='cancelled';j.attention='프린터 매칭 변경으로 기존 미출력 접수를 취소했습니다.';save(j);}});
 function device(req){return clientId(req.headers['x-client-token']);}
 function currentPair(req){return pairings.publicDevice(device(req));}
@@ -19,7 +24,7 @@ function auth(req,job){const s=sessions.get(req.headers['x-operator-token']),loc
  if(!s||s.expiry<Date.now()||s.admin&&!local||!s.admin&&(!d||s.clientId!==d.id||s.printerId!==d.printerId||s.revision!==d.revision)||job&&!s.admin&&(job.clientId!==s.clientId||job.printerId!==s.printerId)){const e=Error('이 기기에 매칭된 미니의 운영자 PIN으로 잠금을 해제하세요.');e.status=401;throw e;}return s;
 }
 function admin(req){const scope=auth(req);if(!scope.admin){const e=Error('전체 매칭 관리는 부스 PC에서 할 수 있습니다.');e.status=403;throw e;}return scope;}
-function summary(j,withPaths=false){const {id,name,state,ticket,createdAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,ticket,createdAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printerName:fleet.items.get(printerId)?.config.name||printerId,slice};}
+function summary(j,withPaths=false){const {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printerName:fleet.items.get(printerId)?.config.name||printerId,telemetry:fleet.items.has(printerId)?fleet.state(printerId):null,slice};}
 function publicPrinters(id,all=false){return printers.map(p=>{const s=fleet.state(p.id),owner=pairings.owner(p.id);return {...s,paired:!!owner,mine:owner?.id===id,available:(!owner||owner.id===id)&&!s.busy,...(all?{pairedDevice:owner?{id:owner.id,name:owner.name}:null}:{})};});}
 function drainSlices(){if(slicing||!sliceQueue.length)return;const j=sliceQueue.shift();slicing=true;j.state='slicing';save(j);sliceSTL(path.join(jobRoot,j.id),config).then(result=>{Object.assign(j,result,{state:'ready'});save(j);}).catch(e=>{j.state='failed';j.error=e.message;save(j);}).finally(()=>{slicing=false;drainSlices();});}
 function reply(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY'});res.end(JSON.stringify(value));}
@@ -31,11 +36,16 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
  if(req.method==='GET'&&route==='/favicon.ico'){res.writeHead(204);return res.end();}
  if(route.startsWith('/api/')&&!access.participant(req))return reply(res,403,{error:'운영자가 공유한 부스 링크로 접속하세요.'});
- if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:5,studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:6,statistics:statistics.summary(),studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/statistics')return reply(res,200,statistics.summary());
  if(req.method==='GET'&&route==='/api/printers')return reply(res,200,{pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/connection-settings'){
+  if(!access.isOperator(req))return reply(res,403,{error:'프린터 연결 설정은 출력 PC에서 열어주세요.'});
+  return reply(res,200,connectionSettings(printers,fleet));
+ }
  if(req.method==='GET'&&route==='/api/booth-links'){admin(req);return reply(res,200,{enabled:access.booth,links:access.links()});}
- if(req.method==='GET'&&route==='/api/operator'){const s=auth(req),list=publicPrinters(device(req),s.admin).filter(p=>s.admin||p.id===s.printerId);const selected=list.find(p=>p.id===url.searchParams.get('printer'))||list[0];return reply(res,200,{admin:s.admin,printers:list,printer:selected,error:selected?.error||'',jobs:[...jobs.values()].filter(j=>j.ticket&&(s.admin||j.printerId===s.printerId&&j.clientId===s.clientId)).sort((a,b)=>b.ticket-a.ticket).map(j=>summary(j)),canStop:selected?.canStop||false});}
- const match=/^\/api\/jobs\/([a-f0-9]{24})(?:\/(queue|start|cancel|resolve|file))?$/.exec(route),j=match?jobs.get(match[1]):null;
+ if(req.method==='GET'&&route==='/api/operator'){const s=auth(req),list=publicPrinters(device(req),s.admin).filter(p=>s.admin||p.id===s.printerId);const selected=list.find(p=>p.id===url.searchParams.get('printer'))||list[0];return reply(res,200,{admin:s.admin,printers:list,printer:selected,error:selected?.error||'',jobs:[...jobs.values()].filter(j=>(j.ticket||j.mode==='direct')&&(s.admin||j.printerId===s.printerId&&j.clientId===s.clientId)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(j=>summary(j)),canStop:selected?.canStop||false});}
+ const match=/^\/api\/jobs\/([a-f0-9]{24})(?:\/(queue|print|stop|start|cancel|resolve|file))?$/.exec(route),j=match?jobs.get(match[1]):null;
  if(match&&(!j||!access.isOperator(req)&&j.clientId!==device(req)))return reply(res,404,{error:'이 기기의 작업을 찾을 수 없습니다.'});
  if(req.method==='GET'&&match&&!match[2])return reply(res,200,summary(j,true));
  if(req.method==='GET'&&match?.[2]==='file'){auth(req,j);if(!j.slice)throw Error('슬라이싱 결과가 없습니다.');res.writeHead(200,{'Content-Type':'application/octet-stream','Cache-Control':'no-store','Content-Disposition':'attachment; filename="click.gcode.3mf"'});return fs.createReadStream(path.join(jobRoot,j.id,'print.gcode.3mf')).pipe(res);}
@@ -56,6 +66,12 @@ const server=http.createServer(async(req,res)=>{try{
   const id=crypto.randomBytes(12).toString('hex'),job={id,name,state:'slice_wait',createdAt:new Date().toISOString(),dimensions:info,clientId:d.id,printerId:d.printerId,printerSerial:fleet.item(d.printerId).config.serial,pairingRevision:d.revision};const dir=path.join(jobRoot,id);jobs.set(id,job);save(job);fs.writeFileSync(path.join(dir,'model.stl'),bytes);sliceQueue.push(job);reply(res,202,summary(job));drainSlices();return;
  }
  if(req.headers['content-type']!=='application/json')return reply(res,415,{error:'JSON required'});const body=JSON.parse((await readBody(req)).toString()||'{}');
+ if(route==='/api/experiences')return reply(res,200,statistics.record(device(req),body.experiences));
+ if(route==='/api/connection-settings'){
+  if(!access.isOperator(req))return reply(res,403,{error:'프린터 연결 설정은 출력 PC에서 열어주세요.'});
+  const result=await saveConnection({body,config,printers,fleet,cfgPath});
+  return reply(res,200,{...result,printers:publicPrinters(device(req))});
+ }
  if(route==='/api/pair')return reply(res,200,{pairing:pairings.pair(device(req),body.printerId,body.name,body.discardPending===true),printers:publicPrinters(device(req))});
  if(route==='/api/unpair')return reply(res,200,{pairing:pairings.release(device(req),body.discardPending===true),printers:publicPrinters(device(req))});
  if(route==='/api/unlock'){
@@ -63,6 +79,11 @@ const server=http.createServer(async(req,res)=>{try{
   if(!equalSecret(body.pin,p?.operatorPin||config.operatorPin))return reply(res,401,{error:'운영자 PIN을 확인하세요.'});const token=crypto.randomBytes(32).toString('hex');sessions.set(token,{expiry:Date.now()+30*60000,admin:isAdmin,...(d?{clientId:d.id,printerId:d.printerId,revision:d.revision}:{})});return reply(res,200,{token,admin:isAdmin,printerId:d?.printerId});
  }
  if(match?.[2]==='queue'){if(!pairings.matches(j))throw Error('매칭이 변경된 작품입니다. 새 미니에서 다시 접수해주세요.');if(j.ticket)return reply(res,200,summary(j,true));if(j.state!=='ready')throw Error('먼저 슬라이싱을 완료하세요.');j.ticket=Math.max(0,...[...jobs.values()].map(x=>x.ticket||0))+1;j.state='queued';save(j);return reply(res,200,summary(j,true));}
+ if(match?.[2]==='print'){
+  const pending=directPrint({job:j,owner:device(req),pairings,fleet,body,save});
+  reply(res,202,summary(j,true));pending?.catch(e=>{fleet.item(j.printerId).error=e.message;});return;
+ }
+ if(match?.[2]==='stop'){stopOwnJob({job:j,owner:device(req),pairings,fleet});return reply(res,202,{sent:true,printerId:j.printerId});}
  const scope=auth(req,j);
  if(route==='/api/release-pairing'){admin(req);if(!pairings.get(body.clientId))throw Error('해제할 매칭이 없습니다.');pairings.release(body.clientId,body.discardPending===true);return reply(res,200,{released:true});}
  const printerId=scope.admin?(body.printerId||j?.printerId):scope.printerId;if(!printerId)throw Error('대상 미니를 선택하세요.');

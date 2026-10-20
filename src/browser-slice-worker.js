@@ -11,8 +11,13 @@ function verticesFromSTL(bytes){
 }
 function makeSettings(){
  const settings={mode:'FDM',controller:{units:'mm',lineType:'line',threaded:false,exportThumb:false},render:false,filter:{FDM:'internal'},device:structuredClone(conf.defaults.fdm.d),process:structuredClone(conf.defaults.fdm.p),widget:{'click-model':{}},time:Date.now()};
+ // Kiri uses pi*width*height/4 for volume. Bambu uses a flattened bead cross-section.
+ // Normalize that geometry before applying Generic PLA's 0.98 material flow ratio.
+ const width=.42,height=.2,flow=.98,beadArea=width*height-(1-Math.PI/4)*height*height;
+ const extrusion=flow*beadArea/(Math.PI*width*height/4);
  Object.assign(settings.device,{deviceName:'A1 mini 0.4 - path research',bedWidth:180,bedDepth:180,maxHeight:180,originCenter:false,extrudeAbs:true,gcodePre:['; CLICK_BROWSER_PATHS_ONLY - NOT A PRINTABLE MACHINE FILE','G90','M82','G92 E0'],gcodePost:['; END CLICK_BROWSER_PATHS_ONLY'],gcodeFan:['M106 P1 S{fan_speed}'],gcodeLayer:[';LAYER:{layer}'],gcodeTrack:[],gcodePause:[],gcodeChange:[],extras:{},extruders:[{extFilament:1.75,extNozzle:.4,extSelect:['T0'],extOffsetX:0,extOffsetY:0}]});
- Object.assign(settings.process,{sliceHeight:.2,firstSliceHeight:.2,sliceShells:2,sliceTopLayers:3,sliceBottomLayers:3,sliceFillSparse:.15,sliceFillType:'grid',sliceLineWidth:.42,sliceFillOverlap:.15,outputShellMult:1,outputFillMult:1,outputSparseMult:1,outputBrimCount:0,outputBedTemp:65,outputTemp:220,firstLayerBedTemp:65,firstLayerNozzleTemp:220,firstLayerRate:25,firstLayerFillRate:30,outputFeedrate:70,outputFinishrate:50,outputSeekrate:100,outputRetractDist:.8,outputRetractSpeed:30,outputMinLayerTime:4,outputMaxFlowrate:12,sliceDetectThin:'basic'});
+ // This pinned engine multiplies solid-fill flow twice (outputFills + its caller).
+ Object.assign(settings.process,{sliceHeight:height,firstSliceHeight:height,sliceShells:2,sliceTopLayers:5,sliceBottomLayers:3,sliceFillSparse:.15,sliceFillType:'grid',sliceLineWidth:width,sliceFillOverlap:.15,sliceSolidMinArea:.02,outputShellMult:extrusion,outputFillMult:Math.sqrt(extrusion),outputSparseMult:extrusion,outputBrimCount:0,outputBedTemp:65,outputTemp:220,firstLayerBedTemp:65,firstLayerNozzleTemp:220,firstLayerRate:25,firstLayerFillRate:30,outputFeedrate:70,outputFinishrate:50,outputSeekrate:100,outputRetractDist:.8,outputRetractSpeed:30,outputMinLayerTime:4,outputMaxFlowrate:12,sliceDetectThin:'legacy 2'});
  return settings;
 }
 function invoke(task,data,onData=()=>{}){
@@ -34,6 +39,6 @@ self.onmessage=async event=>{
   await invoke('prepare',{settings},data=>{if(data.progress)progress(.7+data.progress*.2,'채움과 이동 경로 계산');});
   let chunks=[];const result=await invoke('export',{settings},data=>{if(typeof data.line==='string')chunks.push(data.line);});
   const gcode=chunks.join('\n');if(!gcode.includes('G1'))throw Error('압출 경로를 생성하지 못했어요.');
-  self.postMessage({id,type:'done',gcode,summary:{...result.output,settings:undefined},profile:'click-paths-0.4-0.2-v1',printable:false});
+  self.postMessage({id,type:'done',gcode,summary:{...result.output,settings:undefined},profile:'click-paths-0.4-0.2-v2',printable:false});
  }catch(error){self.postMessage({id,type:'error',message:String(error.message||error)});}
 };

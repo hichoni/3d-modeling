@@ -1,5 +1,6 @@
 original.html
 artifacts/
+work/
 node_modules/
 *.log
 .DS_Store
