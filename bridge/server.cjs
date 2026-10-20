@@ -50,7 +50,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
  if(req.method==='GET'&&route==='/favicon.ico'){res.writeHead(204);return res.end();}
  if(route.startsWith('/api/')&&!access.participant(req))return reply(res,403,{error:'운영자가 공유한 부스 링크로 접속하세요.'});
- if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:3,operator:access.isOperator(req),booth:access.booth});
+ if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:3,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin});
  if(req.method==='GET'&&route==='/api/booth-links'){auth(req);return reply(res,200,{enabled:access.booth,links:access.links()});}
  if(req.method==='GET'&&route==='/api/operator'){auth(req);return reply(res,200,{printer:{online:!!mqtt?.online,fresh:!!mqtt&&Date.now()-mqtt.lastReportAt<15000,state:mqtt?.state.gcode_state,attention:attention(mqtt?.state)},error:lastError,jobs:[...jobs.values()].filter(j=>j.ticket).sort((a,b)=>b.ticket-a.ticket).map(j=>summary(j)),canStop:!!canStop()});}
  const match=/^\/api\/jobs\/([a-f0-9]{24})(?:\/(queue|start|cancel|resolve|file))?$/.exec(route);const j=match?jobs.get(match[1]):null;

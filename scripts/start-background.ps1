@@ -4,11 +4,17 @@ $workshopRoot = Split-Path -Parent $PSScriptRoot
 $nodePath = (Get-Command node -ErrorAction Stop).Source
 $runtimePath = Join-Path $workshopRoot 'runtime'
 if (-not (Test-Path -LiteralPath (Join-Path $runtimePath 'config.json'))) { throw 'Run configure-booth.cmd first.' }
+$config = Get-Content -LiteralPath (Join-Path $runtimePath 'config.json') -Raw | ConvertFrom-Json
+$expectedBoothOrigin = if ($config.booth.enabled -eq $true) { 'http://' + $config.booth.host + ':5188' } else { $null }
 $running = $false
+$probe = $null
 try {
   $probe = Invoke-RestMethod -Uri 'http://127.0.0.1:5188/api/bootstrap' -TimeoutSec 2
   $running = $probe.app -eq 'click-workshop'
 } catch {}
+if ($running -and ($probe.version -lt 3 -or [bool]$probe.booth -ne [bool]$config.booth.enabled -or $probe.boothOrigin -ne $expectedBoothOrigin)) {
+  throw 'An older workshop or different booth configuration is still running. Close its server first, then run start-booth.cmd. Check the printer before restarting.'
+}
 if (-not $running) {
   $serverPath = Join-Path $workshopRoot 'bridge\server.cjs'
   $child = Start-Process -FilePath $nodePath -ArgumentList ('"' + $serverPath + '"') -WorkingDirectory $workshopRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $runtimePath 'server.log') -RedirectStandardError (Join-Path $runtimePath 'server-error.log') -PassThru
