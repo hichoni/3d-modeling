@@ -1,0 +1,22 @@
+param([switch]$NoBrowser)
+$ErrorActionPreference = 'Stop'
+$workshopRoot = Split-Path -Parent $PSScriptRoot
+$nodePath = (Get-Command node -ErrorAction Stop).Source
+$runtimePath = Join-Path $workshopRoot 'runtime'
+if (-not (Test-Path -LiteralPath (Join-Path $runtimePath 'config.json'))) { throw 'Run configure-booth.cmd first.' }
+$running = $false
+try {
+  $probe = Invoke-RestMethod -Uri 'http://127.0.0.1:5188/api/bootstrap' -TimeoutSec 2
+  $running = $probe.app -eq 'click-workshop'
+} catch {}
+if (-not $running) {
+  $serverPath = Join-Path $workshopRoot 'bridge\server.cjs'
+  $child = Start-Process -FilePath $nodePath -ArgumentList ('"' + $serverPath + '"') -WorkingDirectory $workshopRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $runtimePath 'server.log') -RedirectStandardError (Join-Path $runtimePath 'server-error.log') -PassThru
+  Set-Content -LiteralPath (Join-Path $runtimePath 'server.pid') -Value $child.Id
+  for ($attempt = 0; $attempt -lt 15; $attempt++) {
+    try { $probe = Invoke-RestMethod -Uri 'http://127.0.0.1:5188/api/bootstrap' -TimeoutSec 1; if ($probe.app -eq 'click-workshop') { $running = $true; break } } catch {}
+    Start-Sleep -Milliseconds 300
+  }
+  if (-not $running) { throw 'Workshop did not start. Check runtime/server-error.log. An older server may already use port 5188.' }
+}
+if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:5188/' }

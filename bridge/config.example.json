@@ -7,5 +7,6 @@
     "accessCode": ""
   },
   "slicerPath": "C:/Program Files/Bambu Studio/bambu-studio.exe",
-  "operatorPin": ""
+  "operatorPin": "",
+  "booth": {"enabled": false, "host": "", "key": ""}
 }
