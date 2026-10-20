@@ -28,11 +28,11 @@ test('browser connection attaches the booth key and keeps loopback operator mode
  const memory=new Map(),storage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)||null,removeItem:k=>memory.delete(k)};
  const calls=[];const c=vm.createContext({URL,URLSearchParams,crypto:require('node:crypto').webcrypto,$:get,local:null,job:null,jobTimer:null,workshopStats:{connected:()=>{}},operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
  vm.runInContext(fs.readFileSync('src/connection.js','utf8'),c);
- c.api=async()=>({app:'click-workshop',csrf:'request-token',operator:false});
+ c.api=async()=>({app:'click-workshop',version:7,csrf:'request-token',operator:false});
  const link=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port).links().pages,target=c.parseBoothLink(link);
- assert.equal(await c.connectWorkshop(target,{save:true}),true);assert.equal(get('operatorLocal').hidden,true);assert.match(get('boothBtn').textContent,/연결됨/);
+ c.api=async()=>({app:'click-workshop',version:6});assert.equal(await c.connectWorkshop(target,{save:true}),false);c.api=async()=>({app:'click-workshop'});assert.equal(await c.connectWorkshop(target,{save:true}),false);c.api=async()=>({app:'click-workshop',version:7,csrf:'request-token',operator:false});assert.equal(await c.connectWorkshop(target,{save:true}),true);assert.equal(get('operatorLocal').hidden,true);assert.match(get('boothBtn').textContent,/연결됨/);
  await c.backendFetch('/api/slice',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:'data'});assert.equal(calls[0].url,hub+'/api/slice');assert.equal(calls[0].options.headers['X-Booth-Key'],key);assert.equal(calls[0].options.headers['X-Click-Token'],'request-token');assert.equal(calls[0].options.targetAddressSpace,'local');
- c.api=async()=>({app:'click-workshop',csrf:'other',operator:true});await c.discoverLocal();assert.equal(get('operatorLocal').hidden,false);assert.equal(vm.runInContext('boothTarget',c),null);
+ c.api=async()=>({app:'click-workshop',version:7,csrf:'other',operator:true});await c.discoverLocal();assert.equal(get('operatorLocal').hidden,false);assert.equal(vm.runInContext('boothTarget',c),null);
 });
 test('two Chromebooks pair independently and scoped PINs cannot operate the other mini',async()=>{
  const {clientId}=require('../bridge/pairings.cjs'),clientA='a'.repeat(64),clientB='d'.repeat(64),deviceA=clientId(clientA),deviceB=clientId(clientB),first='c'.repeat(24),second='e'.repeat(24);

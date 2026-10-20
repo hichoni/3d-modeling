@@ -12,11 +12,11 @@ async function sliceInBrowser(){
    timer=setTimeout(()=>reject(Error('웹 슬라이싱 시간이 길어지고 있어요. 다른 앱을 닫고 다시 시도해주세요.')),90000);
    worker.onerror=event=>{event.preventDefault();reject(Error('웹 슬라이서 실행 중 오류가 발생했어요. 브라우저를 새로 열고 다시 시도해주세요.'));};
    worker.onmessage=event=>{const m=event.data;if(m.id!==id)return;if(m.type==='progress'){$('sliceBtn').textContent=m.message+' · '+Math.round(m.value*100)+'%';}else if(m.type==='done')resolve(m);else if(m.type==='error')reject(Error(m.message));};
-   worker.postMessage({id,stl},[stl]);
+   worker.postMessage({id,stl,...sliceSelection()},[stl]);
   });
   if(mine!==revision)return;
-  const details=analyzeToolpaths(result.gcode,{height:current.totalH,strict:true});
-  browserSlice={revision:mine,gcode:result.gcode,profile:result.profile,elapsedMs:performance.now()-beginAt,slice:{...details,moves:undefined,profile:result.profile,seconds:Math.max(details.seconds,Number(result.summary?.time)||0),layerHeight:.2,source:'browser',timeScope:'model'}};
+  const profile=WebPrintProfiles.fromId(result.profile),details=analyzeToolpaths(result.gcode,{height:current.totalH,strict:true,layerHeight:profile.height});
+  browserSlice={revision:mine,gcode:result.gcode,profile:result.profile,elapsedMs:performance.now()-beginAt,slice:{...details,moves:undefined,profile:result.profile,seconds:Math.max(details.seconds,Number(result.summary?.time)||0),layerHeight:profile.height,quality:profile.quality,material:profile.material,materialLabel:profile.materialLabel,topLayers:profile.top,bottomLayers:profile.bottom,source:'browser',timeScope:'model'}};
   toast('슬라이싱 완료! 슬라이더로 밑판부터 쌓아봐요.');beep(850);
  }catch(error){if(mine===revision)toast(error.message);}
  finally{clearTimeout(timer);if(url)URL.revokeObjectURL(url);worker?.terminate();if(browserSliceWorker===worker){browserSliceWorker=null;browserSliceCancel=null;}if(mine===revision){browserSliceBusy=false;renderSlice();renderTicket();}}

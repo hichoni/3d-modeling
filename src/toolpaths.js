@@ -1,6 +1,7 @@
 // Shared browser/relay validation for the fixed 14 mm, 0.4 mm nozzle profile.
 (function(root){
-function analyzeToolpaths(text,{height=2.5,strict=false}={}){
+function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2}={}){
+ if(![.12,.16,.2].includes(layerHeight))throw Error('지원하지 않는 출력 층 높이입니다.');
  if(typeof text!=='string'||text.length>2500000)throw Error('경로 파일 크기를 확인해주세요.');
  if(!Number.isFinite(height)||height<2||height>2.51)throw Error('지원하지 않는 모델 높이입니다.');
  let x=90,y=90,z=0,e=0,relativeE=false,feed=0,extruded=0,retract=0,debt=0,seconds=0,layer=null,feature='path';
@@ -24,14 +25,14 @@ function analyzeToolpaths(text,{height=2.5,strict=false}={}){
   if(delta < -1.21 || delta>1.21&&distance<.001)throw Error('압출 또는 리트랙션 양을 확인해주세요.');
   if(delta>0&&distance>.001){
    if(nz<=0||nz>height+.11||Math.abs(nz-z)>.001||delta/distance>.09||delta/distance*feed/60*Math.PI*(1.75/2)**2>12.01||debt>.001||!inside(x,y))throw Error('압출 경로 또는 재료량이 올바르지 않아요.');
-   extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-.2)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('0.2mm 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[],features:[]};layers.push(layer);}
+   extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-layerHeight)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('선택한 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[],features:[]};layers.push(layer);}
    if(layer.segments.length>=20000)throw Error('한 층의 경로가 너무 많아요.');layer.segments.push([x-90,y-90,nx-90,ny-90].map(round));layer.features.push(feature);
   }else if(delta<0){retract-=delta;debt-=delta;if(debt>1.22||feed>1800)throw Error('리트랙션 양 또는 속도가 너무 커요.');}
   else if(delta>0){debt-=delta;if(debt<-.001||feed>1800)throw Error('재료 복원량 또는 압출 속도가 올바르지 않아요.');}
   if(feed>0)seconds+=(travel||Math.abs(delta))*60/feed;
   if(moves.length>=100000)throw Error('경로 명령이 너무 많아요.');moves.push({command,x:nx,y:ny,z:nz,e:ne,delta,distance,feed});x=nx;y=ny;z=nz;e=ne;
  }
- if(!layers.length||layers.length>13||extruded<5||extruded>600||retract>1000)throw Error('층수 또는 총 재료량이 허용 범위를 벗어났어요.');
+ if(!layers.length||layers.length>Math.ceil((height-.2)/layerHeight)+2||extruded<5||extruded>600||retract>1000)throw Error('층수 또는 총 재료량이 허용 범위를 벗어났어요.');
  if(strict&&(!commands.has('G90')||!commands.has('G92')||!commands.has('M82')&&!commands.has('M83')))throw Error('절대 좌표와 압출 원점 설정이 필요해요.');
  return {paths:layers,layers:layers.length,height:layers.at(-1).z,filamentMM:extruded,weightG:extruded*Math.PI*(1.75/2)**2*1.24/1000,seconds,moves};
 }

@@ -2,7 +2,8 @@
   "upstream": "https://github.com/GridSpace/grid-apps",
   "revision": "d138275bbe9d4e4030d8cb8b2dcf66607da9295a",
   "version": "4.7.0",
-  "workerSha256": "045f24d0f106f74b5d22610ada54becb86d0fe6c48268c2b76916eb42ebe64be",
-  "entrySha256": "0c7fbe5b34f0790faf720ea4565ddc2267687b5780cf6d41acea41609fc2a80f",
-  "builderSha256": "12cb81739bfaa69a5e2e8314c74f7ef99162c217b349cba014881929897da811"
+  "workerSha256": "24f952e74e0dd5a3c628cac32c2110ab88c7d99982cc11fc598502e880d7fd9e",
+  "entrySha256": "2947f0abfae7930532a99d4543d972b0fa6b3d6ecfd047a53351887c5ba13761",
+  "profilesSha256": "e7425fabba0fa56a1a395c75e0f8c4083000a4b993bfd505498fce1281544fe3",
+  "builderSha256": "5bd43e61205b86221f34b45579b29a8ad408238b1a9383332556565d28c90a4e"
 }

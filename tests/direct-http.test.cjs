@@ -9,12 +9,12 @@ test('direct HTTP action requires same owner, lease and CSRF, starts without PIN
  const request=(route,body,headers={})=>new Promise((resolve,reject)=>{const req=http.request(origin+route,{method:body?'POST':'GET',headers:{Origin:origin,'X-Client-Token':token,...(body?{'Content-Type':'application/json'}:{}),...headers}},res=>{let text='';res.on('data',v=>text+=v);res.on('end',()=>resolve({status:res.statusCode,json:JSON.parse(text)}));});req.on('error',reject);req.end(body?JSON.stringify(body):undefined);});
  try{
   await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Startup timeout')),8000);child.stdout.once('data',()=>{clearTimeout(timer);resolve();});child.once('exit',()=>{clearTimeout(timer);reject(Error('Server exited'));});});
-  const boot=(await request('/api/bootstrap')).json,headers={'X-Click-Token':boot.csrf},body={ready:true,sha256:sha},route='/api/jobs/'+id+'/print';
+  const boot=(await request('/api/bootstrap')).json,headers={'X-Click-Token':boot.csrf},body={ready:true,sha256:sha,printOptions:{bedLeveling:false,flowCalibration:false}},route='/api/jobs/'+id+'/print';
   assert.equal((await request(route,body)).status,403);assert.equal((await request(route,body,{...headers,Origin:'https://evil.test'})).status,403);
   assert.equal((await request(route,body,{...headers,'X-Client-Token':'b'.repeat(64)})).status,404);
   const result=await request(route,body,headers);assert.equal(result.status,202,JSON.stringify(result.json));assert.equal(result.json.mode,'direct');assert.equal(result.json.ticket,undefined);
   assert.equal((await request(route,body,headers)).status,202);
-  const current=(await request('/api/jobs/'+id)).json;assert.ok(['sent','accepted'].includes(current.state));assert.equal(current.telemetry.fresh,true);assert.equal(current.telemetry.bedTarget,65);assert.equal(current.telemetry.bedTemperature,35);
+  const current=(await request('/api/jobs/'+id)).json;assert.ok(['sent','accepted'].includes(current.state));assert.equal(current.telemetry.fresh,true);assert.equal(current.telemetry.bedTarget,65);assert.equal(current.telemetry.bedTemperature,35);assert.deepEqual(current.printOptions,body.printOptions);assert.equal(current.telemetry.filament.external.color,'#78C451');assert.equal((await request(route,{...body,printOptions:{bedLeveling:true,flowCalibration:true}},headers)).status,409);
   const starts=fs.readFileSync(path.join(dir,'events.jsonl'),'utf8').trim().split('\n').map(JSON.parse).filter(x=>x.type==='start_command');assert.equal(starts.length,1);
   assert.equal((await request('/api/jobs/'+id+'/stop',{}, {...headers,'X-Client-Token':'b'.repeat(64)})).status,404);
   assert.equal((await request('/api/jobs/'+id+'/stop',{},headers)).status,202);

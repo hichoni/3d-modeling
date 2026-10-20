@@ -35,6 +35,17 @@ test('direct start preserves owner, pairing, hash, readiness and hardware checks
  }
  f.p().mqtt.lastReportAt=0;assert.throws(()=>f.start(j),/최신/);assert.equal(j.state,'ready');assert.equal(f.p().mqtt.sent.length,0);
 });
+test('all four calibration combinations reach the actual start payload and cannot change mid-transfer',async t=>{
+ for(const bedLeveling of [false,true])for(const flowCalibration of [false,true]){
+  const f=fixture(t);await f.fleet.connect('mini-01');const j=f.job(),options={bedLeveling,flowCalibration},body={ready:true,sha256:j.sha256,printOptions:options},pending=f.start(j,body);
+  assert.deepEqual(j.printOptions,{bedLeveling,flowCalibration});assert.equal(f.start(j,body),null);assert.throws(()=>f.start(j,{...body,printOptions:{bedLeveling:!bedLeveling,flowCalibration}}),/바꿀 수/);
+  options.bedLeveling=!bedLeveling;await pending;const p=f.p().mqtt.sent[0].print;assert.equal(p.bed_leveling,bedLeveling);assert.equal(p.flow_cali,flowCalibration);assert.equal(p.use_ams,false);
+ }
+});
+test('non-PLA metadata blocks before file transfer, and a material change during upload blocks the start command',async t=>{
+ const f=fixture(t);await f.fleet.connect('mini-01');const j=f.job();f.p().mqtt.state.vt_tray={tray_type:'PETG'};assert.throws(()=>f.start(j),/PLA/);assert.equal(j.state,'ready');assert.equal(f.p().mqtt.sent.length,0);
+ let g;g=fixture(t,class{async connect(){}async upload(){g.p().mqtt.state.vt_tray={tray_type:'ABS'};}close(){}});await g.fleet.connect('mini-01');const k=g.job();await assert.rejects(g.start(k));assert.equal(k.state,'failed');assert.equal(g.p().mqtt.sent.length,0);
+});
 test('transfer failure and unknown command outcome never trigger an automatic retry',async t=>{
  const f=fixture(t,class{async connect(){throw Error('test failure');}close(){}});await f.fleet.connect('mini-01');const j=f.job();await assert.rejects(f.start(j));assert.equal(j.state,'failed');assert.throws(()=>f.start(j),/이미/);assert.equal(f.p().mqtt.sent.length,0);
  const g=fixture(t);await g.fleet.connect('mini-01');const k=g.job();await g.start(k);k.state='uncertain';assert.equal(g.start(k),null);assert.equal(g.p().mqtt.sent.length,1);

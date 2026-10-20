@@ -3,7 +3,7 @@
 const {EventEmitter}=require('node:events');
 const fleetPath=require.resolve('../../bridge/fleet.cjs'),{Fleet}=require(fleetPath);
 class MockMqtt extends EventEmitter{
- constructor(){super();this.state={gcode_state:'IDLE',sdcard:true,print_error:0,nozzle_diameter:'0.4',bed_temper:24,bed_target_temper:0,nozzle_temper:25,nozzle_target_temper:0};}
+ constructor(){super();this.state={gcode_state:'IDLE',sdcard:true,print_error:0,nozzle_diameter:'0.4',bed_temper:24,bed_target_temper:0,nozzle_temper:25,nozzle_target_temper:0,vt_tray:{id:'254',tray_type:'PLA',tray_color:'78C451FF',nozzle_temp_min:'190',nozzle_temp_max:'240'},ams:{tray_now:'254',ams:[]}};}
  async connect(){this.online=true;this.tick();this.timer=setInterval(()=>this.tick(),500);}
  tick(){
   this.lastReportAt=Date.now();if(this.began){const elapsed=Date.now()-this.began;

@@ -33,7 +33,7 @@ function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.pri
 async function connectWorkshop(target,{save=false,showError=false}={}){
  prepareDevice();clearInterval(jobTimer);job=null;pairing=null;boothTarget=target;local=null;lock();syncConnection();
  try{
-  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(data.version<5)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;workshopStats.connected(data.statistics);
+  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(!Number.isInteger(data.version)||data.version<7)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;workshopStats.connected(data.statistics);
   if(save&&target)try{localStorage.setItem('click-booth-v1',JSON.stringify(target));}catch{}
   syncConnection();renderSlice();renderTicket();
   try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();if(printActive()&&ready())setStep(2);clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
