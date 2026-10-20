@@ -1,42 +1,126 @@
-# 집에서 이어가기 — 2026-10-21
+# 현재 상황 인수인계 — 2026-10-21 08:12 KST
 
-최신 기능과 집계 기준·배포 확인은 [2026-10-21 기록](DEPLOYMENT_2026-10-21.md)에 있다. 이전 날짜의 검증 문서는 당시 상태를 보관한 기록이다.
+다음 작업자는 이 문서부터 읽는다. 코드·중계기 API·보관 작업을 읽어 확인한 상태다. 프린터 상태와 집계는 이후 달라질 수 있으므로 다시 조회한다. 이전 날짜 문서는 해당 배포 시점의 기록이다.
 
-새 출력 설정·품질 비교·검증: [출력 전 설정과 프리셋](PRINT_PREPARATION_2026-10-21.md).
+## 가장 먼저 알아둘 점
 
-## 현재까지 확인한 범위
+**지금 이 PC에서 출력할 때는 http://127.0.0.1:5186/ 를 사용한다.** 이 주소의 브라우저에 기존 SM 디자인·기기 매칭이 있고, 실제 A1 mini 목록과 실시간 상태 수신을 확인했다.
 
-- 브라우저에서 모델링과 실제 Kiri 웹 슬라이싱을 한다. Bambu Studio는 대체 계산용 선택 사항이다.
-- A1 mini 연결 설정을 웹에 입력하고, 대기표와 개별 운영자 승인 없이 **바로 출력**한다.
-- 3D 프린터 튜토리얼에서 베드·노즐·필라멘트를 설명하며 실제 온도와 작업 상태를 표시한다.
-- 상단에 한국 날짜와 오늘/누적 체험 인원·완료 출력 수를 표시한다. 공방 연결 시 전체 합계, 미연결 시 이 브라우저 합계다. 과거 인원 기록은 없으므로 새 기능 적용 이후부터 쌓인다.
-- 웹 v1·v2 SM 각각 실물 완료 기록을 확인했다. v2 사진에서 표면 개선과 남은 글씨 빈틈을 확인했다. v3 채움 개선·0.12/0.16/0.20mm·PLA Matte 선택과 출력 전 보정 체크를 추가했다. v3 실물·받침 결합 확인은 남아 있다. 기기 완료를 품질 합격으로 해석하지 않는다.
-- 실제 학교 ChromeOS·학교 Wi-Fi·6대 동시 실물 운영과 정식 Store 배포는 아직 검증하지 않았다.
+- GitHub 공개 사이트 https://hichoni.github.io/3d-modeling/ 는 공방 연결 없이 열면 모델링·슬라이싱은 가능하지만 프린터 목록은 비어 있다. 설정이 지워진 것이 아니다.
+- 직전 안내에서 공개 사이트를 출력 진입 주소처럼 제공해 사용자가 빈 목록을 보게 됐다. 현재 탭을 연결된 로컬 5186 공방으로 옮겨 해결했다. 같은 혼동을 반복하지 않는다.
+- 중계기는 5188에서 실행 중이고 개발 미리보기 5186이 API 요청을 전달한다. 두 주소는 브라우저 저장소·기기 토큰이 다르므로 기존 작업을 이어가며 임의로 주소를 바꾸지 않는다.
+- 현재 부스 모드는 **false**다. 다른 크롬북·GitHub Pages에서 이 PC에 붙는 공유 부스 연결을 설정한 상태가 아니다. 기존 액세스 코드를 다시 입력하거나 네트워크 공개 범위를 임의로 넓히지 않는다.
+- 현재 사용자 요청은 **상황을 MD로 인수인계하는 것**이다. 새 출력·가열·설정 변경을 시작하라는 요청은 아니다.
 
-## 실행과 업데이트
+## 저장소와 배포
 
-1. 최신 main을 받는다. 기존 수정이 없는 체크아웃에서는 git pull --ff-only를 쓴다.
-2. Node.js 20 이상을 준비한다. 웹을 계산하고 중계기를 실행하는 데 npm 설치와 Bambu Studio는 필수가 아니다.
-3. 기존 공방이면 출력이 끝난 뒤 서버를 종료하고 비공개 **runtime 폴더 전체를 백업**한다. 새 공개 코드로 갱신하되 config.json·pairings.json·statistics.json·jobs는 보존한다.
-4. 새 PC는 configure-booth.cmd 또는 node bridge/setup.cjs로 미니를 등록한다. node bridge/server.cjs 또는 start-workshop.cmd로 중계기를 실행한다.
-5. http://127.0.0.1:5188/ 를 열고 **부스 연결 → A1 mini 직접 연결**에서 현재 LAN 액세스 코드를 입력해 저장·연결을 확인한다. 프린터의 LAN Only와 Developer Mode, 같은 Wi-Fi가 필요하다.
-6. 참가자 크롬북은 부스 링크를 열고 사용할 미니를 고른다. 한 대면 자동 매칭한다. 빈 베드·텍스처 PEI·0.4mm 노즐·외부 PLA 준비 뒤 바로 출력을 누른다.
-7. 최신 중계기는 API v7이다. HTML만 갱신하고 구버전 중계기를 계속 켜 두지 않는다. IP·일련번호·접근 코드·운영자 PIN은 공개 저장소와 ZIP에 없다.
+| 항목 | 상태 |
+| --- | --- |
+| 저장소 / 브랜치 | https://github.com/hichoni/3d-modeling · main |
+| 작업 사본 | 이 대화 작업공간의 `work/3d-modeling` |
+| 출력 전 설정·프리셋 기능 | `a32e1d3e32f3b19514d5f33870cd3a27e9159912` |
+| 최신 연결 유지 보완 | `4826bb2ef10473af856023c60a9260f1157c6d86` |
+| 이 인수인계 갱신 직전 HEAD | `0fe8140ee609c25ff012fd2128ba8141b1cb0820` |
+| 로컬 중계기 | http://127.0.0.1:5188/ · API v7 |
+| 현재 사용할 화면 | http://127.0.0.1:5186/ · HTTP 200 확인 |
 
-로컬 개발 미리보기: node scripts/serve.cjs → http://127.0.0.1:5186/ . /api 요청은 로컬 중계기 5188로 전달된다. 미리보기만 열어도 프린터 없이 디자인과 실제 슬라이싱을 할 수 있다.
+코드·공개 HTML·운영자 ZIP은 main에 반영돼 있다. [기능 Pages 배포](https://github.com/hichoni/3d-modeling/actions/runs/39506689387), [Windows 빌드·MSIX·격리 시작/종료·UI 검사](https://github.com/hichoni/3d-modeling/actions/runs/39506690767), [직전 문서 Pages 배포](https://github.com/hichoni/3d-modeling/actions/runs/39506987043)는 모두 성공했다.
 
-## 수정과 검사
+- 최신 자동 검사: **54개 통과·실패 0개**. 이번 갱신은 문서뿐이므로 전체 검사를 다시 실행하지 않는다.
+- 공개 HTML SHA-256: `8221cd25426b3546465e0b53f88c8542dda71d2d454c9ecc05c0955283bf7d76`
+- 공개 ZIP SHA-256: `4827a3a834f26c095d47c49ce23da3e16b1d0d1773a93b60052de7841c0b5360`
+- 공개 HTML·ZIP의 HTTP 200과 로컬 해시 일치는 직전 배포에서 확인했다. Windows 패키지는 미서명 검토용이며 Store 정식 출시는 하지 않았다.
 
-- 화면·중계기 변경: node scripts/build.cjs, node --test tests/*.test.cjs.
-- 웹 엔진 설정 변경: 먼저 node tools/slicer/build.cjs. 고정 소스·잠금 의존성은 tools/slicer/README.md를 따른다.
-- 통계 로직: src/statistics-core.js, src/statistics.js, bridge/statistics.cjs.
-- 바로 출력: bridge/direct-print.cjs, bridge/fleet.cjs, src/app.js.
-- 3D 안내: src/print-lesson.js, src/printer-tutorial.js.
-- 다운로드 ZIP과 Windows payload는 허용 목록이다. 새 런타임 require를 추가하면 scripts/package-operator.cjs와 desktop/prepare-payload.cjs에 포함됐는지 확인한다.
-- runtime, work, artifacts는 Git에서 제외한다. 다른 PC로 옮길 비공개 백업은 공개 저장소에 올리지 않는다.
+## 실제 프린터와 현재 집계
 
-## 문제 해결과 후속 검증
+- 등록 프린터: `mini-01`, 화면 이름 **A1 mini 1439**.
+- 현재 상태: **online=true, fresh=true, FINISH, busy=false, 오류 없음**.
+- LAN Only·Developer Mode 연결로 MQTT 상태 수신과 FTPS 출력 경로를 사용한다. 액세스 코드는 로컬 비공개 설정에 이미 저장돼 있다.
+- 본체 보고: 외부 스풀·PLA·흰색(`#FFFFFF`), 노즐 권장 190–240°C. AMS 목록은 비어 있다.
+- **종류·색상은 본체 등록값이며 실제 스풀을 센서로 식별한 결과가 아니다.** 초록색 실물 사진과 흰색 등록값이 다르지만 본체 설정을 임의로 바꾸지 않았다.
+- 현재 중앙 집계: 오늘 체험 **1명**, 누적 체험 **1명**, 오늘 완료 출력 **2개**, 누적 완료 출력 **3개**. 한국 날짜 기준이다. 과거 인원 기록이 없어 집계 기능 도입 이후부터 센다.
+- `runtime`의 설정·매칭·통계·작업은 보존했다. 가짜 프린터 UI 시험 서버는 종료했고 시험 파일은 Git에서 제외된 `work`에 있다.
 
-출력 결과가 불확실하면 재전송하지 않고 본체를 확인한다. ⚙ 운영자 PIN은 전체 프린터 관리·매칭 복구·이전 작업 정리에 쓴다. 출력 중에는 서버나 프린터 연결을 재시작하지 않는다. 학교 네트워크/앱 제어 정책은 우회하지 않는다.
+## 완료한 기능
 
-다음 검증은 v2 표면·실 끌림·치수·받침 결합, 학교 ChromeOS와 여러 미니의 동시 운영이다. 상세 안내: [부스 운영](BOOTH_GUIDE.md), [현장 매칭](FLEET.md), [크롬북](CHROMEBOOK.md), [실물 기록](PRINT_VALIDATION_2026-10-20.md).
+1. **14×14mm 키캡 모델링과 실제 웹 슬라이싱**: Kiri worker가 브라우저에서 계산한다. 이 기본 경로에는 Bambu Studio가 필요 없다. 실제 경로의 층 쌓기·한 층 분리·속 채움·완성 모델을 살펴본다.
+2. **바로 출력**: 대기표·개별 운영자 PIN 승인 없이 브라우저 계산 → 중계기 검증·3MF → 해당 프린터 업로드·시작으로 이어진다. 다음 작품을 자동 출력하지 않는다.
+3. **웹에서 연결 설정 입력**: 부스 연결 창에서 LAN 액세스 코드를 직접 입력·저장·연결 확인한다. 메모장 편집을 요구하지 않는다. 현재 PC는 이미 연결돼 있다.
+4. **출력 전 보정**: 베드 레벨링·자동 유량 보정을 각각 체크/해제한다. 기본 모두 켬이며 브라우저·프린터별 선택을 저장한다. 시작 순간 작업에 복사하고 전송·출력 중에는 잠근다. 실제 `bed_leveling`, `flow_cali`까지 반영한다.
+5. **필라멘트 정보**: 최신 본체 재질·색상·권장 온도를 표시하고 오래된 값은 숨긴다. 현재 출력은 외부 PLA 전용이며 보고된 비-PLA나 사용 중인 AMS 재료는 시작을 막는다. AMS 슬롯은 읽기 전용이고 자동 라우팅은 없다.
+6. **웹 품질 선택**: 0.12mm 정밀·0.16mm 균형·0.20mm 표준, Generic PLA·Bambu PLA Matte. 선택 변경 시 기존 계산을 버리고 다시 슬라이싱한다. 첫 층은 모두 0.20mm이며 0.4mm 노즐 고정이다.
+7. **3D A1 mini 튜토리얼**: 베드·노즐·필라멘트·층 쌓기·식히기 애니메이션과 실제 온도·목표 온도·작업 상태. 원리 미리보기는 하드웨어를 움직이지 않는다.
+8. **상단 날짜·카운터**: 오늘/누적 체험 인원·완료 출력 수. 공방 연결 시 중앙 합계, 미연결 시 이 브라우저 기준이다. 같은 체험 새로고침·재시도와 작업 완료 중복 합산을 막는다.
+
+## 실물 출력과 품질
+
+현재 보관 작업 3개 모두 SM·실제 웹 슬라이싱 출력이며 중계기 상태는 complete다.
+
+| 프로필 | 층 수 | 작품 경로 예상 / 작품 재료 | 실물 피드백 |
+| --- | --- | --- | --- |
+| v1 · 0.20mm | 10 | 약 2분 13초 / 0.270g | 바닥·윗면·글씨의 빈틈과 실 끌림 |
+| v2 · 0.20mm | 10 | 약 2분 26초 / 0.331g | 전반적 개선. S 안쪽 틈, M 꺾이는 부분·접합부 구멍이 남았다는 사진 피드백 |
+| v3 · 0.20mm Generic PLA | 10 | 약 2분 29초 / 0.337g | **2026-10-21 08:09:34 KST 기기 완료 확인. 새 실물 사진·품질 피드백은 아직 없음** |
+
+**최신 v3 작업**:
+
+- 작업 ID `8bcdd4421adecb227e4a6996`.
+- 접수 2026-10-21 08:02:07 KST → 완료 08:09:34 KST.
+- 정확한 프로필 `click-paths-0.4-0.2-generic-v3`.
+- 저장된 옵션은 **bedLeveling=false, flowCalibration=false**. 사용자가 두 옵션을 끈 상태로 보낸 작업이다. 기본값 모두 켬과 이 작업의 실제 선택을 혼동하지 않는다.
+- 기기 완료는 품질 합격이나 보정 효과 검증을 뜻하지 않는다. 위 예상은 작품 경로 범위이며 예열·퍼지·보정을 포함한 총시간/총재료와 직접 비교하지 않는다.
+
+v2는 Kiri/Bambu 비드 단면 계산 차이와 재료 유량 0.98을 반영하고 윗면 5겹·바닥 3겹·thin-fill을 적용했다. v3는 글씨 형상 자체에 구멍이 없음을 확인하고 Kiri 채움/벽 겹침을 15→35%로 늘렸다. 같은 SM 경로 진단의 빈틈 표본은 줄었지만 실물 개선을 단정하지 않았다.
+
+**Bambu Studio의 A1 mini PLA Matte·0.20mm Standard와 동급 품질이라고 확정하지 않는다.** 일부 온도·유량·선폭·층 수를 참고했지만 엔진·채움·속도·냉각이 다르다. 웹은 12mm³/s 상한을 유지하고 공식 Matte의 22mm³/s를 그대로 적용하지 않는다. 0.08mm·강도·다른 노즐 옵션은 아직 없다.
+
+다음 비교 후보로 **0.16mm·Bambu PLA Matte·두 보정 모두 켬**을 안내했으나 이 조합의 실물 출력을 완료했다고 기록하면 안 된다. 실제 재료가 해당 Matte인지 확인하고 새 출력은 사용자 요청 후 진행한다. 얇은 층만으로 가로 방향 빈틈이 자동 해결되지는 않는다.
+
+## 다음 작업 우선순위
+
+1. **방금 완료된 v3 실물 피드백**: S/M 글씨 속 틈·M 접합부·밑판 외벽 안쪽·바닥면·실 끌림·치수·받침 끼움. 앞선 v2 사진을 v3 결과로 오인하지 않는다.
+2. 사용자 요청 시 같은 디자인으로 조건을 정해 비교 출력한다. 현재 v3 기준은 0.20mm Generic/보정 둘 다 끔이므로 재료·층 높이·보정 옵션을 기록한다.
+3. **공개 웹/로컬 공방 진입 UX 개선 여지**: 빈 목록의 이유와 이 PC 공방/다른 PC 부스 연결 경로를 더 분명히 안내할 수 있다. 자동 연결·주소 간 디자인/설정 자동 이관은 구현하지 않았다. 현재 해결은 기존 5186 공방으로 이동한 것이다.
+4. 실제 학교 ChromeOS·학교 Wi-Fi·여러 미니 동시 운영, 앱 제어 정책, 정식 Store 배포는 별도 미검증이다.
+
+## 실행·업데이트
+
+지금은 서버가 실행 중이므로 기존 주소부터 확인한다. 출력 중이거나 결과가 불확실하면 중계기·연결을 재시작하지 않는다. 동일 자격 증명으로 연결되고 보고가 최신이면 재확인 시 연결을 유지한다. 오래됐거나 자격 증명이 바뀌면 discovery·TLS 검증을 다시 한다.
+
+새 실행이 필요하면 저장소 루트에서 각각 별도 프로세스로 실행한다. 이미 포트를 사용 중이면 중복 실행하지 않는다.
+
+```powershell
+node bridge/server.cjs
+node scripts/serve.cjs
+```
+
+중계기는 5188, 미리보기는 5186. Node.js 20 이상이 필요하고 일반 실행에는 npm 설치가 필수가 아니다.
+
+다른 PC 업데이트는 작업이 끝난 뒤 서버를 종료하고 **runtime 전체를 비공개 백업**한 후 공개 코드만 갱신한다. config.json·pairings.json·statistics.json·jobs를 새 기본 파일로 덮어쓰지 않는다. 새 PC 최초 등록은 configure-booth.cmd 또는 node bridge/setup.cjs다. 다른 기기 참가자 접속에는 별도 부스 모드·공유 링크·같은 네트워크 허용이 필요하다.
+
+## 주요 파일과 확인 명령
+
+| 영역 | 파일 |
+| --- | --- |
+| 사용자 흐름·출력 UI | src/app.js, src/index.html, src/style.css |
+| 공방 연결·매칭 | src/connection.js, bridge/connection-settings.cjs, bridge/pairings.cjs |
+| 보정 체크·필라멘트 | src/print-preparation.js, bridge/print-preparation.cjs |
+| 웹 프리셋·엔진 | src/print-profiles.js, src/browser-slice-worker.js, src/browser-slicer.js |
+| 경로 검증·3MF·출력 시작 | src/toolpaths.js, bridge/browser-job.cjs, bridge/direct-print.cjs, bridge/fleet.cjs |
+| 층 시각화·프린터 튜토리얼 | src/layer-view.js, src/print-lesson.js, src/printer-tutorial.js |
+| 날짜·통계 | src/statistics-core.js, src/statistics.js, bridge/statistics.cjs |
+| ZIP·Windows 허용 목록 | scripts/package-operator.cjs, desktop/prepare-payload.cjs |
+
+화면·중계기 변경 후:
+
+```powershell
+node scripts/build.cjs
+node --test tests/*.test.cjs
+git diff --check
+```
+
+엔진·공통 프리셋을 바꾸면 먼저 node tools/slicer/build.cjs로 worker를 재생성한다. 고정 upstream과 잠금 의존성은 [빌드 안내](../tools/slicer/README.md)를 따른다. index.html·downloads/booth-setup.zip·worker·해시 파일을 소스와 함께 갱신한다. 새 런타임 모듈은 ZIP과 Windows 두 허용 목록에 포함한다.
+
+runtime·work·artifacts 및 실제 IP·일련번호·액세스 코드·운영자 PIN·부스 키를 공개 저장소나 ZIP에 넣지 않는다. 소유자·매칭 버전·해시·중복 시작 방지·최신 상태·SD·0.4mm 노즐 검사를 유지한다. 학교 정책이나 인증서 검증을 우회하지 않는다.
+
+상세 기록: [출력 전 설정·품질 프리셋·배포](PRINT_PREPARATION_2026-10-21.md), [집계 도입 배포](DEPLOYMENT_2026-10-21.md), [이전 실물 진단](PRINT_VALIDATION_2026-10-20.md), [웹 구현 범위](WEB_FIRST.md), [현장 매칭](FLEET.md), [부스 운영](BOOTH_GUIDE.md).
