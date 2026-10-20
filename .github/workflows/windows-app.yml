@@ -19,6 +19,10 @@ on:
       publisher_display_name:
         description: Publisher display name from Partner Center (Store only)
         type: string
+      version:
+        description: Four-part MSIX version; increment for each Store update, for example 3.0.1.0
+        type: string
+        default: '3.0.0.0'
 permissions:
   contents: read
 jobs:
@@ -30,6 +34,7 @@ jobs:
       DOTNET_GENERATE_ASPNET_CERTIFICATE: 'false'
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
       BUILD_MODE: ${{ inputs.mode || 'Preview' }}
+      PACKAGE_VERSION: ${{ inputs.version || '3.0.0.0' }}
       PACKAGE_NAME: ${{ inputs.identity_name }}
       PACKAGE_PUBLISHER: ${{ inputs.publisher }}
       PACKAGE_PUBLISHER_DISPLAY: ${{ inputs.publisher_display_name }}
@@ -57,7 +62,7 @@ jobs:
           NODE_BINARY: ${{ steps.tools.outputs.node }}
           MAKEAPPX_BINARY: ${{ steps.tools.outputs.makeappx }}
         run: |
-          $arguments=@{NodePath=$env:NODE_BINARY;MakeAppxPath=$env:MAKEAPPX_BINARY;OutputRoot=(Join-Path $env:GITHUB_WORKSPACE 'artifacts/ci');Mode=$env:BUILD_MODE}
+          $arguments=@{NodePath=$env:NODE_BINARY;MakeAppxPath=$env:MAKEAPPX_BINARY;OutputRoot=(Join-Path $env:GITHUB_WORKSPACE 'artifacts/ci');Mode=$env:BUILD_MODE;Version=$env:PACKAGE_VERSION}
           if ($env:BUILD_MODE -eq 'Store') {
             if (-not $env:PACKAGE_NAME -or -not $env:PACKAGE_PUBLISHER -or -not $env:PACKAGE_PUBLISHER_DISPLAY) { throw 'Enter all three exact Partner Center identity values. This workflow does not create or verify your Store account.' }
             $arguments.IdentityName=$env:PACKAGE_NAME; $arguments.Publisher=$env:PACKAGE_PUBLISHER; $arguments.PublisherDisplayName=$env:PACKAGE_PUBLISHER_DISPLAY

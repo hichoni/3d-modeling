@@ -38,14 +38,10 @@ public sealed class Supervisor : IDisposable
         if (Running) return;
         Payload.Verify(root);
         if (settings.Booth.Enabled && !Configuration.Addresses().Contains(settings.Booth.Host)) throw new InvalidOperationException("PC의 Wi-Fi 주소가 바뀌었어요. 주소를 다시 선택하고 저장해 주세요.");
-        using (var probe = new System.Net.Sockets.TcpClient())
-        {
-            try { await probe.ConnectAsync("127.0.0.1", settings.Port).WaitAsync(TimeSpan.FromSeconds(1)); }
-            catch (System.Net.Sockets.SocketException) { goto Available; }
-            catch (TimeoutException) { throw new InvalidOperationException("공방 포트 사용 여부를 확인할 수 없어요."); }
+        // Do not infer an occupied port from a short outbound connection timeout.
+        // Windows can delay ECONNREFUSED even on loopback. The real bind is checked by Node as well.
+        if (System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(listener => listener.Port == settings.Port))
             throw new InvalidOperationException("같은 포트의 공방이 이미 실행 중이에요. 기존 공방의 작업 상태를 확인하고 종료한 뒤 다시 시작해 주세요.");
-        }
-        Available:
         nonce = Configuration.RandomKey(); instance = Guid.NewGuid().ToString("N");
         var start = new ProcessStartInfo(Path.Combine(root, "payload", "node.exe"))
         {

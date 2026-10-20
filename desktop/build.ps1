@@ -25,7 +25,7 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT='1'
 $env:DOTNET_GENERATE_ASPNET_CERTIFICATE='false'
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE='1'
 $env:NUGET_PACKAGES=Join-Path $repoRoot 'artifacts\nuget-packages'
-& $DotnetPath publish (Join-Path $PSScriptRoot 'ClickBooth\ClickBooth.csproj') -c Release -r win-x64 --self-contained true -o $stage --nologo
+& $DotnetPath publish (Join-Path $PSScriptRoot 'ClickBooth\ClickBooth.csproj') -c Release -r win-x64 --self-contained true -o $stage --nologo ('-p:Version='+($Version -replace '\.0$','')) ('-p:AssemblyVersion='+$Version)
 if ($LASTEXITCODE -ne 0) { throw 'Desktop publish failed' }
 if ($MakeAppxPath) {
  & (Join-Path $PSScriptRoot 'package.ps1') -Stage $stage -MakeAppxPath $MakeAppxPath -IdentityName $IdentityName -Publisher $Publisher -PublisherDisplayName $PublisherDisplayName -Version $Version -Mode $Mode
