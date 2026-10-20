@@ -7,5 +7,5 @@ module.exports=function licenses(root,meta){
  for(const [file,end]of [['clip2.js',133],['jspoly.js',95]])parts.push('\n\n===== upstream '+file+' notices =====\n'+read('artifacts/grid-apps/src/ext/'+file).split('\n').slice(0,end).join('\n'));
  parts.push('\n\n===== QuickJS embedded engine =====\n'+read('vendor/kiri/QUICKJS-LICENSE.txt'));
  parts.push('\n\n===== esbuild preserved notices =====\n'+read('vendor/kiri/fdm-worker.js.LEGAL.txt'));
- fs.writeFileSync(path.join(root,'vendor/kiri/LICENSES.txt'),parts.join('\n').replace(/[ \t]+$/gm,'')+'\n');
+ fs.writeFileSync(path.join(root,'vendor/kiri/LICENSES.txt'),parts.join('\n').replace(/[ \t]+$/gm,'').trimEnd()+'\n');
 };
