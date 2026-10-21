@@ -1,5 +1,15 @@
 # 인수인계 — Click Studio·운영자 공방 (2026-10-21)
 
+## 최신: 크롬북 직접 연결 앱 — 출력 PC 없이 (2026-10-21)
+
+사용자 요청: Bambu Studio를 분석해 **크롬북에서 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결 → 슬라이싱 → 출력**을 노트북 경유 없이 하도록 보완. [CHROMEBOOK_DIRECT.md](CHROMEBOOK_DIRECT.md)가 설치·사용·검증 기록이다.
+
+- 방식: Chrome **Isolated Web App**(서명 번들 `downloads/click-studio.swbn`) + **Direct Sockets**. 앱 안에 TLS 1.2(`src/direct/tls.js`), MQTT·FTPS(`src/direct/printer-link.js`), SSDP·인증서 검색(`src/direct/discovery.js`), 중계기 API를 그대로 흉내 내는 앱 내부 중계기(`src/direct/relay.js`)를 넣었다. 기존 화면은 API 호출만 바뀌고 그대로 쓴다. 공개 Pages에서는 꺼져 있다.
+- 중계기와 공유: 출력 파일·안전 규칙을 `src/print-job.js`로 옮기고 `bridge/browser-job.cjs`·`core.cjs`·`print-preparation.cjs`가 이를 쓴다. 출력 파일 내용은 이전과 동일함을 테스트로 확인했다. 새로 `plate_1.png`/`plate_1_small.png` 썸네일(선택)을 넣는다. ZIP·Windows 허용 목록에 `src/print-job.js`를 추가했다.
+- 검증: 자동 테스트 + `scripts/iwa-e2e.cjs`(실제 Chromium에 앱 설치 ↔ 모의 A1 mini, 검색·코드·슬라이싱·업로드·시작·일시정지/계속·완료) 통과. 서명 번들 설치·실행 확인. **실물 A1 mini·실제 ChromeOS 시험은 안 했다.** 다음 작업은 문서의 첫 실물 시험 체크리스트다.
+- 서명 키: 이번 클라우드 세션에서 새로 만든 `runtime/iwa-signing-key.pem`(Git 제외)으로 서명했다. 세션 컨테이너가 사라지면 이 키도 사라지므로 사용자가 비공개로 보관해야 한다. 키가 없으면 다음 버전은 다른 앱 ID가 되어 재설치가 필요하다. 앱 ID는 `downloads/click-studio.json`.
+- 학교 일괄 배포(관리 콘솔 강제 설치)는 Chrome 143+의 Google 허용 목록 등록이 필요하며 아직 신청하지 않았다.
+
 ## 다음 작업자는 여기부터
 
 사용자 목표는 **크롬북/노트북의 웹 화면에서 모델링 또는 STL 불러오기 → 웹 슬라이싱 → 여러 A1 mini와 현장 1:1 매칭 → 출력**이다. 14×14mm 둥근 사각 끼움판의 이름 새기기 체험과 일반 STL 스튜디오를 함께 제공한다. 프린터와 통신하는 현장 Windows 중계기가 필요하며, 학교 PC의 Smart App Control 차단을 해결하기 위해 개인 명의 Microsoft Store 앱을 준비 중이다.

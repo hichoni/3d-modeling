@@ -1,0 +1,9 @@
+{
+  "name": "click-studio-iwa-signer",
+  "private": true,
+  "description": "Signs artifacts/iwa-app into the Chromebook Isolated Web App bundle. Build-time only; never shipped.",
+  "dependencies": {
+    "wbn": "0.0.9",
+    "wbn-sign": "0.3.3"
+  }
+}
