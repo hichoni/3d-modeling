@@ -5,7 +5,7 @@
 // --shell runs the auto-updating path: the app's shell loads the public pages from a local HTTPS "website" in a frame.
 const http=require('node:http'),net=require('node:net'),https=require('node:https'),fs=require('node:fs'),path=require('node:path'),dgram=require('node:dgram'),os=require('node:os');
 const {MockPrinter}=require('../tests/helpers/mock-printer.cjs'),{zipEntries}=require('../bridge/core.cjs');
-const root=path.resolve(__dirname,'..'),app=path.join(root,'artifacts','iwa-app'),shellMode=process.argv.includes('--shell'),shots=process.argv.slice(2).find(a=>!a.startsWith('--'))||null;
+const root=path.resolve(__dirname,'..'),app=path.join(root,'artifacts','iwa-app'),shellMode=process.argv.includes('--shell')||process.argv.includes('--android'),androidMode=process.argv.includes('--android'),shots=process.argv.slice(2).find(a=>!a.startsWith('--'))||null;
 const playwright=(()=>{for(const p of ['playwright',path.join(process.execPath,'../../lib/node_modules/playwright')])try{return require(p);}catch{}throw Error('Playwright is required');})();
 const testCA=fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-ca.pem'),'utf8');
 const patch=`;globalThis.BAMBU_CA_PEM+=${JSON.stringify(testCA)};(()=>{const o=DirectDiscovery.privateIPv4;DirectDiscovery.privateIPv4=ip=>ip==='127.0.0.1'||o(ip);})();`;
@@ -20,19 +20,29 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
  const server=http.createServer((q,r)=>{let p=decodeURIComponent(new URL(q.url,'http://x').pathname);if(p.endsWith('/'))p+='index.html';const file=path.join(app,p);if(!file.startsWith(app)||!fs.existsSync(file)){r.writeHead(404);return r.end();}
   let body=fs.readFileSync(file);if(/\/(studio|booth)\.js$/.test(p))body=Buffer.concat([body,Buffer.from(patch)]);if(p==='/shell.js')body=Buffer.from(body.toString().replace(/REMOTE="[^"]*"/,'REMOTE="https://127.0.0.1:8443/"').replace('ALLOW_LOOPBACK=false','ALLOW_LOOPBACK=true'));r.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream'});r.end(body);}).listen(8099,'127.0.0.1');
  // The "website" for --shell: the built public pages over HTTPS, trusting the installed test app's origin.
- const website=https.createServer({key:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.key.pem')),cert:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.pem'))},(q,r)=>{const p=new URL(q.url,'https://x').pathname,name={'/':'index.html','/index.html':'index.html','/studio.html':'studio.html'}[p];if(!name){r.writeHead(404);return r.end();}
+ const website=https.createServer({key:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.key.pem')),cert:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.pem'))},(q,r)=>{const p=new URL(q.url,'https://x').pathname;if(p==='/favicon.ico'){r.writeHead(204);return r.end();}const name={'/':'index.html','/index.html':'index.html','/studio.html':'studio.html'}[p];if(!name){r.writeHead(404);return r.end();}
   const html=fs.readFileSync(path.join(root,name),'utf8').replace(/globalThis\.CLICK_SHELL_ORIGINS=\[[^\]]*\]/,()=>'globalThis.CLICK_SHELL_ORIGINS='+JSON.stringify([appId])).replace('</body>',()=>pagePatch+'</body>');r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end(html);}).listen(8443,'127.0.0.1');
- const profile=fs.mkdtempSync(path.join(os.tmpdir(),'iwa-e2e-')),errors=[];
- const ctx=await playwright.chromium.launchPersistentContext(profile,{headless:false,ignoreHTTPSErrors:true,viewport:{width:1366,height:820},args:['--enable-features=IsolatedWebApps,IsolatedWebAppDevMode','--install-isolated-web-app-from-url=http://127.0.0.1:8099','--ignore-certificate-errors']});
+ const profile=fs.mkdtempSync(path.join(os.tmpdir(),'iwa-e2e-')),errors=[],consoleLog=[];
+ const ctx=await playwright.chromium.launchPersistentContext(profile,{headless:false,ignoreHTTPSErrors:true,viewport:{width:1366,height:820},args:androidMode?['--ignore-certificate-errors']:['--enable-features=IsolatedWebApps,IsolatedWebAppDevMode','--install-isolated-web-app-from-url=http://127.0.0.1:8099','--ignore-certificate-errors']});
+ // --android: a plain browser page plus the Android app's native socket bridge, emulated in Node.
+ const natives=new Map();
+ if(androidMode){const {createNative}=require('../tests/helpers/fake-android-native.cjs');
+  await ctx.exposeBinding('__clickNativeSend',({page},text)=>{let n=natives.get(page);if(!n){n=createNative(j=>page.evaluate(x=>window.__clickNativeDeliver?.(x),j).catch(()=>{}),{allowLoopback:true});natives.set(page,n);}n.handle(text);});
+  await ctx.addInitScript(()=>{if(location.protocol!=='https:')return;const ls=[];window.__clickNativeDeliver=s=>{for(const f of ls)f({data:s});};window.ClickNative={postMessage:s=>{window.__clickNativeSend(s);},addEventListener:(t,f)=>{if(t==='message')ls.push(f);}};});}
  const finish=async code=>{clearInterval(beacon);ssdp.close();server.close();website.close();await ctx.close().catch(()=>{});await printer.stop();fs.rmSync(profile,{recursive:true,force:true});process.exit(code);};
  try{
-  const admin=await ctx.newPage();let id=null;for(let i=0;i<40&&!id;i++){await admin.goto('chrome://web-app-internals');await admin.waitForTimeout(500);id=(await admin.evaluate(()=>document.body.innerText)).match(/isolated-app:\/\/[a-z0-9]+/)?.[0];}
+  let page=null,id=null;
+  if(androidMode){page=await ctx.newPage();appId='https://127.0.0.1:8443';console.log('android bridge mode');}
+  else{
+  const admin=await ctx.newPage();for(let i=0;i<40&&!id;i++){await admin.goto('chrome://web-app-internals');await admin.waitForTimeout(500);id=(await admin.evaluate(()=>document.body.innerText)).match(/isolated-app:\/\/[a-z0-9]+/)?.[0];}
   if(!id)throw Error('IWA was not installed');console.log('installed',id,shellMode?'(shell mode)':'');appId=id;
   const cdp=await ctx.newCDPSession(admin);await cdp.send('PWA.launch',{manifestId:id+'/'});
-  let page=null;for(let i=0;i<40&&!page;i++){await admin.waitForTimeout(250);page=ctx.pages().find(p=>p.url().startsWith(id));}if(!page)throw Error('IWA window did not open');
-  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(e.message));
+  for(let i=0;i<40&&!page;i++){await admin.waitForTimeout(250);page=ctx.pages().find(p=>p.url().startsWith(id));}if(!page)throw Error('IWA window did not open');
+  }
+  page.on('response',r=>{if(r.status()===404)consoleLog.push('404: '+r.url());});page.on('console',m=>{consoleLog.push(m.type()+': '+m.text());if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(e.message));
   if(shots)await page.screenshot({path:path.join(shots,'iwa-1-launcher.png')});
-  const open=async (target,pageName)=>{if(!shellMode){await target.goto(id+(pageName==='booth'?'/booth.html':'/studio.html#connect=1'));return target;}
+  const open=async (target,pageName)=>{if(androidMode){await target.goto('https://127.0.0.1:8443/'+(pageName==='booth'?'index.html':'studio.html#connect=1'));await target.waitForFunction(()=>window.ClickAndroid?.version,null,{timeout:15000});console.log('android page:',target.url().split('#')[0],'native',await target.evaluate(()=>ClickAndroid.version));return target;}
+   if(!shellMode){await target.goto(id+(pageName==='booth'?'/booth.html':'/studio.html#connect=1'));return target;}
    await target.goto(id+'/open.html?page='+pageName+(pageName==='studio'?'#connect=1':''));let f=null;for(let i=0;i<80&&!f;i++){await target.waitForTimeout(250);f=target.frames().find(x=>x.url().startsWith('https://127.0.0.1:8443/'));}
    if(!f)throw Error('shell did not show the website');await f.waitForFunction(()=>window.ClickShell?.version,null,{timeout:15000});console.log('shell frame:',f.url().split('?')[0],'shell',await f.evaluate(()=>ClickShell.version));return f;};
   let ui=await open(page,'studio');await ui.waitForSelector('#connectionDialog[open]');
@@ -69,5 +79,5 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
    console.log('slow receiver:',st.got,'bytes',st.fin?'+ FIN':'(no FIN)');if(st.got!==11*16384||!st.fin)throw Error('Direct Sockets transport lost data or never closed');}
   const real=errors.filter(e=>!/favicon|ERR_FILE_NOT_FOUND/.test(e));console.log('page errors:',real.length?real:'none');
   if(!entries.has('Metadata/plate_1.png')||real.length)throw Error('E2E expectations failed');console.log('E2E OK');await finish(0);
- }catch(e){console.error('E2E FAILED:',e.message,errors);if(shots)await ctx.pages().at(-1)?.screenshot({path:path.join(shots,'iwa-failure.png')}).catch(()=>{});await finish(1);}
+ }catch(e){console.error('E2E FAILED:',e.message,errors);try{const pg=ctx.pages().at(-1);console.error('state:',await pg.evaluate(()=>document.getElementById('printMonitor')?.innerText+' | toast: '+document.getElementById('toast')?.textContent+' | dialog: '+(document.getElementById('printDialog')?.open?document.getElementById('printDialog').innerText.slice(-300):'closed')).catch(x=>x.message));console.error('console:',consoleLog.slice(-15));}catch{}if(shots)await ctx.pages().at(-1)?.screenshot({path:path.join(shots,'iwa-failure.png')}).catch(()=>{});await finish(1);}
 })();
