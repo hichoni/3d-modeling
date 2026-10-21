@@ -1,5 +1,13 @@
 # 현재 상황 인수인계 — 2026-10-21 STL 스튜디오 추가
 
+## 최신: 개인 개발자 등록·앱 예약 완료, 제출 초안 준비
+
+사용자가 본인 확인·프로필·개발자 계약 동의를 직접 완료했고 Microsoft의 계정 생성 완료를 확인했다. Partner Center 앱 **상상을 클릭하다! 운영자 공방**, Store ID `9N2V9KQDSJ0G`, Submission 1 초안을 만들었다. 실제 Name/Publisher/PublisherDisplayName은 [desktop/store-identity.json](../desktop/store-identity.json)에 기록했다. 계정 등록이나 식별값 전달을 다시 요구하지 않는다.
+
+실제 식별값의 `3.0.0.0` Store 제출용 MSIX 생성·MakeAppx 검증·공개 payload 41개 해시 검사를 마쳤다. 설치·차단 우회·프린터 작동은 하지 않았다. Partner Center 패키지 업로드는 장시간 응답 지연 후 **Error**로, 저장 성공이 확인되지 않았다. 자동 대용량 파일 선택을 반복하지 말고 사용자 직접 선택으로 이어간다. 심사 제출·Microsoft 서명·공개·학교 설치는 미완료다. 파일 경로·해시·다음 절차는 [STORE_PROGRESS_2026-10-21.md](STORE_PROGRESS_2026-10-21.md)에 있다.
+
+아래의 ‘계정 등록·본인 확인·실제 식별값이 필요’ 문구는 이 작업 이전의 기록이다. 현재 남은 외부 작업은 업로드·제출 자료 검토·심사·실제 설치 검증이다.
+
 ## 현재 차단 상태 · 11:49 KST 재확인
 
 사용자가 최신 ZIP의 `configure-booth.cmd` 또는 `start-workshop.cmd`를 실행할 때 Smart App Control 차단을 다시 보고했다. 읽기 전용 확인에서 SAC는 On이며 11:48~11:49에 탐색기의 cmd.exe 실행 차단 이벤트가 있었다. 다운로드·페이지 배포 성공과 학교 PC 설치·실행 성공을 구분한다. 현재 ZIP/Preview MSIX는 정식 서명 전이며, 우회 실행이나 보안 설정 변경을 하지 않았다.

@@ -1,10 +1,12 @@
 # Microsoft Store 제출 자료 초안
 
-이 문서는 계정 소유자가 검토할 제출 초안입니다. 아직 Store에 등록·심사 제출하지 않았고, 아래 문구가 심사 통과를 보장하지 않습니다. 개인 명의 계정의 실제 Publisher 식별값은 Partner Center에서 가져옵니다.
+이 문서는 계정 소유자가 검토할 제출 초안입니다. 앱 등록과 제출 초안 생성은 완료했으며, 최종 심사에는 제출하지 않았습니다. 아래 문구가 심사 통과를 보장하지 않습니다.
+
+**2026-10-21 갱신:** 계정 등록·앱 이름 예약·실제 식별값 확인과 제출 초안 생성은 완료했습니다. 실제 값은 [store-identity.json](../desktop/store-identity.json), 패키지 경로·검증·업로드 Error 상태는 [현재 진행 기록](STORE_PROGRESS_2026-10-21.md)을 따릅니다. 최종 심사 제출·서명·공개는 하지 않았습니다.
 
 ## 앱 정보
 
-- 표시 이름 후보: 상상을 클릭하다! 운영자 공방
+- 예약한 표시 이름: 상상을 클릭하다! 운영자 공방
 - 용도: 교육 부스의 3D 키캡 클리커 만들기 운영 도구
 - 배포 목표: 개인 명의 무료 Windows 앱, x64, 한국어
 - 최소 OS 패키지 설정: Windows 10 2004 (빌드 19041) 이상. 실제 지원·보안 업데이트가 제공되는 Windows 11에서 우선 검증합니다.
@@ -17,22 +19,24 @@
 
 이 앱은 Bambu Lab의 공식 앱이 아닙니다. 기본 슬라이싱은 참가자 브라우저에서 수행하고, 운영자 앱은 검증·파일 작성·프린터 통신을 중계합니다. 학교 네트워크나 PC 정책이 기기 간 통신을 막으면 담당자 확인이 필요합니다.
 
+별도 STL 스튜디오에서는 STL 가져오기·배치·크기 조정, 서포트·브림 설정, 실제 층별 미리보기와 출력 검토를 제공합니다. A1 mini·0.4mm 노즐·외부 PLA·텍스처 PEI 조건으로 제한합니다. 모델링 체험 시간과 실제 출력 시간은 다릅니다.
+
 ## runFullTrust 권한 사유 초안 · 심사 담당자용
 
-The app is a desktop relay for a supervised educational 3D-printing booth. It runs a bundled official Node.js runtime without CMD or PowerShell launchers and hosts an HTTP server on port 5188. Participants slice their own fixed 14mm models in the browser. The relay validates the resulting paths and prepares a fixed A1 mini print package. A separately installed Bambu Studio executable is used only for an optional alternative slicing action. With booth mode explicitly enabled, Chromebooks on the same local network access the relay through an authenticated booth link. The relay communicates with individually configured A1 mini printers using TLS MQTT and FTPS and verifies each configured printer through local discovery. An operator PIN, explicit bed/material checks, and acknowledgement of the experimental browser profile are required before a print starts. No automatic print start, kernel drivers or automatic firewall/policy changes are included. Full-trust desktop process and local file/network access are required for these functions. Physical validation of the new browser-generated print package is pending; this draft must be reviewed before submission.
+The app is a desktop relay for a supervised educational 3D-printing workshop. It runs a bundled official Node.js runtime without CMD or PowerShell launchers and hosts an HTTP server on port 5188. Participants design fixed 14mm inserts or import supported STL models in the web studio, then slice in the browser. The relay validates model bounds, profiles and paths and prepares an A1 mini print package. A separately installed Bambu Studio executable is used only for an optional alternative slicing action. With booth mode explicitly enabled, Chromebooks on the same local network access the relay through an authenticated booth link. The relay communicates with individually configured A1 mini printers using TLS MQTT and FTPS. An operator PIN and explicit bed/material review are required before a print starts. No automatic print start, kernel drivers or automatic firewall/policy changes are included. Full-trust desktop process and local file/network access are required for these functions. General STL/support physical printing, target-school policy, signed installation and update validation remain pending; review these limitations before certification submission.
 
 ## 심사 재현 절차
 
 1. 앱을 실행합니다. 외부 하드웨어가 없으면 빈 미니 슬롯을 유지할 수 있습니다.
-2. Bambu Studio를 설치하고 실행 파일 경로를 선택합니다. 운영자 PIN은 설정 화면에서 지정합니다.
+2. 운영자 PIN은 설정 화면에서 지정합니다. Bambu Studio 경로는 선택 사항이며 기본 웹 슬라이싱에는 설치가 필요하지 않습니다.
 3. 로컬 체험은 ‘크롬북 접속 허용’을 끈 채 시작합니다. 브라우저에서 운영자 화면을 엽니다.
-4. 프린터가 없어도 모델링과 Bambu Studio를 이용한 실제 슬라이싱은 확인할 수 있습니다. 물리 출력에는 별도 A1 mini와 현장 확인이 필요합니다.
+4. 프린터가 없어도 브라우저 모델링·STL 가져오기·웹 엔진의 실제 슬라이싱과 층 미리보기를 확인할 수 있습니다. 물리 출력에는 별도 A1 mini와 현장 확인이 필요합니다.
 5. 크롬북 체험은 해당 옵션을 켜고 PC 주소를 선택해 부스 링크를 복사합니다. 같은 네트워크의 기기에서 웹을 열고 미니 매칭을 선택합니다.
 6. 종료는 트레이 메뉴에서 선택합니다. 실제 프린터는 심사 자동화 대상에 포함하지 않습니다.
 
 ## 제출 전 채울 항목
 
-- 실제 Package/Identity/Name, Publisher, PublisherDisplayName
+- 실제 Package/Identity/Name, Publisher, PublisherDisplayName: 확인·제출용 패키지 반영 완료
 - 공개 지원 이메일 또는 지원 페이지
 - 계정 소유자가 확인한 개인정보처리방침 URL: [초안](PRIVACY.md)
 - 실제 앱 스크린샷(합성 안내가 아닌 실행 화면). 시험 화면에는 실제 프린터 비밀 정보가 없어야 합니다.
