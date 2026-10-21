@@ -10,7 +10,7 @@ function modelXML(bytes){const vertices=[],triangles=[];let n=0;for(let o=84;o<b
 function prepareBrowserJob(body,{studio=false}={}){
  const profile=studio?studioCore.profile(body.studio):profiles.fromId(body.profile);if(body.profile!==profile.id)throw Error('선택한 프로필과 슬라이싱 결과가 다릅니다. 다시 계산해주세요.');
  if(typeof body.stl!=='string'||body.stl.length>8388608||!/^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(body.stl))throw Error('바이너리 STL이 필요합니다.');
- const stl=Buffer.from(body.stl,'base64');let dimensions;if(studio){const b=studioCore.validateBinary(stl);dimensions={triangles:b.triangles,width:b.size[0],depth:b.size[1],height:b.size[2],min:b.min,max:b.max};}else dimensions=validateSTL(stl);
+ const stl=Buffer.from(body.stl,'base64');let dimensions;if(studio){const b=studioCore.validateBinary(stl);dimensions={triangles:b.triangles,width:b.size[0],depth:b.size[1],height:b.size[2],min:b.min,max:b.max,contactEdges:b.nonManifold};}else dimensions=validateSTL(stl);
  const analysis=analyzeToolpaths(body.gcode,{height:dimensions.height,strict:true,layerHeight:profile.height,studio});
  if(studio)for(const layer of analysis.paths)for(const segment of layer.segments)for(let point=0;point<2;point++){const x=segment[point*2]+90,y=segment[point*2+1]+90;if(x<dimensions.min[0]-3||x>dimensions.max[0]+3||y<dimensions.min[1]-3||y>dimensions.max[1]+3)throw Error('경로와 STL의 배치가 다릅니다. 다시 슬라이싱해주세요.');}
  if(analysis.height<dimensions.height-profile.height-.11)throw Error('모델의 위쪽 층이 누락됐습니다. 다시 슬라이싱해주세요.');

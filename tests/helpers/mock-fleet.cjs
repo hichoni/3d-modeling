@@ -21,3 +21,6 @@ class MockFleet extends Fleet{
  device(){return {ip:'test-only',serial:'TESTMINI001',password:'test-only'};}
 }
 require.cache[fleetPath].exports={Fleet:MockFleet};
+
+// Discovery results are also fixtures; the test UI must not open UDP sockets.
+const discoveryPath=require.resolve('../../bridge/discovery.cjs');require.cache[discoveryPath].exports={...require(discoveryPath),discoverMinis:async()=>[{ip:'192.168.1.99',serial:'TESTMINI001',model:'A1 mini',lanOnly:true}]};

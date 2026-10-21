@@ -2,6 +2,7 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
 const {makeAccess,equalSecret}=require('./access.cjs');const {serveDownload}=require('./downloads.cjs');const {validateSTL,sliceSTL}=require('./core.cjs');const {printerDefinitions}=require('./printers.cjs');const {Pairings,clientId}=require('./pairings.cjs');const {Fleet}=require('./fleet.cjs');
 const {prepareBrowserJob,prepareStudioJob}=require('./browser-job.cjs');
 const {connectionSettings,saveConnection}=require('./connection-settings.cjs');
+const {discoverMinis}=require('./discovery.cjs');let printerSearch=null;
 const {directPrint,stopOwnJob}=require('./direct-print.cjs');
 const {Statistics}=require('./statistics.cjs');
 const root=path.resolve(__dirname,'..'),runtime=process.env.CLICK_RUNTIME?path.resolve(process.env.CLICK_RUNTIME):path.join(root,'runtime');fs.mkdirSync(runtime,{recursive:true});
@@ -36,7 +37,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method==='GET'&&['/','/index.html','/studio.html'].includes(route)){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,route==='/studio.html'?'studio.html':'index.html')).pipe(res);}
  if(req.method==='GET'&&route==='/favicon.ico'){res.writeHead(204);return res.end();}
  if(route.startsWith('/api/')&&!access.participant(req))return reply(res,403,{error:'운영자가 공유한 부스 링크로 접속하세요.'});
- if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:8,stlStudio:true,statistics:statistics.summary(),studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:8,stlStudio:true,printerDiscovery:true,statistics:statistics.summary(),studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/statistics')return reply(res,200,statistics.summary());
  if(req.method==='GET'&&route==='/api/printers')return reply(res,200,{pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/connection-settings'){
@@ -68,6 +69,11 @@ const server=http.createServer(async(req,res)=>{try{
  }
  if(req.headers['content-type']!=='application/json')return reply(res,415,{error:'JSON required'});const body=JSON.parse((await readBody(req)).toString()||'{}');
  if(route==='/api/experiences')return reply(res,200,statistics.record(device(req),body.experiences));
+ if(route==='/api/discover-printers'){
+  if(!access.isOperator(req))return reply(res,403,{error:'프린터 검색은 출력 PC에서 실행해주세요.'});
+  if(printerSearch)throw Error('이미 프린터를 찾고 있습니다. 잠시 기다려주세요.');
+  try{printerSearch=discoverMinis();return reply(res,200,{printers:await printerSearch});}finally{printerSearch=null;}
+ }
  if(route==='/api/connection-settings'){
   if(!access.isOperator(req))return reply(res,403,{error:'프린터 연결 설정은 출력 PC에서 열어주세요.'});
   const result=await saveConnection({body,config,printers,fleet,cfgPath});

@@ -35,6 +35,12 @@ const plugin={name:'static-browser-adapters',setup(b){
   let s=fs.readFileSync(a.path,'utf8');
   s=s.replace(/^import \{ (CAM|DRAG|LASER|SLA|WEDM|WJET) \}[^\n]*\n/gm,'');
   s=s.replace(/let drivers = \{[\s\S]*?\},\s*ccvalue =/, 'let drivers = {FDM}, ccvalue =');
+  // The upstream pool defaults to at least four workers even when threading is
+  // disabled. Complex changing layers then queue boolean operations forever.
+  // This distribution intentionally runs a single self-contained Blob Worker.
+  const pool='concurrent = Math.round(Math.max(4, self.Worker && ccvalue > 3 ? ccvalue * 0.75 : 0)),';
+  if(!s.includes(pool))throw Error('Pinned worker pool initializer changed');
+  s=s.replace(pool,'concurrent = 0,');
   return {contents:s,loader:'js',resolveDir:path.dirname(a.path)};
  });
 }};

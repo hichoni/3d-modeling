@@ -8,4 +8,13 @@ function verifyMini(device){return new Promise((resolve,reject)=>{
  s.bind(port,'0.0.0.0',()=>{s.setMulticastTTL(1);const query=Buffer.from('M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:2021\r\nMAN: "ssdp:discover"\r\nMX: 2\r\nST: urn:bambulab-com:device:3dprinter:1\r\n\r\n');for(const n of nic)try{s.addMembership('239.255.255.250',n.address);s.setMulticastInterface(n.address);s.send(query,2021,'239.255.255.250',()=>{});}catch{}});
  }
 });}
-module.exports={verifyMini};
+// Read-only, explicit operator discovery. It never authenticates or prints.
+function discoverMinis({udp=dgram,interfaces=os.networkInterfaces(),timeoutMs=4500}={}){return new Promise(resolve=>{
+ const sockets=[],found=new Map(),nic=Object.values(interfaces).flat().filter(x=>x.family==='IPv4'&&!x.internal);let finished=false;
+ const finish=()=>{if(finished)return;finished=true;clearTimeout(timer);for(const s of sockets)try{s.close();}catch{}resolve([...found.values()].sort((a,b)=>a.serial.localeCompare(b.serial)));};
+ const timer=setTimeout(finish,timeoutMs);if(!nic.length)return finish();
+ for(const port of [2021,1990]){const s=udp.createSocket({type:'udp4',reuseAddr:true});sockets.push(s);s.on('error',()=>{});s.on('message',(data,remote)=>{if(finished||data.length>8192||!require('./access.cjs').privateIPv4(remote.address))return;const h={};for(const line of data.toString().split(/\r?\n/)){const i=line.indexOf(':');if(i>0)h[line.slice(0,i).trim().toLowerCase()]=line.slice(i+1).trim();}if(h['devmodel.bambu.com']!=='N1'||!/^[A-Za-z0-9]{6,40}$/.test(h.usn||''))return;if(found.size>=32&&!found.has(h.usn))return;found.set(h.usn,{ip:remote.address,serial:h.usn,model:'A1 mini',lanOnly:h['devconnect.bambu.com']==='lan'});});
+ s.bind(port,'0.0.0.0',()=>{try{s.setMulticastTTL(1);}catch{}const query=Buffer.from('M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:2021\r\nMAN: "ssdp:discover"\r\nMX: 2\r\nST: urn:bambulab-com:device:3dprinter:1\r\n\r\n');for(const n of nic)try{s.addMembership('239.255.255.250',n.address);s.setMulticastInterface(n.address);s.send(query,2021,'239.255.255.250',()=>{});}catch{}});
+ }
+});}
+module.exports={verifyMini,discoverMinis};
