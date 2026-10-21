@@ -12,10 +12,10 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node bridge\setup.cjs --booth
+node bridge\setup.cjs --booth --web
 if errorlevel 1 (
   pause
   exit /b 1
 )
-powershell.exe -NoProfile -File scripts\start-background.ps1
+powershell.exe -NoProfile -File scripts\start-background.ps1 -Studio
 pause

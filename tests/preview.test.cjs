@@ -15,5 +15,6 @@ test('preview forwards only local same-origin API requests and preserves backend
   for(const method of ['GET','POST'])assert.equal((await request(port,'/api/connection-settings',{method,headers:{...headers,Origin:'https://evil.test'}})).status,403);
   assert.equal((await request(port,'/api/connection-settings',{method:'POST',body:'{}'})).status,403);assert.equal((await request(port,'/api/bootstrap',{headers:{Host:'evil.test'}})).status,403);assert.equal(seen.length,count);
   assert.equal((await request(port,'/runtime/config.json')).status,404);
+  const guide=await request(port,'/setup.html');assert.equal(guide.status,200);assert.match(guide.text,/프린터 연결 시작하기/);
  }finally{await Promise.all([new Promise(r=>preview.close(r)),new Promise(r=>backend.close(r))]);}
 });

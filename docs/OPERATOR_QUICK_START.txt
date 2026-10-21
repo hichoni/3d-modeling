@@ -1,0 +1,43 @@
+Click Studio 연결 프로그램 · Windows 개발용 ZIP
+
+웹에서 순서대로 따라하기:
+https://hichoni.github.io/3d-modeling/setup.html
+
+1. 출력용 Windows PC에 공식 Node.js LTS를 설치합니다.
+   https://nodejs.org/en/download
+   Bambu Studio는 웹 슬라이싱·전송의 필수 프로그램이 아닙니다.
+
+2. ZIP을 마우스 오른쪽 버튼으로 눌러 ‘모두 추출’한 뒤
+   추출된 click-workshop 폴더를 엽니다. ZIP 안에서 실행하지 마세요.
+
+3. 이 PC에서만 출력: start-workshop.cmd 더블클릭
+   크롬북 여러 대와 함께: configure-booth.cmd 더블클릭
+   처음에는 미니 대수만 입력합니다. 1대는 1, 6대는 6.
+   함께 쓰기는 이어서 출력 PC의 Wi-Fi 주소를 확인합니다.
+
+4. 연결 프로그램이 실행되면 이 주소를 엽니다.
+   http://127.0.0.1:5188/studio.html#connect=1
+   미니 선택 → 같은 Wi-Fi에서 A1 mini 찾기 → 본체와 같은 미니 선택
+   → 본체 LAN Only 화면의 8자리 코드 → 연결 정보 저장하고 확인
+   → 이 프린터 사용하기
+   검색이 안 되면 IP·일련번호 직접 입력을 펼칩니다.
+   A1 mini는 같은 Wi-Fi·LAN Only·Developer Mode로 준비합니다.
+
+5. 이후 실행은 start-workshop.cmd 또는 start-booth.cmd입니다.
+   프린터 등록 정보는 runtime 폴더에 보관됩니다.
+   업데이트할 때 출력·전송이 끝난 뒤 프로그램을 종료하고,
+   runtime 전체를 비공개 백업·보존하세요.
+
+6. 크롬북 함께 쓰기를 설정했다면 출력 PC의 체험 화면에서
+   ⚙ 운영자 화면 → 실행 시 표시된 PIN으로 잠금 해제
+   → 참가자 링크 복사. 각 크롬북은 미니 한 대씩 선택합니다.
+   크롬북에는 이 ZIP이나 Node.js를 설치하지 않습니다.
+
+학교 PC에서 실행이 차단되면 여기서 멈춥니다.
+이 묶음은 정식 서명 전 개발용이며 정식 Store 앱이 아닙니다.
+Smart App Control·학교 정책 차단은 학교 담당자의 배포 검토가 필요합니다.
+보호 기능을 끄거나 다른 방법으로 차단을 우회하지 마세요.
+자세한 내용: docs/SMART_APP_CONTROL.md
+
+실제 프린터 IP·일련번호·8자리 코드·운영자 PIN과 작업 파일은
+runtime에만 저장되며 이 ZIP에는 포함되지 않습니다.

@@ -4,6 +4,8 @@
 
 ## 처음 준비
 
+**[다운로드 → 압축 해제 → 실행 → 프린터 연결 웹 안내](https://hichoni.github.io/3d-modeling/setup.html#mode=shared)**에서 순서대로 진행할 수 있습니다. 연결 프로그램은 Windows 출력 PC에서 준비하며 크롬북에는 설치하지 않습니다.
+
 운영자 묶음은 **코드 서명 전 개발용**입니다. Windows가 실행을 차단하면 [Smart App Control·학교 정책 안내](SMART_APP_CONTROL.md)를 먼저 확인하세요. 이 배포본의 SAC 호환성은 검증되지 않았습니다.
 
 [부스 사이트](https://hichoni.github.io/3d-modeling/)에서 **부스 연결 → 운영자 처음 설정 → 운영자 설정 파일 받기 (ZIP)**을 누릅니다. 내려받은 ZIP을 압축 해제한 뒤 `click-workshop/configure-booth.cmd`를 실행합니다. 설정 CMD와 필요한 공방 모듈을 함께 제공합니다.
@@ -11,7 +13,7 @@
 - [운영자 설정 묶음 ZIP](https://hichoni.github.io/3d-modeling/downloads/booth-setup.zip)
 - [configure-booth.cmd 단독](https://hichoni.github.io/3d-modeling/configure-booth.cmd): 기존 공방 폴더용입니다. 단독 파일만 실행하면 필요한 ZIP을 안내합니다.
 
-Windows 출력 PC 한 대에 Node.js 20 이상을 준비합니다. 설정 시 등록할 미니 대수와 각 미니의 이름·IP·일련번호를 입력합니다. PC의 운영자 화면에서 부스 링크를 공유하세요.
+Windows 출력 PC 한 대에 공식 Node.js LTS를 준비합니다. 새 설정 파일은 먼저 미니 대수와 출력 PC 주소만 확인합니다. 이후 웹에서 미니를 찾아 IP·일련번호를 자동 입력하고 본체의 8자리 코드로 연결합니다. PC의 운영자 화면에서 부스 링크를 공유하세요.
 
 ## 참가자 크롬북
 
@@ -32,7 +34,7 @@ PC 전원·로그인·Wi-Fi는 필요합니다. Bambu Studio는 대체 계산용
 
 ## 네트워크 조건
 
-GitHub Pages는 웹 화면을 배포하고, 실제 슬라이싱과 각 미니 통신은 현장의 공방 PC가 맡습니다. 웹 접속만으로 크롬북에서 Windows CMD를 실행하는 구조가 아닙니다.
+GitHub Pages는 웹 화면을 배포하고 실제 슬라이싱은 브라우저가 계산합니다. 출력 PC는 파일 검증·3MF 작성과 각 미니 통신을 맡습니다. 웹 접속만으로 크롬북에서 Windows CMD를 실행하는 구조가 아닙니다.
 
 [Chrome 공식 Local Network Access 안내](https://developer.chrome.com/blog/local-network-access)에 따라 공개 HTTPS 페이지가 부스 PC의 사설 주소에 접속할 때 허용이 필요할 수 있습니다. 학교에서 관리하는 Chrome의 정책, 게스트/AP 격리, PC 방화벽이 기기 사이 통신을 막으면 연결할 수 없습니다. 앱은 이 정책을 우회하거나 방화벽을 자동으로 바꾸지 않습니다.
 

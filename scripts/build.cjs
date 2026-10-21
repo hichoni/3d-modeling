@@ -15,4 +15,6 @@ console.log('Built offline index.html ('+(Buffer.byteLength(html)/1024/1024).toF
 const studioJS=(worker+['vendor/three.min.js','vendor/OrbitControls.js','src/print-profiles.js','src/studio-core.js','src/toolpaths.js','src/studio-api.js','src/studio-view.js','src/studio-app.js'].map(f=>fs.readFileSync(f,'utf8')).join('\n;\n')).replace(/<\/script/gi,'<\\/script');
 const studio=fs.readFileSync('src/studio.html','utf8').replace('/* STUDIO_CSS */',fs.readFileSync('src/studio.css','utf8')).replace('/* STUDIO_JS */',()=>studioJS).replace('<!-- STUDIO_LICENSES -->',()=>`<!-- Bundled third-party licenses\n${licenses.replace(/-->/g,'')}\n-->`);
 fs.writeFileSync('studio.html',studio.replace(/\r\n/g,'\n'));console.log('Built offline studio.html ('+(Buffer.byteLength(studio)/1024/1024).toFixed(1)+' MB)');
+const setup=fs.readFileSync('src/setup.html','utf8').replace('/* SETUP_CSS */',fs.readFileSync('src/setup.css','utf8')).replace('/* SETUP_JS */',()=>fs.readFileSync('src/setup.js','utf8').replace(/<\/script/gi,'<\\/script'));
+fs.writeFileSync('setup.html',setup.replace(/\r\n/g,'\n'));console.log('Built offline setup.html ('+(Buffer.byteLength(setup)/1024).toFixed(0)+' KB)');
 require('./package-operator.cjs').packageOperator();

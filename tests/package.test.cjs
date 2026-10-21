@@ -7,6 +7,7 @@ test('downloadable operator package is complete, current, and contains no runtim
  }
  assert.deepEqual(entries.get(prefix+'index.html')(),fs.readFileSync('index.html'));
  assert.deepEqual(entries.get(prefix+'studio.html')(),fs.readFileSync('studio.html'));assert.ok(entries.has(prefix+'src/studio-core.js'));
+ assert.deepEqual(entries.get(prefix+'setup.html')(),fs.readFileSync('setup.html'));assert.equal(entries.get(prefix+'먼저 읽어주세요.txt')().toString().replace(/\r\n/g,'\n'),fs.readFileSync('docs/OPERATOR_QUICK_START.txt','utf8').replace(/\r\n/g,'\n'));
  assert.equal(entries.get(prefix+'configure-booth.cmd')().toString().replace(/\r\n/g,'\n'),fs.readFileSync('configure-booth.cmd','utf8').replace(/\r\n/g,'\n'));
  assert.ok(entries.has(prefix+'scripts/start-background.ps1'));assert.ok(entries.has(prefix+'scripts/install-autostart.ps1'));assert.ok(entries.has(prefix+'먼저 읽어주세요.txt'));
  const config=JSON.parse(entries.get(prefix+'bridge/config.example.json')());for(const p of config.printers){assert.equal(p.accessCode,'');assert.equal(p.serial,'');assert.equal(p.ip,'');}assert.equal(config.operatorPin,'');assert.equal(config.booth.enabled,false);assert.equal(config.booth.key,'');

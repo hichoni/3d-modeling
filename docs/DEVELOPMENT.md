@@ -17,6 +17,8 @@ node bridge/server.cjs
 
 ## STL 스튜디오 · API v8
 
+`src/setup.html/css/js`는 다운로드부터 연결까지의 5단계 안내이며 `scripts/build.cjs`가 독립 `setup.html`로 생성합니다. 공개·미리보기·연결 프로그램에서 같은 페이지를 제공합니다. ZIP·native payload 허용 목록에도 포함합니다. `bridge/setup.cjs --web`은 미니 대수만 받아 빈 등록 칸을 준비하고, 기존 이름·IP·SN·코드·PIN은 보존합니다. `--booth --web`은 공유할 출력 PC 주소를 추가 확인합니다. 실제 설정은 웹에서 진행합니다. `studio.html#connect=1`은 초기 연결 후 설정 창만 열며 검색·출력을 자동 시작하지 않습니다.
+
 `src/studio.html/css`는 별도 전문 작업 화면입니다. `studio-core.js`는 STL 파서·메쉬 진단·변환·배치·설정 검증을 브라우저/worker/중계기에서 공유합니다. `studio-view.js`는 Three.js 플레이트·실제 층 경로를, `studio-app.js`는 편집 이력·프로젝트·worker·출력 검토를, `studio-api.js`는 기존 부스 키·기기 토큰·1:1 매칭을 연결합니다.
 
 worker의 `mode:studio`, `/api/studio-jobs`, `prepareStudioJob`에만 170×170×160mm 범위를 허용합니다. 기존 14mm 엔드포인트의 범위를 넓히지 않습니다. 레벨링 영역과 종료 상승은 실제 모델 높이에 따라 계산하며, 큰 STL 출력은 아직 실물 검증 전입니다. `/api/jobs/:id/download`와 `/discard`는 작업 소유자만 사용할 수 있습니다. API v7 중계기는 스튜디오가 업데이트 안내와 함께 거절합니다. 자세한 범위·시험은 [STL_STUDIO.md](STL_STUDIO.md)를 참고하세요.

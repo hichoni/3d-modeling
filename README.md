@@ -2,6 +2,8 @@
 
 **[바로 체험하기 →](https://hichoni.github.io/3d-modeling/)**
 
+**[Windows 연결 프로그램 받기 · 다운로드부터 프린터 연결까지 5단계 →](https://hichoni.github.io/3d-modeling/setup.html)** — 공식 Node.js 설치 파일, 연결 프로그램 ZIP, 압축 해제, 실행할 파일, 미니 검색·8자리 코드 입력을 웹에서 따라갑니다. 크롬북에는 이 프로그램을 설치하지 않습니다. 학교 PC가 개발용 ZIP 실행을 차단하면 담당자의 배포 승인이 필요합니다.
+
 **[Click Studio · STL 웹 스튜디오 →](https://hichoni.github.io/3d-modeling/studio.html)** — 일반 STL을 올려 배치·회전·크기를 조정하고, 채움·외벽·서포트·브림을 설정해 실제 레이어를 계산합니다. 프로젝트 저장과 출력 전 검토를 제공합니다. A1 mini/0.4mm/외부 PLA 베타이며, 출력에는 최신 중계기 API v8이 필요합니다. [기능·제한·검증 상태](docs/STL_STUDIO.md)를 확인하세요.
 
 [출력 전 보정·필라멘트 표시·품질 프리셋](docs/PRINT_PREPARATION_2026-10-21.md) · [2026-10-21 변경·집계·배포 기록](docs/DEPLOYMENT_2026-10-21.md) · [집에서 이어가기](docs/HANDOFF.md)

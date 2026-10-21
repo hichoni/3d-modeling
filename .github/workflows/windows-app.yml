@@ -2,7 +2,7 @@ name: Windows operator app
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'bridge/**', 'src/**', 'index.html', 'studio.html', 'tests/**', 'scripts/**', '.github/workflows/windows-app.yml']
+    paths: ['desktop/**', 'bridge/**', 'src/**', 'index.html', 'studio.html', 'setup.html', 'tests/**', 'scripts/**', '.github/workflows/windows-app.yml']
   workflow_dispatch:
     inputs:
       mode:
