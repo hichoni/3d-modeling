@@ -45,6 +45,8 @@ Thank you.
 
 ## 발송 전 확인
 
+- 공식 [Windows 개발자 지원](https://developer.microsoft.com/ko-kr/windows/support)의 **비기술 지원(개발자 센터 프로그램) → 지원 사례 만들기(MSA)**가 개인 Microsoft 계정용 경로다. 무료 계정·제출 지원과 유료 앱 개발 기술 지원을 구분한다. 문의는 아직 발송하지 않았다.
+- 15:11 KST 이후 다시 읽은 초안에서는 두 형식 모두 `일시 중지됨 / null Bytes`였고 Save는 비활성이었다. 이 상태를 접수 완료나 패키지 검사 성공으로 설명하지 않는다.
 - 일반 Chrome 수동 업로드도 사용자가 실패를 보고했고 포털의 해당 Error 항목을 확인했다. 새 `.msixupload` 형식도 동일하게 실패했다. 같은 파일 선택을 다시 요구하지 않는다.
 - 계정 소유자가 내용을 확인하고 명시적으로 문의 발송을 요청해야 한다.
 - 스크린샷이 필요하면 두 형식의 Error가 함께 보이는 `artifacts/registration/chrome-msixupload-error-2026-10-21.jpg`를 검토한다. 이미지와 패키지는 Git/Pages에 공개하지 않는다.
