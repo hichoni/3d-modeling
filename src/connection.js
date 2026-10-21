@@ -33,6 +33,7 @@ function syncConnection(){
  else if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 바로 출력 버튼으로 이 미니에 작품을 보낼 수 있어요.':'출력할 미니를 고르면 바로 출력 버튼으로 시작할 수 있어요.';
  else if(connected)$('operatorInfo').textContent='현장에서 크롬북과 미니를 1:1 매칭하고 필요할 때 해제·재매칭하세요.';
  $('boothSetupHint').hidden=direct||!local?.operator||local?.booth;
+ const guide=$('platformDialogGuide');if(guide&&globalThis.ClickPlatform){guide.hidden=direct||connected;if(!guide.hidden&&!guide.dataset?.platform)ClickPlatform.render(guide,{onStl:()=>{$('boothDialog').close();$('stlBtn').click();}});}
 }
 function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.printerId)?.name||pairing?.printerId||'미니';}
 async function connectWorkshop(target,{save=false,showError=false}={}){

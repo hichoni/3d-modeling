@@ -115,6 +115,9 @@ function renderTicket(){
  $('printState').textContent=job?stateLabel[job.state]||job.state:local?'준비되면 바로 출력을 눌러요.':'프린터 연결부터 시작해요.';
  const progress=job?.state==='complete'?100:Math.max(0,Math.min(100,Number(job?.progress)||0));$('printProgress').value=progress;$('printPercent').textContent=job?.state==='printing'?progress+'% · '+(job.layer||0)+' / '+(job.slice?.layers||'—')+'층':job?.state==='complete'?'100% · 출력 완료':active?'전송·준비 상태 확인 중':'출력 전';
  $('printDetail').textContent=job?.attention||job?.error||printer?.error||(job?.state==='complete'?'완성품이 식으면 받침에 끼우고 스위치를 눌러봐요!':printer?.busy&&!active?'이 프린터가 다른 작업을 하고 있어요. 작업이 끝난 뒤 눌러주세요.':'선택한 자동 보정 후 출력을 시작해요. 준비 시간은 작품 경로 예상 시간에 더해져요.');
+ // On the plain website (no app, no booth PC) the card shows how this device can print instead.
+ const guide=!local&&!directMode();$('printCard').classList.toggle('is-guide',guide);$('platformPrint').hidden=!guide;
+ if(guide&&!$('platformPrint').dataset.platform){ClickPlatform.render($('platformPrint'),{onStl:()=>$('stlBtn').click()});const booth=document.createElement('button');booth.type='button';booth.className='text-btn platform-booth';booth.textContent='부스 출력 PC에 연결하기';booth.onclick=()=>$('boothBtn').click();$('platformPrint').append(booth);}
  $('retryPrintBtn').hidden=!terminal;$('queueBtn').hidden=false;$('queueBtn').disabled=active||terminal||materialBlocked||browserSliceBusy||['slice_wait','slicing'].includes(job?.state)||!!local&&(!printer||printer.busy||!printer.online||!printer.fresh);
  $('queueBtn').textContent=queueBusy?'출력 파일 준비 중…':terminal?job.state==='complete'?'출력 완료 ✓':'작업 종료':active?'출력 진행 중…':!local?'프린터 연결':'▶ 바로 출력';
  $('resultCopy').textContent='베드를 비우고 텍스처 PEI·0.4mm 노즐·외부 PLA를 준비한 뒤 눌러요.';

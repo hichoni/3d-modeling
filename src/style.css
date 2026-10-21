@@ -207,3 +207,12 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
  .coach-tip{top:10px;right:18px;max-width:none}.coach-face{width:50px;height:50px}.coach-tip .game-dialog{margin-top:14px;padding:16px 38px 10px 18px}.game-dialog p{font-size:14px}
 }
 @media(max-width:700px){.coach-tip{left:10px;top:10px;max-width:calc(100% - 20px)}.coach-face{width:46px;height:46px}.game-dialog p{font-size:13px}}
+/* Device guide on the plain website: how this device prints (tablet app, Chromebook app, or Bambu Studio + STL) */
+.platform-print{display:grid;gap:8px;padding:14px 16px;border:3px solid var(--ink);border-radius:18px;background:linear-gradient(180deg,#fff,#fffaf0);box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 5px #a2eddb88,0 4px 0 #17284622}
+.platform-print .platform-title{font:400 18px/1.3 Jua,sans-serif;color:var(--ink)}
+.platform-print p{font-size:12px;line-height:1.6;color:#41506a;margin:0;word-break:keep-all}
+.platform-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.platform-actions .primary,.platform-actions .secondary{flex:1 1 140px;text-align:center;text-decoration:none;padding:11px 12px;font-size:16px;border-radius:14px}
+.platform-booth{justify-self:start;font-size:11px}
+#boothDialog .platform-print{margin:0 0 14px}
+.print-card.is-guide>:not(#platformPrint):not(.card-kicker){display:none!important}

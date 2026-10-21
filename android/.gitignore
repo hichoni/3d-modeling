@@ -1,0 +1,6 @@
+.gradle/
+build/
+app/build/
+local.properties
+# Offline copies of the built pages are added by CI before packaging.
+app/src/main/assets/web/
