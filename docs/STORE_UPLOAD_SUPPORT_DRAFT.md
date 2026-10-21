@@ -4,7 +4,7 @@
 
 ## 제목
 
-Partner Center MSIX upload fails with Error / Paused / null Bytes for a newly registered individual developer
+Partner Center MSIX and MSIXUPLOAD uploads fail with Error / Paused / null Bytes
 
 ## 본문
 
@@ -27,6 +27,16 @@ The MSIX was created with Microsoft MakeAppx 10.0.28000.2705. Package creation a
 
 We retried after signing in using a normal Google Chrome window. The browser extension's local file selection permission was explicitly enabled by the account owner. File selection completed successfully and the portal displayed the correct filename and size, but the upload then showed only `Error`. Another page load showed `Paused`, `null Bytes`, and a message that package processing was taking a long time. Both Korean and English portal views showed the same incomplete package. Save remains disabled. No successful package validation result has been displayed.
 
+The account owner then selected the same MSIX manually in normal Chrome, without automated file selection, and reported the same upload failure. We observed that attempt in the portal: the correct filename and `86.97 MB` were displayed, followed by `Error`.
+
+On October 21, 2026, at approximately 06:01 UTC, we also tried the recommended `.msixupload` submission format. This was a ZIP archive containing the unchanged original MSIX at its root, with no optional symbol file. We verified the inner MSIX SHA-256 before uploading. The portal showed the correct filename and `86.55 MB`, then immediately `Error` again, without any detailed error or successful validation.
+
+- Upload archive: `ClickBooth-3.0.0.0-x64.msixupload`
+- Archive size: `90,755,674 bytes`
+- Archive SHA-256: `6690c1af53043cc1b02140a5b18f874e7feb664257e27f047f5d47e7b788c93d`
+- Inner MSIX SHA-256: same as the original package listed above
+- Packaging reference: https://learn.microsoft.com/en-us/windows/msix/package/packaging-uwp-apps#generate-your-app-package-upload-file-manually
+
 The console also reported `require is not defined`, `requirejs is not defined`, and `fdRequire is not a function`. We cannot confirm that these console errors caused the upload failure. No HTTP status or storage upload failure reason is exposed in the visible portal.
 
 Could you check whether this account and submission are enabled for package ingestion and identify the failed upload stage? Please also confirm whether any additional packaging or signing step is required for this Store MSIX submission. We have not submitted the app for certification.
@@ -35,7 +45,7 @@ Thank you.
 
 ## 발송 전 확인
 
-- 일반 Chrome에서 자동 파일 선택을 거치지 않는 수동 업로드 결과도 먼저 확인한다. 현재 이 결과는 미확인이며, 수동으로도 재현됐다고 단정해 보내지 않는다.
+- 일반 Chrome 수동 업로드도 사용자가 실패를 보고했고 포털의 해당 Error 항목을 확인했다. 새 `.msixupload` 형식도 동일하게 실패했다. 같은 파일 선택을 다시 요구하지 않는다.
 - 계정 소유자가 내용을 확인하고 명시적으로 문의 발송을 요청해야 한다.
-- 스크린샷이 필요하면 `artifacts/registration/chrome-upload-error-2026-10-21.jpg`를 검토한다. 이미지와 MSIX는 Git/Pages에 공개하지 않는다.
+- 스크린샷이 필요하면 두 형식의 Error가 함께 보이는 `artifacts/registration/chrome-msixupload-error-2026-10-21.jpg`를 검토한다. 이미지와 패키지는 Git/Pages에 공개하지 않는다.
 - Microsoft가 로그를 요청하면 인증 토큰·쿠키·SAS URL의 서명 값·개인 연락처를 포함하지 않도록 검토한다.

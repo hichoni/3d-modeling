@@ -50,13 +50,26 @@ Partner Center의 Product identity에서 읽었다. 아래 값은 패키지에 �
 
 SHA-256을 다시 계산해 원래 파일과 동일함을 확인했다. 최신 등록 기록 커밋 `e056eee`의 [Windows 전체 검사·앱 빌드·격리 실행 검사](https://github.com/hichoni/3d-modeling/actions/runs/39544174396)는 성공했다. 이 CI 성공이 Partner Center 업로드나 학교 PC 설치 성공을 뜻하지는 않는다.
 
-실패한 임시 업로드 항목을 정리하고 한국어 Chrome 패키지 화면을 빈 업로드 상태로 다시 확인했다. 일반 Chrome에서 자동 선택을 거치지 않고 직접 같은 파일을 선택했을 때의 결과는 아직 미확인이다. 이 확인으로 자동 선택 문제와 포털 전송 문제를 구분한 뒤 지원 문의를 판단한다. 진단용 영문·계정 상태 탭은 닫고 원래 Chrome 패키지 탭을 남겼다. 계정 설정 화면만으로 추가 활성화 대기 여부는 확인하지 못했으므로 ‘계정이 미활성화됐다’고 설명하지 않는다.
+실패한 임시 항목 정리 후 사용자가 일반 Chrome에서 같은 MSIX를 직접 선택했지만 다시 오류를 보고했다. 포털에서도 해당 수동 선택 항목의 정확한 파일명·`86.97 MB`·`Error`를 확인했다. 수동 업로드는 더 이상 미확인 항목이 아니다. 자동 선택만의 문제라고 설명하거나 같은 파일 선택을 다시 요구하지 않는다. 계정 설정 화면만으로 추가 활성화 대기 여부는 확인하지 못했으므로 ‘계정이 미활성화됐다’고 설명하지 않는다.
+
+### 15:01 KST: Store 권장 제출 묶음도 같은 오류
+
+[Microsoft의 업로드 안내](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/upload-app-packages)는 원본 MSIX도 허용하며 Windows 10 이상 앱에 `.msixupload`를 권장한다. [공식 수동 생성 방법](https://learn.microsoft.com/en-us/windows/msix/package/packaging-uwp-apps#generate-your-app-package-upload-file-manually)에 따라 검증된 원본 MSIX 한 개를 ZIP 루트에 넣고 `.msixupload`로 만들었다. 선택 사항인 심볼 파일은 포함하지 않았다. 단순히 MSIX 확장자를 바꾼 파일이 아니다.
+
+- 로컬 파일: `artifacts/store-submission-20261021-initial/ClickBooth-3.0.0.0-x64.msixupload`
+- 크기: **90,755,674 bytes**, 포털 표시 `86.55 MB`
+- SHA-256: `6690c1af53043cc1b02140a5b18f874e7feb664257e27f047f5d47e7b788c93d`
+- 내부 항목 1개이며 원본 MSIX의 SHA-256 `6c6ba3fc6c389069fdf8b9da2c20374d6ee93d429a931187a4d3389c586c08a7`이 일치한다.
+- 일반 Chrome 파일 선택은 성공했으나 포털은 이 형식도 즉시 **Error**로 표시했다. 상세 오류·서버의 패키지 검증 결과는 없다. Save도 완료하지 못했다.
+- 오류 스크린샷: `artifacts/registration/chrome-msixupload-error-2026-10-21.jpg`. 비공개 로컬 증거이며 Git에 넣지 않는다.
+
+파일 형식 변경으로 해결되지 않았다. 현 단계에서 원인을 서명·SAC·학교망·Microsoft 장애 중 하나로 확정할 수 없다. 지원 문의 초안에는 수동 선택 실패와 두 제출 형식의 재현 결과를 반영했다. 문의 발송은 아직 하지 않았으며 계정 소유자의 명시적 요청이 필요하다.
 
 ### 최초 업로드 기록 및 남은 절차
 
 Partner Center에서 해당 패키지를 선택했으나, 파일 선택·업로드 응답이 장시간 지연된 뒤 화면에 **Error**가 표시됐다. 패키지 저장·검증 성공을 확인하지 못했다. 이유를 SAC나 파일 내용으로 단정할 증거는 없다. 자동 업로드를 같은 방식으로 반복하지 않는다.
 
-1. 위 패키지 화면에서 실패 항목을 정리하고, 계정 소유자가 `browse your files`로 로컬 MSIX를 직접 선택해 업로드한다. 설치 파일을 실행하는 절차가 아니다.
+1. 일반 Chrome 수동 업로드와 `.msixupload`도 실패했다. 같은 업로드를 반복하지 않고 위 기록과 [문의 초안](STORE_UPLOAD_SUPPORT_DRAFT.md)을 바탕으로 계정 소유자의 발송 지시 후 Microsoft 지원에 원인 확인을 요청한다.
 2. 업로드 완료 및 서버의 패키지 식별·검증 결과를 확인한 뒤 Windows Desktop 대상과 Save를 확인한다. 아직 성공 저장되지 않았다면 완료로 기록하지 않는다.
 3. 속성, 무료 배포·시장, 연령별 등급, 한국어 Store 설명·실제 앱 스크린샷, 개인정보처리방침·지원 페이지, runFullTrust 심사 설명을 실제 기능에 맞춰 준비한다. [제출 자료 초안](STORE_SUBMISSION.md)을 사용한다.
 4. 학교 PC 설치·업데이트·제거·설정 보존과 SAC, 학교 Wi-Fi·6대 운영, 새 일반 STL 출력의 현장 검증은 남아 있다. 앞서 완료된 14mm 실물 시험과 구분한다.

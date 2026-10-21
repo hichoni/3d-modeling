@@ -1,8 +1,8 @@
 # 현재 상황 인수인계 — 2026-10-21 STL 스튜디오 추가
 
-## 최신: Chrome 파일 권한 해결, Partner Center 업로드 미완료
+## 최신: 수동 업로드와 MSIXUPLOAD도 실패 · 15:01 KST
 
-일반 Chrome 로그인과 확장 프로그램의 파일 URL 권한은 사용자가 직접 완료했다. 이후 같은 MSIX의 파일 선택은 정상 성공했다. 하지만 포털 전송 단계가 `Error`, 다시 읽은 영문 초안이 `Paused / null Bytes`로 Save 비활성이다. HTTP 원인이나 포털 장애 여부는 확정하지 못했다. 계정 등록·로그인·파일 권한을 다시 처음부터 요구하지 않는다. 동일 재업로드만 반복하거나 업로드 완료로 보고하지 않는다.
+일반 Chrome 로그인과 확장 프로그램의 파일 URL 권한은 사용자가 직접 완료했다. 자동 파일 선택 성공 후 포털 전송이 Error였다. 이어 사용자의 **수동 MSIX 선택도 Error**임을 확인했다. 공식 방법으로 원본 MSIX를 담은 `.msixupload`를 만들고 내부 해시를 검증해 한 번 전송했지만 이것도 즉시 Error였다. 두 파일의 정확한 크기가 표시되나 상세 오류·패키지 검증 성공은 없고 Save도 미완료다. HTTP 원인이나 포털 장애 여부는 확정하지 못했다. 계정 등록·로그인·파일 권한·같은 파일 선택을 다시 요구하거나 완료로 보고하지 않는다.
 
 파일 해시는 최초 MSIX와 일치하고 `e056eee`의 Windows CI도 성공했다. 업로드와 별개다. [현재 Store 기록](STORE_PROGRESS_2026-10-21.md), [Microsoft 문의 초안](STORE_UPLOAD_SUPPORT_DRAFT.md)을 먼저 읽는다. 문의는 아직 보내지 않았으며 외부 발송에는 계정 소유자의 명시적 지시가 필요하다. 실제 프린터·보안 정책은 변경하지 않았다.
 
@@ -10,7 +10,7 @@
 
 사용자가 본인 확인·프로필·개발자 계약 동의를 직접 완료했고 Microsoft의 계정 생성 완료를 확인했다. Partner Center 앱 **상상을 클릭하다! 운영자 공방**, Store ID `9N2V9KQDSJ0G`, Submission 1 초안을 만들었다. 실제 Name/Publisher/PublisherDisplayName은 [desktop/store-identity.json](../desktop/store-identity.json)에 기록했다. 계정 등록이나 식별값 전달을 다시 요구하지 않는다.
 
-실제 식별값의 `3.0.0.0` Store 제출용 MSIX 생성·MakeAppx 검증·공개 payload 41개 해시 검사를 마쳤다. 설치·차단 우회·프린터 작동은 하지 않았다. Partner Center 패키지 업로드는 장시간 응답 지연 후 **Error**로, 저장 성공이 확인되지 않았다. 자동 대용량 파일 선택을 반복하지 말고 사용자 직접 선택으로 이어간다. 심사 제출·Microsoft 서명·공개·학교 설치는 미완료다. 파일 경로·해시·다음 절차는 [STORE_PROGRESS_2026-10-21.md](STORE_PROGRESS_2026-10-21.md)에 있다.
+실제 식별값의 `3.0.0.0` Store 제출용 MSIX 생성·MakeAppx 검증·공개 payload 41개 해시 검사를 마쳤다. 설치·차단 우회·프린터 작동은 하지 않았다. Partner Center 업로드는 위 후속 수동·묶음 확인까지 모두 **Error**로, 저장 성공이 확인되지 않았다. 심사 제출·Microsoft 서명·공개·학교 설치는 미완료다. 파일 경로·해시·다음 절차는 [STORE_PROGRESS_2026-10-21.md](STORE_PROGRESS_2026-10-21.md)에 있다.
 
 아래의 ‘계정 등록·본인 확인·실제 식별값이 필요’ 문구는 이 작업 이전의 기록이다. 현재 남은 외부 작업은 업로드·제출 자료 검토·심사·실제 설치 검증이다.
 
