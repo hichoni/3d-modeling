@@ -12,3 +12,4 @@
 # Upstream generated bundle contains intentional whitespace in shader/template strings.
 vendor/kiri/fdm-worker.js linguist-generated=true whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 *.swbn binary
+*.gz binary
