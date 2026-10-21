@@ -3,7 +3,7 @@
 // Output: artifacts/iwa-app/ (signed into downloads/click-studio.swbn by tools/iwa/build.cjs).
 const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts','iwa-app');
-const VERSION='1.1.0',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
+const VERSION='1.1.1',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
 function manifest(){return {name:'Click Studio · A1 mini 직접 출력',short_name:'Click Studio',description:'크롬북에서 모델링·슬라이싱하고 같은 Wi-Fi의 Bambu Lab A1 mini로 바로 출력합니다.',id:'/',start_url:'/',scope:'/',display:'standalone',background_color:'#f6f1e8',theme_color:'#ff7a45',lang:'ko',version:VERSION,update_manifest_url:UPDATE_URL,
  icons:[{src:'/icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}],
  permissions_policy:{'cross-origin-isolated':['self'],'direct-sockets':['self'],'direct-sockets-private':['self'],'direct-sockets-multicast':['self'],'local-network':['self'],'loopback-network':['self']}};}
@@ -46,7 +46,7 @@ function buildApp({fonts,licenses,boothJS,studioJS}){
   ...Object.fromEntries(fonts.map(([,,file])=>['fonts/'+file,fs.readFileSync(path.join(root,'fonts',file))])),
   'open.html':OPEN_PAGE,'shell.js':fs.readFileSync(path.join(root,'src/iwa-shell.js'),'utf8').replace("/* SHELL_VERSION */''",JSON.stringify(VERSION)).replace("/* SHELL_REMOTE */''",JSON.stringify(REMOTE)).replace('/* SHELL_ALLOW_LOOPBACK */false','false'),
   'kiri-worker.js':fs.readFileSync(path.join(root,'vendor/kiri/fdm-worker.js')),
-  'studio.js':"const BROWSER_SLICE_WORKER_URL='/kiri-worker.js';\n"+studioJS,'booth.js':"const BROWSER_SLICE_WORKER_URL='/kiri-worker.js';\n"+boothJS,
+  'studio.js':"const BROWSER_SLICE_WORKER_URL='/kiri-worker.js',CLICK_APP_VERSION='"+VERSION+"';\n"+studioJS,'booth.js':"const BROWSER_SLICE_WORKER_URL='/kiri-worker.js',CLICK_APP_VERSION='"+VERSION+"';\n"+boothJS,
   'studio.html':page('src/studio.html',{cssMark:'/* STUDIO_CSS */',css:fs.readFileSync(path.join(root,'src/studio.css'),'utf8'),jsMark:'/* STUDIO_JS */',script:'studio.js',licenseMark:'<!-- STUDIO_LICENSES -->',licenses}),
   'booth.html':page('src/index.html',{cssMark:'/* BUNDLED_CSS */',css,jsMark:'/* BUNDLED_JS */',script:'booth.js',licenseMark:'<!-- LICENSES -->',licenses})
  };

@@ -53,7 +53,7 @@
 <details><summary>앱 없이 웹에서는 안 되나요?</summary><p>일반 웹 페이지는 프린터의 파일 전송·상태 통신을 직접 열 수 없어요. 설치한 앱만 Chrome의 Direct Sockets 기능으로 프린터와 직접 통신해요. 웹에서는 모델링·슬라이싱까지 되고, 출력은 앱이나 출력 PC가 필요해요.</p></details>
 <p class="sources">자세한 기술 내용: <a href="https://github.com/hichoni/3d-modeling/blob/main/docs/CHROMEBOOK_DIRECT.md" target="_blank" rel="noopener">CHROMEBOOK_DIRECT.md ↗</a> · <a href="https://chromeos.dev/en/tutorials/getting-started-with-isolated-web-apps" target="_blank" rel="noopener">Isolated Web Apps ↗</a> · <a href="https://wiki.bambulab.com/en/knowledge-sharing/enable-developer-mode" target="_blank" rel="noopener">Bambu 개발자 모드 ↗</a></p></section>
 </section></main><div id="copyToast" class="cb-toast" role="status" hidden></div><script>(()=>{
- const $=id=>document.getElementById(id),info={"version":"1.1.0","bytes":14697256,"bundleId":"at56pqaemxzzojbx5idsvupqxolmoddxarz4eumk2bgzbq2ilpgaaaic"};
+ const $=id=>document.getElementById(id),info={"version":"1.1.1","bytes":14700979,"bundleId":"at56pqaemxzzojbx5idsvupqxolmoddxarz4eumk2bgzbq2ilpgaaaic"};
  if(!/CrOS/.test(navigator.userAgent))$('platformNote').hidden=false;
  if(info){$('bundleInfo').textContent='Click Studio 크롬북 앱 v'+info.version+' · '+(info.bytes/1048576).toFixed(1)+' MB · 서명된 웹 앱 파일';$('bundleId').textContent=info.bundleId;}
  let timer;function toast(text){const t=$('copyToast');t.textContent=text;t.hidden=false;clearTimeout(timer);timer=setTimeout(()=>{t.hidden=true;},2200);}

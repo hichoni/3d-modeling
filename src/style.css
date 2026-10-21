@@ -36,3 +36,4 @@ select:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.print-pre
 .direct-steps{margin:8px 0 12px;padding-left:22px;line-height:1.7}
 .direct-find{display:grid;gap:8px;margin-bottom:12px}
 #directBoothWarning{color:#b4472e;font-weight:700}
+.direct-version{position:fixed;left:10px;bottom:8px;z-index:50;font-size:11px;color:#6b7280;background:#ffffffcc;border-radius:999px;padding:3px 9px;pointer-events:auto}
