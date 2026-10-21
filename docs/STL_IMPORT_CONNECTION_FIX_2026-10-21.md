@@ -18,4 +18,14 @@
 
 ## 배포
 
-공개 HTML·운영자 ZIP을 재생성했다. 배포 커밋·Actions·공개 해시 검증 결과는 완료 후 이 절에 기록한다.
+기능 커밋 [`7292d682f203a1fcd6e3acefcaaedfd26514b4ee`](https://github.com/hichoni/3d-modeling/commit/7292d682f203a1fcd6e3acefcaaedfd26514b4ee). [Pages 배포](https://github.com/hichoni/3d-modeling/actions/runs/39530127834)와 [Windows 전체 검사·MSIX 빌드·격리 앱 실행](https://github.com/hichoni/3d-modeling/actions/runs/39530128535) 모두 성공했다. 이 빌드는 정식 Store 서명이 아니다.
+
+공개 스튜디오에서 두 연결 안내·모바일 폭 390px·60층 실제 계산·콘솔 오류 없음을 확인했다. 공개 HTML·운영자 ZIP 모두 HTTP 200 및 로컬 SHA-256 일치:
+
+| 파일 | SHA-256 |
+| --- | --- |
+| index.html | `c0ba30b8becc73f6446819bfc07ce2c82675187c02519454073b3b1f12952b82` |
+| studio.html | `dde91ea94db3f67ac52a40833d2c51a7b0db4dcd4b6f56a9a49709c7ba689088` |
+| downloads/booth-setup.zip | `cff2e4fefb42c2bf3d93a844d683b58d9e81f0bbe6135e821fd0dbd3db351d8f` |
+
+![공개 페이지의 쉬운 연결 안내](images/connection-guide-2026-10-21.jpg)
