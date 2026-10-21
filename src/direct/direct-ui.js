@@ -48,6 +48,14 @@ function booth(){
  $('foundPrinterSelect').onchange=()=>{const p=found[+$('foundPrinterSelect').value];if(!p||$('foundPrinterSelect').value==='')return;const records=printerConnectionSettings||[],existing=records.find(r=>r.serial===p.serial)||records.find(r=>r.blank);if(existing)$('printerConnectionSelect').value=existing.id;$('printerIpIn').value=p.ip;$('printerSerialIn').value=p.serial;$('printerAccessCodeIn').value='';$('printerAccessCodeIn').focus();status('주소와 일련번호를 채웠어요. 프린터 화면의 8자리 코드를 입력하고 저장하세요.');};
  setInterval(()=>{if($('boothDialog').open)$('directBoothWarning').textContent=warning(paired());},1500);
 }
-function init(){studio();booth();}
+// Which code is running: the live site through the auto-updating shell, or the copy bundled in the app.
+function version(){
+ let el=$('appVersion');if(!el){el=document.createElement('div');el.id='appVersion';el.className='direct-version';document.body.append(el);}
+ const build=root.CLICK_WEB_BUILD||'',shell=root.ClickShell,bundled=typeof CLICK_APP_VERSION==='string'?CLICK_APP_VERSION:'';let offline='';try{offline=sessionStorage.getItem('click-shell-fallback')||'';}catch{}
+ const show=()=>{const live=!!shell?.version;el.textContent=live?'앱 '+shell.version+' · 최신 화면 '+build:'앱 '+(bundled||'?')+' · 앱 안 버전 '+build+(offline?' · 오프라인':'');
+  el.title=live?'자동 업데이트 켜짐: 사이트의 최신 화면을 쓰고 있어요.':offline?'사이트에 연결하지 못해 앱에 들어 있는 버전으로 열었어요.':'앱에 들어 있는 버전이에요. chrome://iwa-dev에서 Update하면 자동 업데이트가 켜져요.';};
+ show();if(shell&&!shell.version){const t=setInterval(()=>{if(shell.version){clearInterval(t);show();}},300);setTimeout(()=>clearInterval(t),10000);}
+}
+function init(){studio();booth();version();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })(globalThis);

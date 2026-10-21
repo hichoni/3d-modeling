@@ -12,7 +12,9 @@ const directConstants='globalThis.CLICK_SHELL_ORIGINS='+JSON.stringify(shellOrig
 const direct=['src/statistics-core.js','src/print-job.js','src/direct/sockets.js','src/direct/tls.js','src/direct/printer-link.js','src/direct/discovery.js','src/direct/relay.js','src/direct/direct-ui.js'];
 const boothScripts=['src/direct/shell-client.js','vendor/three.min.js','vendor/OrbitControls.js','src/state.js','src/statistics-core.js','src/engine.js','src/toolpaths.js','src/layer-view.js','src/print-profiles.js','src/print-preparation.js','src/browser-slicer.js',...direct.slice(1),'src/connection.js','src/print-lesson.js','src/printer-tutorial.js','src/statistics.js','src/app.js'];
 const studioScripts=['src/direct/shell-client.js','vendor/three.min.js','vendor/OrbitControls.js','src/print-profiles.js','src/studio-core.js','src/toolpaths.js',...direct,'src/studio-api.js','src/studio-view.js','src/studio-app.js'];
-const concat=list=>directConstants+list.map(f=>fs.readFileSync(f,'utf8')).join('\n;\n');
+// Deterministic build ID of the web code (shown in the Chromebook app) so a stale screen is easy to spot.
+const webBuild=require('node:crypto').createHash('sha256').update([...new Set([...boothScripts,...studioScripts])].map(f=>fs.readFileSync(f)).join('\n')).digest('hex').slice(0,7);
+const concat=list=>directConstants+'globalThis.CLICK_WEB_BUILD='+JSON.stringify(webBuild)+';\n'+list.map(f=>fs.readFileSync(f,'utf8')).join('\n;\n');
 const worker = 'const BROWSER_SLICE_WORKER='+JSON.stringify(fs.readFileSync('vendor/kiri/fdm-worker.js','utf8'))+';\n';
 const js = (worker+concat(boothScripts)).replace(/<\/script/gi,'<\\/script');
 const licenses = fs.readFileSync('vendor/kiri/LICENSES.txt','utf8')+'\n\n'+fs.readFileSync('vendor/THREE-LICENSE.txt','utf8')+'\n\n'+fs.readdirSync('fonts').filter(f=>f.endsWith('OFL.txt')).map(f=>fs.readFileSync('fonts/'+f,'utf8')).join('\n\n');

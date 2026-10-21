@@ -27,7 +27,9 @@ function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=fa
   // quantization-scale moves as rounding residue below (capped per file) instead of a real extrusion line.
   const residue=studio&&delta>0&&delta<=.00051&&distance<.01;
   if(delta>0&&distance>.001&&!residue){
-   if(nz<=0||nz>height+.11||Math.abs(nz-z)>.001||delta/distance>.09||delta/distance*feed/60*Math.PI*(1.75/2)**2>12.01||debt>.001||!inside(x,y))throw Error('압출 경로 또는 재료량이 올바르지 않아요.');
+   const flow=delta/distance*feed/60*Math.PI*(1.75/2)**2,why=nz<=0||nz>height+.11?'높이 Z'+round(nz)+'mm가 모델 범위 밖':Math.abs(nz-z)>.001?'압출 중 높이 변경':delta/distance>.09?'1mm당 '+(delta/distance).toFixed(3)+'mm 압출(한도 0.09)':flow>12.01?'초당 '+flow.toFixed(1)+'mm³(한도 12)':debt>.001?'리트랙션 상태에서 압출':!inside(x,y)?'안전 영역 밖':'';
+   // The reason, layer and feature make a rejected slice diagnosable from a screenshot.
+   if(why)throw Error('압출 경로 또는 재료량이 올바르지 않아요. ('+(layers.length+(layer&&Math.abs(layer.z-nz)<=.001?0:1))+'층 · '+({shell:'외벽',solid:'윗면·바닥',infill:'채움',support:'서포트',path:'경로'}[feature]||feature)+' · '+why+')');
    extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-layerHeight)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('선택한 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[],features:[]};layers.push(layer);}
    if(layer.segments.length>=20000)throw Error('한 층의 경로가 너무 많아요.');layer.segments.push([x-90,y-90,nx-90,ny-90].map(round));layer.features.push(feature);
   }else if(delta<0){retract-=delta;debt-=delta;if(debt>1.22||feed>1800)throw Error('리트랙션 양 또는 속도가 너무 커요.');}
