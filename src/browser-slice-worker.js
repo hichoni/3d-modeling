@@ -1,11 +1,18 @@
 // Built with the pinned Kiri:Moto FDM worker. This file never connects to a printer.
 import '../artifacts/grid-apps/src/kiri/run/worker.js';
 import { conf } from '../artifacts/grid-apps/src/kiri/app/conf/defaults.js';
-import { newWidget } from '../artifacts/grid-apps/src/kiri/core/widget.js';
+import { Widget, newWidget } from '../artifacts/grid-apps/src/kiri/core/widget.js';
 import './print-profiles.js';
+import './studio-core.js';
 
-function verticesFromSTL(bytes){
- const data=new DataView(bytes),count=data.getUint32(80,true);if(count<12||count>120000||bytes.byteLength!==84+count*50)throw Error('올바른 바이너리 STL이 필요해요.');
+// Upstream support shadows always queue minions, including when threading is off.
+// Compute the same shadow stack serially in our single self-contained Blob Worker.
+Widget.prototype.computeShadowStack=async function(zlist,progress,pocket,up=1){
+ this.cache.shadow_stack={};let n=0;for(const z of zlist){this.cache.shadow_stack[z-.005]=this.computeShadowAtZ(z-.005,z+up,undefined,pocket);progress(++n/zlist.length);}
+};
+
+function verticesFromSTL(bytes,studio=false){
+ if(bytes.byteLength<84)throw Error('올바른 바이너리 STL이 필요해요.');const data=new DataView(bytes),count=data.getUint32(80,true);if(count<(studio?4:12)||count>120000||bytes.byteLength!==84+count*50)throw Error('올바른 바이너리 STL이 필요해요.');
  const vertices=new Float32Array(count*9);let n=0;
  for(let face=0;face<count;face++)for(let v=0;v<3;v++)for(let d=0;d<3;d++){const value=data.getFloat32(84+face*50+12+v*12+d*4,true);if(!Number.isFinite(value))throw Error('좌표를 확인해주세요.');vertices[n++]=value;}
  return vertices;
@@ -26,6 +33,7 @@ function makeSettings(profile){
  settings.process.sliceFillOverlap=.35;
  settings.process.outputFanSpeed=profile.fan;settings.process.outputMinLayerTime=profile.minLayerTime;
  settings.process.ranges=[{lo:0,hi:0,fields:{outputShellMult:firstExtrusion,outputFillMult:Math.sqrt(firstExtrusion),outputSparseMult:firstExtrusion}}];
+ if(profile.studio){const s=profile.studio;Object.assign(settings.process,{sliceShells:s.walls,sliceFillSparse:s.infill/100,outputBrimCount:s.brim?3:0,outputBrimOffset:0,sliceSupportType:s.supports?'auto':'disabled',sliceSupportDensity:.15,sliceSupportOffset:.6,sliceSupportGap:true,outputFeedrate:s.speed==='quiet'?40:70,outputFinishrate:s.speed==='quiet'?35:50});}
  return settings;
 }
 function invoke(task,data,onData=()=>{}){
@@ -35,11 +43,13 @@ self.onmessage=async event=>{
  const {id,stl}=event.data||{};if(!id||!(stl instanceof ArrayBuffer))return;
  const progress=(value,message)=>self.postMessage({id,type:'progress',value,message});
  try{
-  const profile=globalThis.WebPrintProfiles.get(event.data.quality,event.data.material),vertices=verticesFromSTL(stl),settings=makeSettings(profile);await invoke('clear',{});
+  const studio=event.data.mode==='studio',profile=studio?globalThis.StudioCore.profile(event.data.studio):globalThis.WebPrintProfiles.get(event.data.quality,event.data.material),vertices=verticesFromSTL(stl,studio),settings=makeSettings(profile);await invoke('clear',{});
+  let position=[0,0];if(studio){const absolute=new Float32Array(vertices);for(let i=0;i<absolute.length;i++)if(i%3!==2)absolute[i]+=90;const b=globalThis.StudioCore.validateVertices(absolute);position=b.center.slice(0,2).map(n=>n-90);}
   const widget=newWidget('source').setInWorker().loadVertices(vertices).center();
   const bounds=widget.getBoundingBox(),height=bounds.max.z-bounds.min.z;
-  if(Math.abs(bounds.max.x-bounds.min.x-14)>.03||Math.abs(bounds.max.y-bounds.min.y-14)>.03||height<2||height>2.51)throw Error('14mm 키캡 조각만 계산할 수 있어요.');
+  if(!studio&&(Math.abs(bounds.max.x-bounds.min.x-14)>.03||Math.abs(bounds.max.y-bounds.min.y-14)>.03||height<2||height>2.51))throw Error('14mm 키캡 조각만 계산할 수 있어요.');
   widget.setTopZ(height);
+  if(studio)widget.move(position[0],position[1],0,true);
   await invoke('sync',{id:'click-model',group:'click-model',meta:{file:'keycap.stl'},anno:{},track:widget.track,vertices:widget.getGeoVertices()});
   await invoke('slicePre',{settings});
   await invoke('slice',{id:'click-model',settings},data=>{if(data.update)progress(data.update*.7,'층과 외벽 계산');});

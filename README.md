@@ -2,6 +2,8 @@
 
 **[바로 체험하기 →](https://hichoni.github.io/3d-modeling/)**
 
+**[Click Studio · STL 웹 스튜디오 →](https://hichoni.github.io/3d-modeling/studio.html)** — 일반 STL을 올려 배치·회전·크기를 조정하고, 채움·외벽·서포트·브림을 설정해 실제 레이어를 계산합니다. 프로젝트 저장과 출력 전 검토를 제공합니다. A1 mini/0.4mm/외부 PLA 베타이며, 출력에는 최신 중계기 API v8이 필요합니다. [기능·제한·검증 상태](docs/STL_STUDIO.md)를 확인하세요.
+
 [출력 전 보정·필라멘트 표시·품질 프리셋](docs/PRINT_PREPARATION_2026-10-21.md) · [2026-10-21 변경·집계·배포 기록](docs/DEPLOYMENT_2026-10-21.md) · [집에서 이어가기](docs/HANDOFF.md)
 
 **웹에서 실제 슬라이싱됩니다.** 크롬북·노트북에서 모델링 → 웹 엔진 계산 → 실제 노즐 경로를 확인하고, 현장 중계기를 연결하면 **바로 출력** 버튼으로 선택한 A1 mini에 전송합니다. 출력 중에는 3D 프린터 튜토리얼과 실제 온도·진행 상태가 표시됩니다. 이 경로에 Bambu Studio는 필요하지 않습니다. **웹 v1·v2 모두 실물 완료 기록이 있으며, v2 표면 품질·받침 결합·실제 ChromeOS·6대 동시 현장 검증은 아직 남아 있습니다.** [구현 범위와 다음 시험](docs/WEB_FIRST.md)을 확인하세요. Windows 설치 앱은 중계기 배포의 선택 사항이며 Store 출시는 하지 않았습니다.

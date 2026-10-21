@@ -148,3 +148,5 @@ function bind(){
 try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
 const workshopStats=new WorkshopStatistics();
 bind();bindBoothConnection();bindPairing();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();
+
+$('studioEntry').href='studio.html'+(new URLSearchParams(location.hash.slice(1)).has('booth')?location.hash:'');

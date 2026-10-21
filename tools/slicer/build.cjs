@@ -47,6 +47,6 @@ const plugin={name:'static-browser-adapters',setup(b){
  const notice='vendor/kiri/fdm-worker.js.LEGAL.txt';fs.writeFileSync(notice,fs.readFileSync(notice,'utf8').replace(/[ \t]+$/gm,''));
  require('./licenses.cjs')(root,result.metafile);
  const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
- fs.writeFileSync('vendor/kiri/build-info.json',JSON.stringify({upstream:'https://github.com/GridSpace/grid-apps',revision,version:'4.7.0',workerSha256:hash('vendor/kiri/fdm-worker.js'),entrySha256:hash('src/browser-slice-worker.js'),profilesSha256:hash('src/print-profiles.js'),builderSha256:hash('tools/slicer/build.cjs')},null,2)+'\n');
+ fs.writeFileSync('vendor/kiri/build-info.json',JSON.stringify({upstream:'https://github.com/GridSpace/grid-apps',revision,version:'4.7.0',workerSha256:hash('vendor/kiri/fdm-worker.js'),entrySha256:hash('src/browser-slice-worker.js'),profilesSha256:hash('src/print-profiles.js'),studioCoreSha256:hash('src/studio-core.js'),builderSha256:hash('tools/slicer/build.cjs')},null,2)+'\n');
  console.log('Built FDM worker ('+(fs.statSync('vendor/kiri/fdm-worker.js').size/1024/1024).toFixed(2)+' MB)');
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

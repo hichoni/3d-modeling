@@ -13,7 +13,13 @@ node bridge/setup.cjs
 node bridge/server.cjs
 ```
 
-`src`를 수정한 뒤 `index.html`을 다시 빌드해야 합니다. Pages는 `main`의 루트 `index.html`을 제공합니다. 정적 미리보기는 5186, 로컬 공방은 5188입니다. 두 서버 모두 허용된 파일만 제공하며 `runtime`, `artifacts`, 임의 경로는 제공하지 않습니다.
+`src`를 수정한 뒤 `node scripts/build.cjs`로 `index.html`, `studio.html`, 운영자 ZIP을 다시 빌드해야 합니다. Pages는 `main`의 루트 HTML을 제공합니다. 정적 미리보기는 5186, 로컬 공방은 5188입니다. 두 서버 모두 허용된 파일만 제공하며 `runtime`, `artifacts`, 임의 경로는 제공하지 않습니다.
+
+## STL 스튜디오 · API v8
+
+`src/studio.html/css`는 별도 전문 작업 화면입니다. `studio-core.js`는 STL 파서·메쉬 진단·변환·배치·설정 검증을 브라우저/worker/중계기에서 공유합니다. `studio-view.js`는 Three.js 플레이트·실제 층 경로를, `studio-app.js`는 편집 이력·프로젝트·worker·출력 검토를, `studio-api.js`는 기존 부스 키·기기 토큰·1:1 매칭을 연결합니다.
+
+worker의 `mode:studio`, `/api/studio-jobs`, `prepareStudioJob`에만 170×170×160mm 범위를 허용합니다. 기존 14mm 엔드포인트의 범위를 넓히지 않습니다. 레벨링 영역과 종료 상승은 실제 모델 높이에 따라 계산하며, 큰 STL 출력은 아직 실물 검증 전입니다. `/api/jobs/:id/download`와 `/discard`는 작업 소유자만 사용할 수 있습니다. API v7 중계기는 스튜디오가 업데이트 안내와 함께 거절합니다. 자세한 범위·시험은 [STL_STUDIO.md](STL_STUDIO.md)를 참고하세요.
 
 ## 모델링
 

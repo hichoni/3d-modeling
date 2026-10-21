@@ -6,6 +6,7 @@ test('downloadable operator package is complete, current, and contains no runtim
   if(name.endsWith('.cjs'))for(const match of read().toString().matchAll(/require\(['"](\.[^'"]+)['"]\)/g)){const dependency=path.posix.normalize(path.posix.join(path.posix.dirname(name),match[1]));assert.ok(entries.has(dependency),'Missing runtime dependency: '+dependency);}
  }
  assert.deepEqual(entries.get(prefix+'index.html')(),fs.readFileSync('index.html'));
+ assert.deepEqual(entries.get(prefix+'studio.html')(),fs.readFileSync('studio.html'));assert.ok(entries.has(prefix+'src/studio-core.js'));
  assert.equal(entries.get(prefix+'configure-booth.cmd')().toString().replace(/\r\n/g,'\n'),fs.readFileSync('configure-booth.cmd','utf8').replace(/\r\n/g,'\n'));
  assert.ok(entries.has(prefix+'scripts/start-background.ps1'));assert.ok(entries.has(prefix+'scripts/install-autostart.ps1'));assert.ok(entries.has(prefix+'먼저 읽어주세요.txt'));
  const config=JSON.parse(entries.get(prefix+'bridge/config.example.json')());for(const p of config.printers){assert.equal(p.accessCode,'');assert.equal(p.serial,'');assert.equal(p.ip,'');}assert.equal(config.operatorPin,'');assert.equal(config.booth.enabled,false);assert.equal(config.booth.key,'');

@@ -49,7 +49,7 @@ test('browser job API works with no Bambu Studio, isolates owners, and never sta
  const request=(route,body,extra={})=>new Promise((resolve,reject)=>{const req=http.request(origin+route,{method:body===undefined?'GET':'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Client-Token':client,'X-Click-Token':csrf,...extra}},res=>{const parts=[];res.on('data',p=>parts.push(p));res.on('end',()=>{const b=Buffer.concat(parts);resolve({status:res.statusCode,headers:res.headers,bytes:b,json:()=>JSON.parse(b)});});});req.on('error',reject);req.end(body===undefined?undefined:JSON.stringify(body));});
  try{
   await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Server startup timeout')),8000);child.stdout.once('data',()=>{clearTimeout(t);resolve();});child.once('exit',()=>{clearTimeout(t);reject(Error('Server exited'));});});
-  const boot=(await request('/api/bootstrap')).json();csrf=boot.csrf;assert.equal(boot.version,7);assert.equal(boot.studioAvailable,false);
+  const boot=(await request('/api/bootstrap')).json();csrf=boot.csrf;assert.equal(boot.version,8);assert.equal(boot.studioAvailable,false);
   const page=await request('/');assert.match(page.headers['content-security-policy'],/'wasm-unsafe-eval'/);assert.match(page.headers['content-security-policy'],/worker-src 'self' blob:/);
   const stl=fixture(2.3),sliced=await slice(stl),body={name:'별',stl:stl.toString('base64'),gcode:sliced.gcode,profile:sliced.profile,seconds:sliced.summary.time};
   assert.equal((await request('/api/browser-jobs',body)).status,409);assert.equal((await request('/api/pair',{printerId:'mini-01',name:'시험 크롬북'})).status,200);

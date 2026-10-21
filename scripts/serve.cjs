@@ -18,8 +18,8 @@ function previewServer({port=5186,bridgePort=5188}={}){
    req.on('aborted',()=>upstream.destroy());req.pipe(upstream);return;
   }
   if(serveDownload(req,res,path.dirname(file)))return;
-  if(!['/','/index.html'].includes(req.url)){res.writeHead(404);return res.end('Not found');}
-  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer'});fs.createReadStream(file).pipe(res);
+  if(!['/','/index.html','/studio.html'].includes(req.url)){res.writeHead(404);return res.end('Not found');}
+  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer'});fs.createReadStream(req.url==='/studio.html'?path.join(path.dirname(file),'studio.html'):file).pipe(res);
  });
 }
 if(require.main===module)previewServer({bridgePort:Number(process.env.CLICK_BRIDGE_PORT||5188)}).listen(5186,'127.0.0.1',()=>console.log('Preview: http://127.0.0.1:5186'));

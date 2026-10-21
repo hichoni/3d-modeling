@@ -1,6 +1,6 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {makeAccess,equalSecret}=require('./access.cjs');const {serveDownload}=require('./downloads.cjs');const {validateSTL,sliceSTL}=require('./core.cjs');const {printerDefinitions}=require('./printers.cjs');const {Pairings,clientId}=require('./pairings.cjs');const {Fleet}=require('./fleet.cjs');
-const {prepareBrowserJob}=require('./browser-job.cjs');
+const {prepareBrowserJob,prepareStudioJob}=require('./browser-job.cjs');
 const {connectionSettings,saveConnection}=require('./connection-settings.cjs');
 const {directPrint,stopOwnJob}=require('./direct-print.cjs');
 const {Statistics}=require('./statistics.cjs');
@@ -33,10 +33,10 @@ const server=http.createServer(async(req,res)=>{try{
  if(!access.hosts.has(req.headers.host))return reply(res,403,{error:'설정된 공방 주소로 접속하세요.'});const url=new URL(req.url,origin),route=url.pathname;if(serveDownload(req,res,root))return;
  if(route.startsWith('/api/')&&!access.cors(req,res))return reply(res,403,{error:'허용된 부스 사이트에서 연결하세요.'});
  if(req.method==='OPTIONS'&&route.startsWith('/api/')){if(!access.allowedOrigin(req.headers.origin))return reply(res,403,{error:'부스 사이트를 확인하세요.'});res.writeHead(204);return res.end();}
- if(req.method==='GET'&&(route==='/'||route==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,'index.html')).pipe(res);}
+ if(req.method==='GET'&&['/','/index.html','/studio.html'].includes(route)){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; object-src 'none'"});return fs.createReadStream(path.join(root,route==='/studio.html'?'studio.html':'index.html')).pipe(res);}
  if(req.method==='GET'&&route==='/favicon.ico'){res.writeHead(204);return res.end();}
  if(route.startsWith('/api/')&&!access.participant(req))return reply(res,403,{error:'운영자가 공유한 부스 링크로 접속하세요.'});
- if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:7,statistics:statistics.summary(),studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
+ if(req.method==='GET'&&route==='/api/bootstrap')return reply(res,200,{app:'click-workshop',csrf,version:8,stlStudio:true,statistics:statistics.summary(),studioAvailable:fs.existsSync(config.slicerPath||'C:/Program Files/Bambu Studio/bambu-studio.exe'),desktopInstance:process.env.CLICK_DESKTOP_INSTANCE||undefined,operator:access.isOperator(req),booth:access.booth,boothOrigin:access.lanOrigin,pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/statistics')return reply(res,200,statistics.summary());
  if(req.method==='GET'&&route==='/api/printers')return reply(res,200,{pairing:currentPair(req),printers:publicPrinters(device(req))});
  if(req.method==='GET'&&route==='/api/connection-settings'){
@@ -45,14 +45,15 @@ const server=http.createServer(async(req,res)=>{try{
  }
  if(req.method==='GET'&&route==='/api/booth-links'){admin(req);return reply(res,200,{enabled:access.booth,links:access.links()});}
  if(req.method==='GET'&&route==='/api/operator'){const s=auth(req),list=publicPrinters(device(req),s.admin).filter(p=>s.admin||p.id===s.printerId);const selected=list.find(p=>p.id===url.searchParams.get('printer'))||list[0];return reply(res,200,{admin:s.admin,printers:list,printer:selected,error:selected?.error||'',jobs:[...jobs.values()].filter(j=>(j.ticket||j.mode==='direct')&&(s.admin||j.printerId===s.printerId&&j.clientId===s.clientId)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).map(j=>summary(j)),canStop:selected?.canStop||false});}
- const match=/^\/api\/jobs\/([a-f0-9]{24})(?:\/(queue|print|stop|start|cancel|resolve|file))?$/.exec(route),j=match?jobs.get(match[1]):null;
+ const match=/^\/api\/jobs\/([a-f0-9]{24})(?:\/(queue|print|stop|start|cancel|resolve|file|download|discard))?$/.exec(route),j=match?jobs.get(match[1]):null;
  if(match&&(!j||!access.isOperator(req)&&j.clientId!==device(req)))return reply(res,404,{error:'이 기기의 작업을 찾을 수 없습니다.'});
  if(req.method==='GET'&&match&&!match[2])return reply(res,200,summary(j,true));
+ if(req.method==='GET'&&match?.[2]==='download'){if(j.clientId!==device(req))return reply(res,404,{error:'이 기기의 파일을 찾을 수 없습니다.'});if(!j.slice)throw Error('슬라이싱 파일이 없습니다.');res.writeHead(200,{'Content-Type':'application/octet-stream','Cache-Control':'no-store','Content-Disposition':'attachment; filename="studio.gcode.3mf"'});return fs.createReadStream(path.join(jobRoot,j.id,'print.gcode.3mf')).pipe(res);}
  if(req.method==='GET'&&match?.[2]==='file'){auth(req,j);if(!j.slice)throw Error('슬라이싱 결과가 없습니다.');res.writeHead(200,{'Content-Type':'application/octet-stream','Cache-Control':'no-store','Content-Disposition':'attachment; filename="click.gcode.3mf"'});return fs.createReadStream(path.join(jobRoot,j.id,'print.gcode.3mf')).pipe(res);}
  if(req.method!=='POST')return reply(res,404,{error:'Not found'});if(!access.allowedOrigin(req.headers.origin)||req.headers['x-click-token']!==csrf)return reply(res,403,{error:'공방 연결 세션이 필요합니다.'});
- if(route==='/api/browser-jobs'){
+ if(route==='/api/browser-jobs'||route==='/api/studio-jobs'){
   const d=pairingRequired(req);if(jobs.size+uploads>=200||uploads>=6)throw Error('접수 중인 작품이 많아요. 잠시 뒤 다시 시도해주세요.');if(req.headers['content-type']!=='application/json')throw Error('JSON required');
-  uploads++;try{const body=JSON.parse((await readBody(req,11*1024*1024)).toString()),result=prepareBrowserJob(body),now=currentPair(req);
+  uploads++;try{const studio=route==='/api/studio-jobs',body=JSON.parse((await readBody(req,(studio?34:11)*1024*1024)).toString()),result=(studio?prepareStudioJob:prepareBrowserJob)(body),now=currentPair(req);
    if(!now||now.revision!==d.revision||now.printerId!==d.printerId)throw Error('매칭이 변경됐습니다. 새 미니를 확인하고 다시 접수해주세요.');
    const id=crypto.randomBytes(12).toString('hex'),name=String(body.name||'나의 작품').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9 ]/g,'').slice(0,16)||'나의 작품';
    const j={id,name,state:'ready',createdAt:new Date().toISOString(),dimensions:result.dimensions,bytes:result.bytes.length,sha256:result.sha256,slice:result.slice,clientId:d.id,printerId:d.printerId,printerSerial:fleet.item(d.printerId).config.serial,pairingRevision:d.revision};
@@ -79,6 +80,7 @@ const server=http.createServer(async(req,res)=>{try{
   if(!equalSecret(body.pin,p?.operatorPin||config.operatorPin))return reply(res,401,{error:'운영자 PIN을 확인하세요.'});const token=crypto.randomBytes(32).toString('hex');sessions.set(token,{expiry:Date.now()+30*60000,admin:isAdmin,...(d?{clientId:d.id,printerId:d.printerId,revision:d.revision}:{})});return reply(res,200,{token,admin:isAdmin,printerId:d?.printerId});
  }
  if(match?.[2]==='queue'){if(!pairings.matches(j))throw Error('매칭이 변경된 작품입니다. 새 미니에서 다시 접수해주세요.');if(j.ticket)return reply(res,200,summary(j,true));if(j.state!=='ready')throw Error('먼저 슬라이싱을 완료하세요.');j.ticket=Math.max(0,...[...jobs.values()].map(x=>x.ticket||0))+1;j.state='queued';save(j);return reply(res,200,summary(j,true));}
+ if(match?.[2]==='discard'){if(j.clientId!==device(req))return reply(res,404,{error:'이 기기의 작업을 찾을 수 없습니다.'});if(!['ready','queued'].includes(j.state)||j.startAttempted)throw Error('출력 중이거나 처리한 작업은 취소할 수 없습니다.');j.state='cancelled';save(j);return reply(res,200,summary(j));}
  if(match?.[2]==='print'){
   const pending=directPrint({job:j,owner:device(req),pairings,fleet,body,save});
   reply(res,202,summary(j,true));pending?.catch(e=>{fleet.item(j.printerId).error=e.message;});return;
@@ -94,7 +96,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(route==='/api/stop'){fleet.stop(printerId);return reply(res,202,{sent:true,printerId});}
  return reply(res,404,{error:'Not found'});
  }catch(e){if(!res.headersSent)reply(res,e.status||409,{error:e.message});else res.end();}});
-server.requestTimeout=20000;server.headersTimeout=10000;
+server.requestTimeout=120000;server.headersTimeout=10000;
 const refresh=setInterval(()=>{fleet.refresh();for(const [token,s]of sessions)if(s.expiry<Date.now())sessions.delete(token);},10000);
 server.listen(port,access.bind,()=>{const links=access.links();if(links)fs.writeFileSync(path.join(runtime,'booth-links.json'),JSON.stringify(links,null,2));console.log('상상을 클릭하다! '+origin+'\n운영자 PIN: '+(process.env.CLICK_DESKTOP_INSTANCE?'운영자 앱에서 확인':config.operatorPin)+'\n등록된 미니: '+printers.map(p=>p.name).join(', ')+'\n참가자는 부스 링크에서 현장 매칭을 선택합니다. 프린터 정보와 작업은 runtime/에만 저장합니다.');for(const p of printers)if(p.ip)fleet.connect(p.id).catch(()=>{});});
 function close(){clearInterval(refresh);fleet.close();server.close(()=>process.exit(0));}process.on('SIGINT',close);process.on('SIGTERM',close);
