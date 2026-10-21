@@ -3,14 +3,14 @@
 function socketError(code,message){const e=Error(message);e.code=code;return e;}
 function available(){return typeof root.TCPSocket==='function'&&typeof root.UDPSocket==='function';}
 function streamTransport(open,socket){
- const reader=open.readable.getReader(),writer=open.writable.getWriter();let closed=false,ended=false;
+ const reader=open.readable.getReader(),writer=open.writable.getWriter();let closed=false;
  return {info:{localAddress:open.localAddress,localPort:open.localPort,remoteAddress:open.remoteAddress,remotePort:open.remotePort},
   async read(){if(closed)return null;try{const {value,done}=await reader.read();return done?null:new Uint8Array(value.buffer?value.buffer.slice(value.byteOffset,value.byteOffset+value.byteLength):value);}catch(e){if(closed)return null;throw socketError('SOCKET_READ','프린터와의 연결이 끊겼습니다.');}},
-  async write(data){if(closed)throw socketError('SOCKET_CLOSED','프린터와의 연결이 이미 닫혔습니다.');try{await writer.write(data);}catch{throw socketError('SOCKET_WRITE','프린터로 데이터를 보내지 못했습니다.');}},
-  // Half-close: send FIN once everything written has gone out, but keep reading (FTPS data channel).
-  async end(){if(closed||ended)return;ended=true;try{await writer.close();}catch{}},
+  // Chrome's TCPSocket can resolve a write before the bytes reach its send pipe, and a write issued right after it
+  // then overwrites them (a file arrives as its first 64 KB plus its last chunk). A timer turn between writes avoids it.
+  async write(data){if(closed)throw socketError('SOCKET_CLOSED','프린터와의 연결이 이미 닫혔습니다.');try{await writer.write(data);}catch{throw socketError('SOCKET_WRITE','프린터로 데이터를 보내지 못했습니다.');}await new Promise(r=>setTimeout(r,0));},
   async close(){if(closed)return;closed=true;
-   if(!ended)await Promise.race([writer.close().catch(()=>{}),new Promise(r=>setTimeout(r,3000))]);
+   await Promise.race([writer.close().catch(()=>{}),new Promise(r=>setTimeout(r,3000))]);
    try{await reader.cancel();}catch{}try{reader.releaseLock();}catch{}try{writer.releaseLock();}catch{}try{await socket.close();}catch{}}};
 }
 async function openTcp(host,port,{timeout=8000}={}){

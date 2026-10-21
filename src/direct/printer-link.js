@@ -77,10 +77,12 @@ class Ftps{
    channel=await TLS().connect(raw,{serverName:this.device.serial,ca:TLS().parsePem(this.device.ca),session}).catch(e=>{throw data_(e);});
    const final=this.read(120000);final.catch(()=>{});
    for(let o=0;o<data.length;o+=65536){await channel.write(data.subarray(o,o+65536)).catch(e=>{throw data_(e);});onProgress(Math.min(1,(o+65536)/data.length));}
-   // Like Node's dataTls.end(): finish sending, then read until the printer closes the data channel. Closing first
-   // can reset the connection while the printer still has unread data, and it then keeps a truncated file.
-   await channel.end();const drained=(async()=>{try{while(await channel.read()!==null);}catch{}})();
-   this.expect(await final,226);await Promise.race([drained,new Promise(r=>setTimeout(r,5000))]);await channel.close();channel=null;
+   // End of data: close_notify first, then keep the socket open while Chrome drains what it still holds (closing a
+   // Direct Sockets stream drops unsent bytes, and closing only the writable sends no FIN). Servers that treat
+   // close_notify as end of file answer 226 here; otherwise the full close after the wait delivers the FIN.
+   await channel.notify();const eof=(async()=>{try{while(await channel.read()!==null);}catch{}})();
+   let reply=await Promise.race([final,eof.then(()=>null),new Promise(r=>setTimeout(()=>r(null),8000))]);
+   await channel.close();channel=null;if(!reply)reply=await final;this.expect(reply,226);
    // The SD card may report the final size a moment after 226; ask again a few times before calling it a mismatch.
    let got=-1;for(const pause of [0,1000,2000,4000]){if(pause)await new Promise(r=>setTimeout(r,pause));const size=this.expect(await this.command('SIZE '+name),213);got=Number(size.text.slice(3).trim());if(got>=data.length)break;}
    if(got!==data.length){const e=linkError('FTPS_SIZE_MISMATCH','업로드한 파일 크기가 다릅니다. 다시 시도하세요.');e.ftpReply=got+'/'+data.length;throw e;}
