@@ -30,7 +30,7 @@ ChromeOS 150부터는 관리 정책(`IsolatedWebAppUserInstallationEnabled`)이 
 
 ### B. 학교 관리 크롬북
 
-학교 계정의 크롬북은 보통 `chrome://flags`가 막혀 있습니다. Google 관리 콘솔에서 IWA로 강제 설치해야 하며, 필요한 값은 다음과 같습니다.
+학교 계정은 보통 **개발자 도구 정책(`DeveloperToolsAvailability`)이 막혀 있고**, Chrome 119부터 이 정책이 IWA 개발자 모드도 함께 막습니다. 이 경우 flags를 Enabled로 바꾸고 다시 시작해도 `chrome://web-app-internals`에 설치 칸이 나타나지 않습니다(`chrome://policy`에서 값 2 확인). 관리자가 해당 조직 단위에 개발자 도구를 허용하면 위 A 방법이 가능해집니다. 또는 Google 관리 콘솔에서 IWA로 강제 설치해야 하며, 필요한 값은 다음과 같습니다.
 
 | 항목 | 값 |
 | --- | --- |
