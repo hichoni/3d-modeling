@@ -1,14 +1,14 @@
 # 현재 상황 인수인계 — 2026-10-21 STL 스튜디오 추가
 
-## 최신: 전화번호 제공 거절, Microsoft 이메일 문의 파일 준비
+## 최신: Microsoft 문의 이메일 발송 완료 · 16:03 KST
 
-사용자는 Microsoft 문의 발송을 요청했지만 **전화번호는 제공하지 않겠다고 선택했다.** 전화번호 필수인 내부 문의 폼은 2/3 단계에서 멈췄다. 전화번호 입력을 다시 요구하거나 임의 번호를 넣지 않는다. 공식 문서의 이메일 주소에 보내는 미발송 EML(본문·오류 이미지 포함)을 artifacts/registration에 준비했다. Gmail 열기는 개인 메일함·인증 세션 접근 허락 부족으로 자동 승인 검토가 거부했다. 우회하지 않는다. 새로 필요한 것은 Gmail의 새 메일 작성·발송 접근에 대한 명시적 허락이며, Microsoft 문의 내용의 발송 허락은 이미 받았다. 실제 발송·접수 번호는 아직 없다. [문의 작성 상태](STORE_UPLOAD_SUPPORT_DRAFT.md).
+사용자는 **전화번호를 제공하지 않겠다고 선택**한 뒤 **Gmail 접속·문의 발송을 명시적으로 허용**했다. `reportapp@microsoft.com`으로 업로드 실패 재현 기록과 오류 이미지 1개를 발송했고 Gmail 메시지 전송됨·보낸편지함을 확인했다. 제목은 `Partner Center MSIX upload Error / null Bytes - Store ID 9N2V9KQDSJ0G`, 발송 시각은 2026-10-21 16:03 KST다. 이메일 회신 및 담당 부서 이관/이메일 경로 안내를 요청했다. **답변·담당 배정·접수 번호는 아직 미확인**이다. 업로드와 Store 출시는 여전히 미완료다. 전화번호나 Gmail 접근 허락을 다시 요구하거나 같은 문의를 중복 발송하지 않는다. 비공개 Gmail 링크·이미지는 artifacts/registration에만 보관한다. [발송 기록](STORE_UPLOAD_SUPPORT_DRAFT.md).
 
 ## 최신: 수동 업로드와 MSIXUPLOAD도 실패 · 15:01 KST
 
 일반 Chrome 로그인과 확장 프로그램의 파일 URL 권한은 사용자가 직접 완료했다. 자동 파일 선택 성공 후 포털 전송이 Error였다. 이어 사용자의 **수동 MSIX 선택도 Error**임을 확인했다. 공식 방법으로 원본 MSIX를 담은 `.msixupload`를 만들고 내부 해시를 검증해 한 번 전송했지만 이것도 즉시 Error였다. 두 파일의 정확한 크기가 표시되나 상세 오류·패키지 검증 성공은 없고 Save도 미완료다. HTTP 원인이나 포털 장애 여부는 확정하지 못했다. 계정 등록·로그인·파일 권한·같은 파일 선택을 다시 요구하거나 완료로 보고하지 않는다.
 
-파일 해시는 최초 MSIX와 일치하고 `e056eee`의 Windows CI도 성공했다. 업로드와 별개다. [현재 Store 기록](STORE_PROGRESS_2026-10-21.md), [Microsoft 문의 초안](STORE_UPLOAD_SUPPORT_DRAFT.md)을 먼저 읽는다. 문의는 아직 보내지 않았으며 외부 발송에는 계정 소유자의 명시적 지시가 필요하다. 실제 프린터·보안 정책은 변경하지 않았다.
+파일 해시는 최초 MSIX와 일치하고 `e056eee`의 Windows CI도 성공했다. 업로드와 별개다. [현재 Store 기록](STORE_PROGRESS_2026-10-21.md), [Microsoft 문의 발송 기록](STORE_UPLOAD_SUPPORT_DRAFT.md)을 먼저 읽는다. 실제 프린터·보안 정책은 변경하지 않았다.
 
 ## 최신: 개인 개발자 등록·앱 예약 완료, 제출 초안 준비
 
