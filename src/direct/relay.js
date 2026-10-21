@@ -70,12 +70,13 @@ function waitForStatus(mqtt,timeout=6000){
 }
 function report(id,r){
  const l=link(id),j=l.active;if(!j||!l.mqtt)return;const s=l.mqtt.state;
- if(r.print?.command==='project_file'&&String(r.print.sequence_id)===j.printId&&r.print.result==='fail'){j.state='failed';j.attention='이 미니가 시작 요청을 거절했습니다. 본체를 확인하세요.';saveJob(j);return;}
+ if(r.print?.command==='project_file'&&String(r.print.sequence_id)===j.printId&&r.print.result==='fail'){const why=[r.print.reason,r.print.err_code&&'err '+r.print.err_code].filter(Boolean).join(' · ').replace(/[^\x20-\x7e가-힣]/g,'').slice(0,80);j.state='failed';j.attention='이 미니가 시작 요청을 거절했습니다. 본체를 확인하세요.'+(why?' ['+why+']':'');saveJob(j);return;}
  if(!['sent','accepted','printing','paused','uncertain'].includes(j.state))return;
  if(!J().matchesJob(s,j)){if(j.state==='uncertain'||!r.print||s.subtask_id===undefined)return;if(['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&j.seenRunning){j.state='uncertain';j.attention='다른 출력이 시작됐습니다. 이 미니의 본체를 확인하세요.';saveJob(j);}return;}
  if(['PREPARE','RUNNING'].includes(s.gcode_state))j.seenRunning=true;
  if(s.gcode_state==='FINISH'&&j.seenRunning)j.state='complete';else if(s.gcode_state==='FAILED')j.state='failed';else if(s.gcode_state==='PAUSE')j.state='paused';else if(s.gcode_state==='RUNNING'&&Number(s.layer_num)>0)j.state='printing';else if(['PREPARE','RUNNING'].includes(s.gcode_state))j.state='accepted';
- if(j.state==='complete'&&!j.completedAt)j.completedAt=new Date().toISOString();j.progress=j.state==='complete'?100:Number(s.mc_percent)||0;j.layer=Number(s.layer_num)||0;j.attention=J().attention(s);saveJob(j);
+ if(j.state==='complete'&&!j.completedAt)j.completedAt=new Date().toISOString();j.progress=j.state==='complete'?100:Number(s.mc_percent)||0;j.layer=Number(s.layer_num)||0;j.attention=J().attention(s);
+ if(j.state==='failed'&&Number(s.print_error)>0)j.attention=(j.attention||'프린터가 출력을 멈췄습니다.')+' [오류 '+Number(s.print_error).toString(16).toUpperCase().padStart(8,'0')+']';saveJob(j);
 }
 // Bambu Studio sends pushall at most every few seconds and as a 5-minute keepalive; A1/P1 otherwise report deltas only.
 function tick(){

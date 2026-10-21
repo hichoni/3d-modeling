@@ -28,7 +28,9 @@ class PrinterTutorial{
   $('tourMode').textContent=this.demo?'원리 미리보기 · 전송하지 않아요':this.job&&!['ready','queued','cancelled'].includes(this.job.state)?'실제 출력과 함께 알아보기':'A1 mini · 프린터 탐험';
   $('tourMode').classList.toggle('is-demo',this.demo);
   $('tourStepNumber').textContent=this.cursor>=0?String(this.cursor+1).padStart(2,'0'):'●';
-  $('tourTitle').textContent=lesson.title;$('tourBody').textContent=lesson.body;
+  // A stopped or unconfirmed job shows its actual reason, not only the generic lesson text.
+  const reason=!this.demo&&this.cursor<0&&['failed','uncertain'].includes(this.phase)?(this.job?.attention||this.job?.error||''):'';
+  $('tourTitle').textContent=lesson.title;$('tourBody').textContent=reason?lesson.body.split('.')[0]+'. '+reason:lesson.body;
   $('tourFocusLabel').textContent=lesson.name;
   $('tourPauseBtn').textContent=this.auto?'Ⅱ 설명 멈추기':'▶ 설명 이어보기';
   $('tourNextBtn').disabled=this.cursor===4;
