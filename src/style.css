@@ -37,3 +37,104 @@ select:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.print-pre
 .direct-find{display:grid;gap:8px;margin-bottom:12px}
 #directBoothWarning{color:#b4472e;font-weight:700}
 .direct-version{position:fixed;left:10px;bottom:8px;z-index:50;font-size:11px;color:#6b7280;background:#ffffffcc;border-radius:999px;padding:3px 9px;pointer-events:auto}
+
+/* One-screen layout for Chromebooks and laptops: no page scroll.
+   Top row: brand · steps · today's counts · actions. Below: 3D stage left, the step's controls right. */
+@media(min-width:1001px){
+ html,body{height:100%;overflow:hidden}
+ .app-shell{max-width:none;height:100dvh;padding:8px 16px 10px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-rows:auto minmax(0,1fr);gap:8px 14px;align-items:center}
+ .topbar{display:contents}
+ .brand{grid-column:1;grid-row:1}.brand small{display:none}.brand strong{font-size:19px}
+ .quest-nav{grid-column:2;grid-row:1;gap:4px;padding:3px 6px;border-radius:16px;max-width:620px;justify-self:center;width:100%}
+ .quest-nav button{grid-template-columns:28px 1fr;column-gap:7px;padding:4px 8px;border-radius:12px}
+ .quest-nav button span{width:28px;height:28px;font-size:12px;grid-row:auto}
+ .quest-nav b{font-size:15px;align-self:center;white-space:nowrap}.quest-nav small{display:none}
+ .workshop-statistics{grid-column:3;grid-row:1;margin:0;padding:5px 12px;border-radius:14px;display:flex;gap:10px;align-items:center}
+ .statistics-date>span,.statistics-date>small,.statistics-info{display:none}
+ .statistics-date{padding:0}.statistics-date time{font-size:13px}
+ .statistics-totals{gap:10px}.statistics-totals>div{padding-left:10px}
+ .statistics-totals dt{font-size:9px}.statistics-totals dd{margin-top:1px}.statistics-totals b{font-size:17px}.statistics-totals dd>span{font-size:9px}
+ .top-actions{grid-column:4;grid-row:1;gap:5px;flex-wrap:nowrap;max-width:none;margin:0}
+ .top-actions .booth-btn{padding:7px 11px;font-size:12px}.top-actions .icon-btn{width:34px;height:34px}
+ #connection{display:none}
+ .page-foot{display:none}
+ #workshop{grid-column:1/-1;grid-row:2;min-height:0;height:100%;display:grid;grid-template-columns:minmax(0,1fr) clamp(330px,29vw,410px);grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:8px 14px}
+ .workspace{display:contents}
+ .heading{grid-column:1/-1;grid-row:1;padding:0 2px;gap:12px}
+ .heading>div:first-child{display:flex;align-items:baseline;gap:10px;min-width:0}
+ .heading .eyebrow{white-space:nowrap}
+ .heading h1{font-size:22px;margin:0;letter-spacing:-.4px;white-space:nowrap}
+ .heading p{font-size:12px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .timer{transform:none;min-width:0;padding:4px 12px;border-radius:12px;display:flex;align-items:baseline;gap:7px;box-shadow:none}
+ .timer span{font-size:10px}.timer b{font-size:19px}.timer small{display:none}
+ #pairingBadge{grid-column:2;grid-row:1;justify-self:end;margin-right:150px;align-self:center}
+ .model-stage,.model-stage.is-layer-view,.printer-tour{grid-column:1;grid-row:2/4;height:auto;min-height:0;border-radius:22px}
+ #layerInspect,#resultPanel{grid-column:1;grid-row:4;margin:0}
+ #designControls,#sliceCard{grid-column:2;grid-row:2/5;min-height:0;overflow:auto;margin:0}
+ #printPreparation{grid-column:2;grid-row:2;margin:0}
+ #printCard{grid-column:2;grid-row:3/5;min-height:0;overflow:auto}
+ #assemblyCard,#sliceLesson{display:none!important}
+ .actionbar{grid-column:1/-1;grid-row:5;padding:0;gap:12px}
+ .actionbar .primary.next{padding:10px 22px;font-size:18px}
+ #footerHint{font-size:10px}
+ /* Right-column cards */
+ .side-card{padding:14px 16px;border-radius:20px}
+ .side-card h2{font-size:18px;margin:4px 0}.side-card p{font-size:11px;line-height:1.6;margin:6px 0}
+ .slice-card .note,.print-card .note{padding:7px 10px;font-size:11px}
+ .slice-presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}.slice-presets>small{grid-column:1/-1}
+ .slice-presets label{font-size:11px}.slice-presets select{margin-top:3px;padding:7px 8px;font-size:12px}
+ .slice-card .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+ .slice-card .metrics>div{border:0;padding:0}.slice-card .metrics dt{font-size:9px}.slice-card .metrics dd{font-size:15px;margin:2px 0 0}
+ #sliceCopy{display:none}
+ .print-card #printTitle{display:none}
+ .print-card .print-target select{padding:7px 8px}
+ .print-card .direct-action p{font-size:11px;margin:4px 0}
+ /* Design controls in the right column */
+ .control-tray{padding:14px 16px;border-radius:20px}
+ .input-row{flex-wrap:wrap;gap:8px}.input-row>label{min-width:0;width:100%;font-size:12px}
+ .input-row .name-field{flex:1 1 100%}.input-row .content-choices{flex:1 1 100%;display:grid;grid-template-columns:repeat(3,1fr)}
+ .input-help{margin:4px 0 6px;font-size:10px}
+ .control-columns{grid-template-columns:1fr;gap:6px}
+ .control-row{gap:8px;margin:5px 0;flex-wrap:wrap}.control-label{min-width:62px;font-size:11px}
+ .control-row .options{flex:1;gap:6px}.control-row .options button{padding:7px 6px;font-size:13px}
+ .control-row .options button small{display:none}
+ .control-row .subtle{display:none}
+ .control-decor{display:grid;gap:5px}.control-decor label small{display:none}
+ .symbols button{width:38px;height:38px}.swatches button{width:30px;height:30px}
+ /* Step 2 layer details and step 3 result under the stage */
+ .layer-inspect{grid-template-columns:minmax(0,1fr) auto;padding:10px 14px;gap:12px;border-radius:18px}
+ .layer-explanation h3{font-size:16px;margin:2px 0}.layer-explanation p{font-size:11px;margin:2px 0}
+ .layer-options{gap:6px}.layer-options button{padding:6px 10px;font-size:11px}
+ .result-panel{padding:10px 16px;gap:14px;border-radius:18px}
+ .result-panel h2{font-size:19px;margin:2px 0}.result-panel p{font-size:11px;margin:2px 0}.result-panel .print-readiness{display:none}
+ /* Step 3 preparation stacked above the print card */
+ .print-preparation{grid-template-columns:1fr;gap:6px;padding:10px 14px;border-radius:18px}
+ .print-preparation legend{font-size:12px;margin:0 0 2px}
+ /* Calibration options as two chips; their one-line explanations and the summary are dropped */
+ .print-preparation fieldset{display:grid;grid-template-columns:1fr 1fr;gap:6px}.print-preparation legend{grid-column:1/-1}
+ .print-preparation fieldset>label{margin:0;gap:6px;align-items:center}.print-preparation fieldset>label small,#calibrationSummary{display:none}
+ .print-preparation fieldset>label b{font-size:13px}.print-preparation input{width:16px;height:16px}
+ /* Filament: one row (swatch · type · colour · source) plus the status line */
+ .printer-filament{padding:0 0 0 10px!important;margin:0!important}.printer-filament h2,#filamentProfile{display:none}
+ .printer-filament .filament-reading{gap:8px;margin:0}.printer-filament .filament-reading i{width:26px;height:26px}
+ .printer-filament .filament-reading b{font-size:14px}.printer-filament .filament-reading span{font-size:11px}
+ .printer-filament p{font-size:10px;line-height:1.4;margin:3px 0 0}
+ /* Print card: kicker and the tour's duplicate status line go; temperatures sit in one short row */
+ .print-card{display:flex;flex-direction:column;gap:5px;padding:12px 14px}
+ .print-card .card-kicker,.print-card #tourLiveStatus{display:none}
+ .print-card .print-target{gap:3px;font-size:11px;margin:0}.print-card .direct-action{gap:6px;margin-bottom:4px}
+ .print-card .direct-action .primary{padding:10px;font-size:20px;border-radius:14px}
+ .print-card .tour-temperatures{gap:6px;margin:4px 0 2px}.tour-temperatures>div{padding:5px 9px}.tour-temperatures strong{font-size:17px;margin:1px 0 0}
+ .print-card #printDetail{margin:2px 0}
+ /* 3D printer tour: smaller captions so the model keeps its space */
+ .printer-viewport{bottom:168px}.tour-scene-caption{bottom:170px}.tour-coach{bottom:64px}
+ .tour-speech{padding:10px 14px 10px 44px}.tour-speech h2{font-size:16px;margin:0 0 4px}.tour-speech p{font-size:11px;line-height:1.6}
+ .tour-chapter{font-size:18px;top:12px}.tour-controls{bottom:8px}.tour-controls nav button{padding:6px 4px}
+}
+/* Narrower laptops: the date chip would collide with the step tabs; the counts stay */
+@media(min-width:1001px) and (max-width:1439px){.statistics-date{display:none}}
+@media(min-width:1001px) and (max-height:700px){
+ .tour-temperatures>div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.tour-temperatures small,#tourTelemetrySource{display:none}
+ .heading p{display:none}
+ .model-stage.is-layer-view #stage{inset:40px 0 96px}.layer-tools{bottom:48px;padding:8px 10px}
+}

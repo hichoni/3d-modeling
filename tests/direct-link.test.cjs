@@ -27,6 +27,12 @@ test('FTPS uploads over a resumed TLS data channel and verifies the size',async 
  await assert.rejects(ftp.upload('../escape.3mf',new Uint8Array(1)),e=>e.code==='FTPS_NAME');
 });
 
+test('FTPS rejection keeps the reply code and text for the job error',async t=>{
+ const printer=await new MockPrinter({storReply:'553 Could not create file.'}).start();t.after(()=>printer.stop());
+ const ftp=new Ftps(printer.device());await ftp.connect();t.after(()=>ftp.close());
+ await assert.rejects(ftp.upload('click_test.3mf',new Uint8Array(10)),e=>e.code==='FTPS_553'&&e.ftpReply==='Could not create file.');
+});
+
 test('upload then project_file runs to FINISH on the mock printer',async t=>{
  const printer=await new MockPrinter({printSeconds:1.5}).start();t.after(()=>printer.stop());
  const mqtt=new Mqtt(printer.device());await mqtt.connect();t.after(()=>mqtt.close());

@@ -110,13 +110,21 @@ function startJob(j,body){
  try{J().checkStart(j,{sha256:j.sha256,bedClear:true,plaReady:true},l.mqtt,l.active);J().checkFilament(l.mqtt.state);}catch(e){j.state=previous;throw fail(e.message);}
  j.mode='direct';j.printOptions={...options};j.state='uploading';j.upload=0;l.active=j;saveJob(j);
  (async()=>{const ftp=new (Link().Ftps)(l.device);
-  try{await ftp.connect();const remote='click_'+j.id+'.3mf';await ftp.upload(remote,bytes,f=>{j.upload=Math.round(f*100);});
-   J().checkReady(l.mqtt);J().checkFilament(l.mqtt.state);
+  let stage='connect';
+  try{await ftp.connect();stage='upload';const remote='click_'+j.id+'.3mf';await ftp.upload(remote,bytes,f=>{j.upload=Math.round(f*100);});
+   // A1 mini often goes quiet during a long upload; fetch a fresh report before the final check instead of failing on stale state.
+   stage='ready';if(Date.now()-l.mqtt.lastReportAt>5000){l.lastPush=Date.now();await waitForStatus(l.mqtt,10000).catch(()=>{});}
+   J().checkReady(l.mqtt);J().checkFilament(l.mqtt.state);stage='start';
    // Firmware reports subtask_id as a signed 32-bit integer; millisecond timestamps overflow.
    j.printId=String(1+Math.floor(Math.random()*0x7ffffffe));j.startAttempted=true;j.state='sent';saveJob(j);l.lastPush=0;
    await l.mqtt.publish({print:{sequence_id:j.printId,command:'project_file',param:'Metadata/plate_1.gcode',url:'ftp://'+remote,file:remote,md5:'',bed_type:'textured_plate',timelapse:false,bed_leveling:options.bedLeveling,flow_cali:options.flowCalibration,vibration_cali:true,layer_inspect:false,use_ams:false,ams_mapping:[-1],subtask_name:'Click_'+j.id,profile_id:'0',project_id:'0',subtask_id:j.printId,task_id:'0'}});
    setTimeout(()=>{if(j.state==='sent'){j.state='uncertain';j.attention='시작 응답을 확인하지 못했습니다. 이 미니의 본체를 확인하세요.';saveJob(j);}},30000);
-  }catch(e){j.state=j.startAttempted?'uncertain':'failed';j.error=j.startAttempted?'시작 결과를 이 미니의 본체에서 확인하세요.':'이 미니로 파일 전송 실패. 같은 Wi-Fi·SD 카드를 확인하세요.';l.error=j.error;saveJob(j);}
+  }catch(e){j.state=j.startAttempted?'uncertain':'failed';
+   // Keep the underlying step and code visible so a failure on a real printer can be told apart (TLS, FTPS reply, stale status…).
+   const code=e?.code||'',detail=code?code+(e.ftpReply?' '+e.ftpReply:''):'';
+   j.error=j.startAttempted?'시작 결과를 이 미니의 본체에서 확인하세요.':stage==='ready'?'파일은 보냈지만 출력 전 확인에서 멈췄어요: '+e.message:'이 미니로 파일 전송 실패: '+(e.message||'알 수 없는 오류');
+   j.failure={stage,code:detail.slice(0,120)};if(detail)j.error+=' ['+({connect:'연결',upload:'전송',ready:'확인',start:'시작'}[stage])+' · '+detail.slice(0,80)+']';
+   j.attention=j.error;l.error=j.error;saveJob(j);console.warn('Click direct print failed',stage,code,e);}
   finally{await ftp.close().catch(()=>{});}})();
 }
 // Printer controls Bambu Studio offers for the current job: pause/resume/stop, speed level, toolhead light.
