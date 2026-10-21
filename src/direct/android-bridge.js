@@ -39,5 +39,7 @@
  root.TCPSocket=TCPSocket;root.UDPSocket=UDPSocket;
  // WebView has no download manager for blob links; the app saves files to the tablet's Download folder.
  root.ClickAndroid={version:null,async save(blob,name){const r=await request({op:'save',name:String(name).replace(/[\\/:*?"<>|]/g,'_').slice(0,120),mime:blob.type||'application/octet-stream',data:b64(new Uint8Array(await blob.arrayBuffer()))});return r.path;}};
+ // A 3MF the app caught from MakerWorld's "Bambu Studio로 열기" link, downloaded natively; taken once.
+ root.ClickAndroid.takeImport=async()=>{const r=await request({op:'takeImport'});if(!r.name)return null;return {name:r.name,blob:new Blob([unb64(r.data)],{type:'model/3mf'})};};
  request({op:'hello',page:root.location.pathname}).then(m=>{root.ClickAndroid.version=String(m.version||'');},()=>{});
 })(globalThis);

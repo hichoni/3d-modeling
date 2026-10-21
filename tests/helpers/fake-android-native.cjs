@@ -3,7 +3,7 @@
 const net=require('node:net'),dgram=require('node:dgram'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const GROUP='239.255.255.250';
 function createNative(deliver,{allowLoopback=false}={}){
- const sockets=new Map(),ftps=new Map();let nextSid=1;
+ const sockets=new Map(),ftps=new Map();let nextSid=1,pendingImport=null;
  const ip4=ip=>{const p=String(ip).split('.');return p.length===4&&p.every(x=>/^\d{1,3}$/.test(x)&&+x<=255);};
  const privateIPv4=ip=>ip4(ip)&&(/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip)||allowLoopback&&/^127\./.test(ip));
  const allowTcp=(host,port)=>privateIPv4(host)&&Number.isInteger(port)&&([8883,990,6000].includes(port)||port>=1024&&port<=65535&&(ftps.get(host)||0)>0);
@@ -40,10 +40,11 @@ function createNative(deliver,{allowLoopback=false}={}){
   }
   if(m.op==='send'){if(e?.kind!=='udp'||!(m.host===GROUP||privateIPv4(m.host))||![2021,1990].includes(m.port))return no('이 UDP 사용은 프린터 검색에 쓰지 않습니다.');e.s.send(Buffer.from(m.data||'','base64'),m.port,m.host,()=>reply({ok:true}));return;}
   if(m.op==='join'||m.op==='leave'){if(e?.kind!=='udp'||m.group!==GROUP)return no('멀티캐스트 그룹을 사용할 수 없습니다.');try{e.s[m.op==='join'?'addMembership':'dropMembership'](GROUP);}catch{}return reply({ok:true});}
+  if(m.op==='takeImport'){const p=pendingImport;pendingImport=null;return reply(p?{ok:true,name:p.name,data:Buffer.from(p.data).toString('base64')}:{ok:true});}
   if(m.op==='save'){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'click-save-')),file=path.join(dir,path.basename(String(m.name||'file')));fs.writeFileSync(file,Buffer.from(m.data||'','base64'));return reply({ok:true,path:file});}
   reply({ok:false,error:'지원하지 않는 요청입니다.'});
  }
  function closeAll(){for(const [sid,e] of sockets){try{e.kind==='tcp'?e.s.destroy():e.s.close();}catch{}release(sid);}}
- return {handle,closeAll};
+ return {handle,closeAll,queueImport:(name,data)=>{pendingImport={name,data};}};
 }
 module.exports={createNative};

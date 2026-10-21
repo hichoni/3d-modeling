@@ -114,8 +114,32 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState != null) web.restoreState(savedInstanceState);
+        if (ModelImport.wants(getIntent())) {
+            web.loadUrl(SITE + "studio.html");
+            startImport(getIntent());
+        } else if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl(SITE);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (ModelImport.wants(intent)) startImport(intent);
+    }
+
+    // MakerWorld "Bambu Studio로 열기" or a .3mf from Files: fetch it, then open Studio, which takes it over the bridge.
+    private void startImport(Intent intent) {
+        Toast.makeText(this, "MakerWorld 모델을 받는 중…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                ModelImport.put(ModelImport.fetch(intent, getContentResolver()));
+                runOnUiThread(() -> web.loadUrl(SITE + "studio.html#makerworld-import"));
+            } catch (Exception e) {
+                String message = e.getMessage() == null ? "모델을 가져오지 못했어요." : e.getMessage();
+                runOnUiThread(() -> Toast.makeText(this, message, Toast.LENGTH_LONG).show());
+            }
+        }).start();
     }
 
     static boolean inApp(Uri u) {

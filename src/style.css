@@ -216,3 +216,4 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .platform-booth{justify-self:start;font-size:11px}
 #boothDialog .platform-print{margin:0 0 14px}
 .print-card.is-guide>:not(#platformPrint):not(.card-kicker){display:none!important}
+.makerworld-entry{background:#1f2937;color:#fff;border-color:#1f2937}

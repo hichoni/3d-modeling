@@ -21,3 +21,18 @@
 .platform-guide .platform-actions{display:flex;flex-wrap:wrap;gap:8px}
 .platform-guide .platform-actions a{display:inline-block;padding:9px 14px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;font-size:13px}
 .platform-guide .platform-actions a.text-btn{background:none;color:#2563eb;padding:9px 4px}
+/* MakerWorld mode: entry button, guide dialog, 3MF plate picker */
+.makerworld-entry span{background:#1f2937;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:3px 5px}
+.makerworld-empty{margin-top:10px}
+.makerworld-dialog,.plate-dialog{max-width:560px}
+.makerworld-steps li{margin:6px 0}
+.makerworld-actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 10px}.makerworld-actions>*{flex:1 1 180px;text-align:center;text-decoration:none}
+.plate-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0;max-height:46vh;overflow:auto}
+.plate-card{display:grid;gap:4px;justify-items:start;text-align:left;padding:10px;border:1.5px solid #d8dee9;border-radius:12px;background:#fff;cursor:pointer}
+.plate-card[aria-checked=true]{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb33}
+.plate-card:disabled{opacity:.5;cursor:not-allowed}
+.plate-card img{width:100%;aspect-ratio:1;object-fit:contain;background:#f3f5f9;border-radius:8px}
+.plate-card b{font-size:13px}.plate-card small{font-size:11px;color:#64748b}
+.plate-warnings{margin:10px 0 14px;padding-left:18px;font-size:12px;line-height:1.7;color:#9a3412}
+.plate-dialog #plateImport{width:100%}
+#importSummary{white-space:normal;line-height:1.6;display:grid;gap:4px}#importSummary div{display:flex;justify-content:space-between;gap:12px}#importSummary span{color:#64748b}
