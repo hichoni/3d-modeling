@@ -132,7 +132,8 @@ function bind(){
  $('directPrinterSelect').onchange=renderTicket;bindPrintPreparation();
  $('ownStopBtn').onclick=async()=>{if(!job)return;$('ownStopBtn').disabled=true;try{await api('/api/jobs/'+job.id+'/stop',{});toast('중지 명령을 보냈어요. 프린터가 멈췄는지 확인해주세요.');await pollJob();}catch(e){toast(e.message);}finally{$('ownStopBtn').disabled=false;}};
  $('retryPrintBtn').onclick=prepareSameDesign;
- $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').setAttribute('aria-pressed',String(sound));$('soundBtn').setAttribute('aria-label',sound?'효과음 끄기':'효과음 켜기');beep();};
+ $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').setAttribute('aria-pressed',String(sound));$('soundBtn').querySelector('b').textContent=sound?'켜짐':'꺼짐';beep();};
+ $('settingsPrinterBtn').onclick=()=>{$('operatorDialog').close();$('boothBtn').click();};
  $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>10000)throw Error('작품 설정 JSON 파일을 선택해주세요.');const data=JSON.parse(await f.text());if(data.version!==2||!data.design)throw Error('이 공방에서 저장한 작품.json이 아닙니다.');Object.assign(S,restoreDesign(data.design));change();toast('저장했던 상상을 불러왔어요.');}catch(e){toast(e.message);}e.target.value='';};
  $('operatorBtn').onclick=()=>{$('operatorDialog').showModal();operatorRefresh();};$('operatorDialog').onclose=lock;$('lockBtn').onclick=lock;
  $('unlockBtn').onclick=async()=>{try{const data=await api('/api/unlock',{pin:$('pinIn').value});operatorToken=data.token;$('pinIn').value='';$('operatorUnlocked').hidden=false;$('lockBtn').hidden=false;$('unlockBtn').hidden=true;$('operatorMessage').textContent='';await operatorRefresh();await showBoothLinks();}catch(e){$('operatorMessage').textContent=e.message;}};

@@ -26,9 +26,11 @@ function syncConnection(){
  $('disconnectBoothBtn').hidden=!boothTarget;$('disconnectBoothBtn').disabled=typeof printActive==='function'&&printActive();
  $('operatorLocal').hidden=direct||!(local?.operator||pairing?.printerId);
  $('localInstructions').hidden=connected;
- $('pairBtn').hidden=!connected;$('pairBtn').textContent=pairing?.printerId?'↔ '+pairedPrinterName():'프린터 선택';$('pairingBadge').hidden=!connected;
+ // In the Chromebook app the printer button already names the paired mini; one button is enough.
+ $('pairBtn').hidden=!connected||direct&&!!pairing?.printerId;$('changePairBtn').hidden=!connected||!direct;$('pairBtn').textContent=pairing?.printerId?'↔ '+pairedPrinterName():'프린터 선택';$('pairingBadge').hidden=!connected;
  $('pairingBadge').textContent=pairing?.printerId?('출력할 프린터 · '+pairedPrinterName()):'출력 화면에서 사용할 프린터를 골라요.';
- if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 바로 출력 버튼으로 이 미니에 작품을 보낼 수 있어요.':'출력할 미니를 고르면 바로 출력 버튼으로 시작할 수 있어요.';
+ if(direct)$('operatorInfo').textContent=pairing?.printerId?'이 크롬북 앱이 '+pairedPrinterName()+'와 같은 Wi-Fi에서 직접 연결돼요. 출력 PC는 필요 없어요.':'프린터 연결에서 같은 Wi-Fi의 A1 mini를 찾아 연결하세요.';
+ else if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 바로 출력 버튼으로 이 미니에 작품을 보낼 수 있어요.':'출력할 미니를 고르면 바로 출력 버튼으로 시작할 수 있어요.';
  else if(connected)$('operatorInfo').textContent='현장에서 크롬북과 미니를 1:1 매칭하고 필요할 때 해제·재매칭하세요.';
  $('boothSetupHint').hidden=direct||!local?.operator||local?.booth;
 }
@@ -112,7 +114,7 @@ async function refreshPairing(){
 async function showPairing(){if(!local){$('boothDialog').showModal();return;}if(!$('pairDialog').open)$('pairDialog').showModal();$('pairError').textContent='';try{const data=await refreshPairing();$('deviceNameIn').value=pairing?.name||localStorage.getItem('click-device-name')||'크롬북';$('unpairBtn').hidden=!pairing?.printerId;$('pairCurrent').textContent=pairing?.printerId?'현재: '+pairing.name+' ↔ '+pairedPrinterName():'아직 매칭되지 않았어요. 현장의 미니 번호를 확인해 골라주세요.';$('printerChoices').replaceChildren();for(const p of data.printers){const b=document.createElement('button');b.className='printer-choice';const title=document.createElement('b');title.textContent=p.name;const status=document.createElement('small');status.textContent=(p.mine?'이 기기에 매칭됨':p.paired?'다른 크롬북이 사용 중':p.busy?'출력/확인 중':'매칭 가능')+' · '+(p.online?p.state||'연결됨':'연결 대기');b.append(title,status);b.disabled=p.paired&&!p.mine||p.busy&&!p.mine;b.setAttribute('aria-pressed',String(p.mine));b.onclick=()=>p.mine?$('pairDialog').close():setPairing(p.id);$('printerChoices').append(b);}}catch(e){$('pairError').textContent=e.message;}}
 async function setPairing(printerId){try{const data=await api(printerId?'/api/pair':'/api/unpair',{printerId,name:$('deviceNameIn').value,discardPending:$('discardPendingIn').checked});pairing=data.pairing;local.printers=data.printers;lock();clearInterval(jobTimer);job=null;sessionStorage.removeItem('click-current-job');localStorage.setItem('click-device-name',$('deviceNameIn').value);syncConnection();renderSlice();renderTicket();$('discardPendingIn').checked=false;await showPairing();toast(printerId?'이 기기 ↔ '+pairedPrinterName()+' 매칭 완료!':'미니 매칭을 해제했어요.');}catch(e){$('pairError').textContent=e.message;}}
 function bindPairing(){
- $('pairBtn').onclick=showPairing;$('refreshPairBtn').onclick=showPairing;$('unpairBtn').onclick=()=>setPairing(null);
+ $('pairBtn').onclick=showPairing;$('changePairBtn').onclick=()=>{$('boothDialog').close();showPairing();};$('refreshPairBtn').onclick=showPairing;$('unpairBtn').onclick=()=>setPairing(null);
  $('operatorPrinterSelect').onchange=()=>{selectedJob=null;operatorRefresh();};
  setInterval(()=>{if(local)refreshPairing().catch(()=>{});},5000);
 }
