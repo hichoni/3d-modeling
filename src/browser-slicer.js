@@ -17,7 +17,7 @@ async function sliceInBrowser(){
   if(mine!==revision)return;
   const profile=WebPrintProfiles.fromId(result.profile),details=analyzeToolpaths(result.gcode,{height:current.totalH,strict:true,layerHeight:profile.height});
   browserSlice={revision:mine,gcode:result.gcode,profile:result.profile,elapsedMs:performance.now()-beginAt,slice:{...details,moves:undefined,profile:result.profile,seconds:Math.max(details.seconds,Number(result.summary?.time)||0),layerHeight:profile.height,quality:profile.quality,material:profile.material,materialLabel:profile.materialLabel,topLayers:profile.top,bottomLayers:profile.bottom,source:'browser',timeScope:'model'}};
-  if(typeof coachSay==='function'&&step===1)coachSay('슬라이싱 완료! 진짜 노즐이 지나갈 길이에요. ▶를 눌러 밑판부터 한 층씩 쌓아봐요.');else toast('슬라이싱 완료! 슬라이더로 밑판부터 쌓아봐요.');beep(850);
+  if(typeof coachSay==='function'&&step===1)coachSay('슬라이싱 완료! 진짜 노즐 길이에요. ▶를 눌러 한 층씩 쌓아봐요.');else toast('슬라이싱 완료! 슬라이더로 밑판부터 쌓아봐요.');beep(850);
  }catch(error){if(mine===revision)toast(error.message);}
  finally{clearTimeout(timer);if(url)URL.revokeObjectURL(url);worker?.terminate();if(browserSliceWorker===worker){browserSliceWorker=null;browserSliceCancel=null;}if(mine===revision){browserSliceBusy=false;renderSlice();renderTicket();}}
 }
