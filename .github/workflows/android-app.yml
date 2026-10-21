@@ -1,0 +1,44 @@
+name: Android tablet app
+# Builds an unsigned release APK of android/ (with offline copies of the built pages) and publishes it on the
+# `android-build` branch. It is signed outside CI with the project's private key (tools/android/sign-apk.cjs),
+# so this workflow never holds signing material.
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['android/**', '.github/workflows/android-app.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android-build
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Package offline pages
+        run: |
+          mkdir -p android/app/src/main/assets/web
+          cp index.html studio.html android/app/src/main/assets/web/
+      - name: Build unsigned release APK
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+      - name: Publish to the android-build branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir out
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk out/click-studio-unsigned.apk
+          printf '{"commit":"%s","ref":"%s","run":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "$GITHUB_RUN_ID" > out/build.json
+          cd out
+          git init -q -b android-build
+          git add .
+          git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit -qm "Unsigned Android APK from $GITHUB_SHA"
+          git push -fq "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" android-build
