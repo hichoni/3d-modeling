@@ -2,7 +2,7 @@
 
 ## 최신: 크롬북 직접 연결 앱 — 출력 PC 없이 (2026-10-21)
 
-사용자 요청: Bambu Studio를 분석해 **크롬북에서 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결 → 슬라이싱 → 출력**을 노트북 경유 없이 하도록 보완. [CHROMEBOOK_DIRECT.md](CHROMEBOOK_DIRECT.md)가 설치·사용·검증 기록이다.
+사용자 요청: Bambu Studio를 분석해 **크롬북에서 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결 → 슬라이싱 → 출력**을 노트북 경유 없이 하도록 보완. [CHROMEBOOK_DIRECT.md](CHROMEBOOK_DIRECT.md)가 설치·사용·검증 기록이고, 사용자용 설치 안내 페이지는 [chromebook.html](https://hichoni.github.io/3d-modeling/chromebook.html)(`src/chromebook.*`)이다.
 
 - 방식: Chrome **Isolated Web App**(서명 번들 `downloads/click-studio.swbn`) + **Direct Sockets**. 앱 안에 TLS 1.2(`src/direct/tls.js`), MQTT·FTPS(`src/direct/printer-link.js`), SSDP·인증서 검색(`src/direct/discovery.js`), 중계기 API를 그대로 흉내 내는 앱 내부 중계기(`src/direct/relay.js`)를 넣었다. 기존 화면은 API 호출만 바뀌고 그대로 쓴다. 공개 Pages에서는 꺼져 있다.
 - 중계기와 공유: 출력 파일·안전 규칙을 `src/print-job.js`로 옮기고 `bridge/browser-job.cjs`·`core.cjs`·`print-preparation.cjs`가 이를 쓴다. 출력 파일 내용은 이전과 동일함을 테스트로 확인했다. 새로 `plate_1.png`/`plate_1_small.png` 썸네일(선택)을 넣는다. ZIP·Windows 허용 목록에 `src/print-job.js`를 추가했다.

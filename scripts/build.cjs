@@ -23,5 +23,9 @@ const studio=fs.readFileSync('src/studio.html','utf8').replace('/* STUDIO_CSS */
 fs.writeFileSync('studio.html',studio.replace(/\r\n/g,'\n'));console.log('Built offline studio.html ('+(Buffer.byteLength(studio)/1024/1024).toFixed(1)+' MB)');
 const setup=fs.readFileSync('src/setup.html','utf8').replace('/* SETUP_CSS */',fs.readFileSync('src/setup.css','utf8')).replace('/* SETUP_JS */',()=>fs.readFileSync('src/setup.js','utf8').replace(/<\/script/gi,'<\\/script'));
 fs.writeFileSync('setup.html',setup.replace(/\r\n/g,'\n'));console.log('Built offline setup.html ('+(Buffer.byteLength(setup)/1024).toFixed(0)+' KB)');
+// Chromebook app install guide. Bundle facts come from the last signed build (tools/iwa/build.cjs).
+const bundleInfo=fs.existsSync('downloads/click-studio.json')?JSON.parse(fs.readFileSync('downloads/click-studio.json','utf8')):null;
+const chromebook=fs.readFileSync('src/chromebook.html','utf8').replace('/* SETUP_CSS */',fs.readFileSync('src/setup.css','utf8')).replace('/* CHROMEBOOK_CSS */',fs.readFileSync('src/chromebook.css','utf8')).replace('/* CHROMEBOOK_JS */',()=>fs.readFileSync('src/chromebook.js','utf8').replace('/* BUNDLE_INFO */null',JSON.stringify(bundleInfo&&{version:bundleInfo.version,bytes:bundleInfo.bytes,bundleId:bundleInfo.bundleId})).replace(/<\/script/gi,'<\\/script'));
+fs.writeFileSync('chromebook.html',chromebook.replace(/\r\n/g,'\n'));console.log('Built offline chromebook.html ('+(Buffer.byteLength(chromebook)/1024).toFixed(0)+' KB)');
 require('./package-operator.cjs').packageOperator();
 require('./build-iwa-app.cjs').buildApp({fonts,licenses,boothJS:concat(boothScripts),studioJS:concat(studioScripts)});

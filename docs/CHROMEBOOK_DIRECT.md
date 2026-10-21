@@ -17,6 +17,8 @@ Chrome의 **Isolated Web App(IWA)** 은 서명된 웹 앱 묶음(`.swbn`)으로 
 
 ## 크롬북에 설치하기
 
+화면을 보며 따라 하는 안내: **<https://hichoni.github.io/3d-modeling/chromebook.html>** (주소 복사 버튼·문제 해결 포함)
+
 ### A. 개인/개발자 크롬북 (지금 바로 가능)
 
 1. Chrome 주소창에 `chrome://flags/#enable-isolated-web-app-dev-mode` 입력 → **Enabled** → 다시 시작.

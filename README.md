@@ -2,7 +2,7 @@
 
 **[바로 체험하기 →](https://hichoni.github.io/3d-modeling/)**
 
-**[새 · 크롬북만으로 출력 — Click Studio 앱 →](docs/CHROMEBOOK_DIRECT.md)** — 크롬북에 앱(Isolated Web App)을 한 번 설치하면 출력 PC 없이 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결하고, 슬라이싱·전송·출력·일시정지·속도·조명까지 앱에서 합니다. [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) · 모의 프린터와 실제 Chromium으로 끝까지 시험했고, **실물 A1 mini·실제 크롬북 시험은 남아 있습니다.**
+**[새 · 크롬북만으로 출력 — Click Studio 앱 설치하기 →](https://hichoni.github.io/3d-modeling/chromebook.html)** — 크롬북에 앱(Isolated Web App)을 한 번 설치하면 출력 PC 없이 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결하고, 슬라이싱·전송·출력·일시정지·속도·조명까지 앱에서 합니다. [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) · [기술 문서](docs/CHROMEBOOK_DIRECT.md) · 모의 프린터와 실제 Chromium으로 끝까지 시험했고, **실물 A1 mini·실제 크롬북 시험은 남아 있습니다.**
 
 **[Windows 연결 프로그램 받기 · 다운로드부터 프린터 연결까지 5단계 →](https://hichoni.github.io/3d-modeling/setup.html)** — 공식 Node.js 설치 파일, 연결 프로그램 ZIP, 압축 해제, 실행할 파일, 미니 검색·8자리 코드 입력을 웹에서 따라갑니다. 크롬북에는 이 프로그램을 설치하지 않습니다. 학교 PC가 개발용 ZIP 실행을 차단하면 담당자의 배포 승인이 필요합니다.
 
