@@ -6,8 +6,8 @@ function u16(n){const b=Buffer.alloc(2);b.writeUInt16BE(n);return b;}
 function utf(s){const b=Buffer.from(s);return Buffer.concat([u16(b.length),b]);}
 function frame(header,data=Buffer.alloc(0)){let n=data.length;const length=[];do{let b=n%128;n=Math.floor(n/128);length.push(b|(n?128:0));}while(n);return Buffer.concat([Buffer.from([header,...length]),data]);}
 class MockPrinter extends EventEmitter{
- constructor({serial='TESTSERIAL01',accessCode='12345678',host='127.0.0.1',mqttPort=0,ftpsPort=0,printSeconds=6,filament={tray_type:'PLA',tray_color:'78C451FF'},model='N1',storReply=null}={}){
-  super();Object.assign(this,{serial,accessCode,host,mqttPort,ftpsPort,printSeconds,filament,model,storReply});this.files=new Map();this.commands=[];this.clients=new Set();this.sessions=new Map();this.ticketKeys=crypto.randomBytes(48);
+ constructor({serial='TESTSERIAL01',accessCode='12345678',host='127.0.0.1',mqttPort=0,ftpsPort=0,printSeconds=6,filament={tray_type:'PLA',tray_color:'78C451FF'},model='N1',storReply=null,dataRate=0,sizeLag=0}={}){
+  super();Object.assign(this,{serial,accessCode,host,mqttPort,ftpsPort,printSeconds,filament,model,storReply,dataRate,sizeLag});this.files=new Map();this.commands=[];this.clients=new Set();this.sessions=new Map();this.ticketKeys=crypto.randomBytes(48);
   this.state={gcode_state:'IDLE',mc_percent:0,mc_remaining_time:0,layer_num:0,total_layer_num:0,sdcard:true,print_error:0,hms:[],nozzle_diameter:'0.4',nozzle_temper:24,nozzle_target_temper:0,bed_temper:23,bed_target_temper:0,spd_lvl:2,wifi_signal:'-48dBm',stg_cur:-1,vt_tray:{id:'254',...filament,nozzle_temp_min:'190',nozzle_temp_max:'240'},ams:{tray_now:'254',ams:[]},lights_report:[{node:'chamber_light',mode:'off'}]};
  }
  tlsOptions(){return {key:fixture('rsa-device.key.pem'),cert:fixture('rsa-device.pem'),minVersion:'TLSv1.2',maxVersion:'TLSv1.2',ticketKeys:this.ticketKeys};}
@@ -59,12 +59,12 @@ class MockPrinter extends EventEmitter{
    else if(cmd==='PASS'){auth=user&&arg===this.accessCode;say(auth?'230 Login successful':'530 Login incorrect');}
    else if(!auth)say('530 Please login');
    else if(cmd==='TYPE')say('200 Switching to Binary mode.');else if(cmd==='PBSZ')say('200 PBSZ set to 0.');else if(cmd==='PROT')say('200 PROT now Private.');
-   else if(cmd==='PASV'){dataServer?.close();dataServer=tls.createServer(this.tlsOptions(),d=>{d.on('error',()=>{});if(!d.isSessionReused()){d.destroy();say('522 SSL connection failed: session reuse required');return;}const parts=[];d.on('data',c=>parts.push(c));d.on('end',()=>{upload?.(Buffer.concat(parts));d.end();});});
+   else if(cmd==='PASV'){dataServer?.close();dataServer=tls.createServer(this.tlsOptions(),d=>{d.on('error',()=>{});if(!d.isSessionReused()){d.destroy();say('522 SSL connection failed: session reuse required');return;}const parts=[];d.on('data',c=>{parts.push(c);if(this.dataRate){d.pause();setTimeout(()=>d.resume(),c.length/this.dataRate*1000);}});d.on('end',()=>{upload?.(Buffer.concat(parts));d.end();});});
     dataServer.on('resumeSession',(id,cb)=>cb(null,this.sessions.get(id.toString('hex'))||null));
     dataServer.listen(0,this.host,()=>{const p=dataServer.address().port;say(`227 Entering Passive Mode (${this.host.replace(/\./g,',')},${p>>8},${p&255}).`);});}
    else if(cmd==='STOR'&&this.storReply)say(this.storReply);
    else if(cmd==='STOR'){const name=arg;say('150 Ok to send data.');upload=data=>{this.files.set(name,data);this.emit('upload',name,data);say('226 Transfer complete.');dataServer?.close();upload=null;};}
-   else if(cmd==='SIZE'){const f=this.files.get(arg);say(f?'213 '+f.length:'550 Could not get file size.');}
+   else if(cmd==='SIZE'){const f=this.files.get(arg);say(f?'213 '+(this.sizeLag-->0?Math.floor(f.length/2):f.length):'550 Could not get file size.');}
    else if(cmd==='QUIT'){say('221 Goodbye.');s.end();}
    else say('502 Command not implemented.');
   }});

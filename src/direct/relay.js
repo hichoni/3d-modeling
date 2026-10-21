@@ -112,7 +112,7 @@ function startJob(j,body){
  j.mode='direct';j.printOptions={...options};j.state='uploading';j.upload=0;l.active=j;saveJob(j);
  (async()=>{const ftp=new (Link().Ftps)(l.device);
   let stage='connect';
-  try{await ftp.connect();stage='upload';const remote='click_'+j.id+'.3mf';await ftp.upload(remote,bytes,f=>{j.upload=Math.round(f*100);});
+  try{await ftp.connect();stage='upload';const remote='click_'+j.id+'.3mf';for(let attempt=1;;attempt++){try{await ftp.upload(remote,bytes,f=>{j.upload=Math.round(f*100);});break;}catch(e){if(e.code!=='FTPS_SIZE_MISMATCH'||attempt>=2)throw e;j.upload=0;}}
    // A1 mini often goes quiet during a long upload; fetch a fresh report before the final check instead of failing on stale state.
    stage='ready';if(Date.now()-l.mqtt.lastReportAt>5000){l.lastPush=Date.now();await waitForStatus(l.mqtt,10000).catch(()=>{});}
    J().checkReady(l.mqtt);J().checkFilament(l.mqtt.state);stage='start';
