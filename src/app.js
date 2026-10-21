@@ -9,6 +9,9 @@ const contentOK=()=>S.content==='icon'||(validText(S.text)&&Array.from(S.text.re
 const ready=()=>current&&built===revision&&contentOK();
 const modelName=()=>S.content==='icon'?symbolNames[S.icon]:S.text;
 const geometries=()=>current.parts.plate.concat(current.parts.relief);
+// 클릭이, the workshop helper, speaks on the model stage like a game NPC, then tucks away so the model stays visible.
+const COACH=['안녕하세요! 공방 도우미 클릭이에요. 오른쪽에 이름을 쓰고, 글씨 느낌과 작은 포인트를 골라봐요!','프린터는 작품을 아주 얇은 층으로 잘라 한 층씩 쌓아요. ▶를 누르면 밑판부터 쌓이는 모습이 보여요!'];let coachTimer;
+function coachSay(text,{replay=false}={}){const tip=$('coachTip'),line=$('coachText');if(!tip||!text)return;tip.classList.remove('is-collapsed');clearTimeout(coachTimer);if(replay)delete line.dataset.full;GameDialog.say(line,text,{onDone:()=>{clearTimeout(coachTimer);coachTimer=setTimeout(()=>tip.classList.add('is-collapsed'),9000);}});}
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,6500);}
 function beep(f=560){if(!sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.connect(gain);gain.connect(audioCtx.destination);osc.type='sine';osc.frequency.setValueAtTime(f,audioCtx.currentTime);gain.gain.setValueAtTime(.07,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.12);osc.start();osc.stop(audioCtx.currentTime+.13);}catch{}}
 function begin(){if(!startedAt){startedAt=Date.now();workshopStats.begin();}}
@@ -39,7 +42,7 @@ function init3D(){try{
 function resetCamera(top=false){if(!R)return;const detail=step===1;R.camera.position.set(top?0:detail?10:13,top?-.01:detail?-15:-20,top?(detail?28:35):detail?23:28);R.controls.target.set(0,0,1);R.controls.update();}
 function showModel(){if(R){R.group.clear();R.plate.color.set(S.color).convertSRGBToLinear();R.relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();for(const type of ['plate','relief'])current.parts[type].forEach(g=>{const mesh=new THREE.Mesh(g,R[type]);mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});updateLayer();}else{const cv=$('fallback'),ctx=cv.getContext('2d');ctx.clearRect(0,0,500,500);ctx.fillStyle=S.color;shapePath(ctx,250,250,350,350,'rounded',0,25);ctx.fill();const face=mkCanvas(500,500);drawFace(face.getContext('2d'),500,500,25,false,'#a54465',fontById(S.font));ctx.drawImage(face,0,0);}}
 function setStep(next){if(next<2&&printActive()){toast('현재 출력 상태를 이 화면에서 확인해주세요.');return;}if(next>0&&!ready()){toast('먼저 내 이름이나 그림을 완성해주세요.');return;}begin();step=next;beep([520,660,780][step]);clearInterval(layerTimer);$('playBtn').textContent='▶';
- const titles=[['MISSION 01 · 나만의 작은 작품','어떤 상상을 새겨볼까?','이름도, 좋아하는 모양도. 작은 네모 안에 나를 담아요.'],['MISSION 02 · 프린터의 비밀','한 층씩, 이렇게 만들어져요!','납작한 층이 차곡차곡. 슬라이더로 입체의 속을 살펴봐요.'],['MISSION 03 · 손으로 만나는 상상','내 상상이 진짜가 되는 순간!','바로 출력하고, A1 mini 안에서 무슨 일이 일어나는지 살펴봐요.']][step];['eyebrow','headline','subtitle'].forEach((id,i)=>$(id).textContent=titles[i]);
+ const titles=[['MISSION 01 · 나만의 작은 작품','어떤 상상을 새겨볼까?','이름도, 좋아하는 모양도. 작은 네모 안에 나를 담아요.'],['MISSION 02 · 프린터의 비밀','한 층씩, 이렇게 만들어져요!','납작한 층이 차곡차곡. 슬라이더로 입체의 속을 살펴봐요.'],['MISSION 03 · 손으로 만나는 상상','내 상상이 진짜가 되는 순간!','바로 출력하고, A1 mini 안에서 무슨 일이 일어나는지 살펴봐요.']][step];['eyebrow','headline','subtitle'].forEach((id,i)=>$(id).textContent=titles[i]);if(step<2)coachSay(COACH[step]);
  document.querySelectorAll('[data-step]').forEach(b=>{if(+b.dataset.step===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
  ['assemblyCard','sliceCard','printCard'].forEach((id,i)=>$(id).hidden=i!==step);['designControls','sliceLesson','resultPanel'].forEach((id,i)=>$(id).hidden=i!==step);
  $('layerTools').hidden=step!==1;$('layerInspect').hidden=step!==1;document.querySelector('.model-stage').classList.toggle('is-layer-view',step===1);$('backBtn').hidden=step===0;$('importBtn').hidden=step!==0;$('nextBtn').textContent=['다음! 층층이 쌓아보기 →','내 작품 출력 준비 →','새 작품 만들기 →'][step];$('stageBadge').textContent=['MY LITTLE KEYCAP',activeSlice()?'REAL TOOLPATH':'LAYER LAB · 원리 체험','YOU MADE IT!'][step];
@@ -149,5 +152,7 @@ function bind(){
 try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
 const workshopStats=new WorkshopStatistics();
 bind();bindBoothConnection();bindPairing();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();
+coachSay(COACH[0]);$('coachToggle').onclick=()=>{if($('coachTip').classList.contains('is-collapsed'))coachSay($('coachText').dataset.full||COACH[step]||COACH[0],{replay:true});else{clearTimeout(coachTimer);$('coachTip').classList.add('is-collapsed');}};
+$('stage').addEventListener('pointerdown',()=>{if(!$('coachTip').classList.contains('is-collapsed')&&!document.querySelector('#coachTip .is-typing')){clearTimeout(coachTimer);$('coachTip').classList.add('is-collapsed');}});
 
 $('studioEntry').href='studio.html'+(new URLSearchParams(location.hash.slice(1)).has('booth')?location.hash:'');
