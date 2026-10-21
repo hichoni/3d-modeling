@@ -168,8 +168,12 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .tour-speech.game-dialog p{font-size:14px;line-height:1.6;max-width:none}
 .tour-speech .dialog-name{background:#2f9d7e}
 /* 클릭이's tips on the model stage (steps 1–2): face button + dialog; tucks away after a while */
-.coach-tip{position:absolute;left:18px;top:60px;z-index:3;display:flex;align-items:flex-start;gap:10px;max-width:min(540px,calc(100% - 36px));animation:coach-in .35s ease-out}
+.coach-tip{position:absolute;left:18px;top:12px;z-index:3;display:flex;align-items:flex-start;gap:10px;max-width:min(540px,calc(100% - 36px));animation:coach-in .35s ease-out}
 .coach-tip .game-dialog{flex:1;margin-top:16px;min-width:0}
+.coach-tip p{min-height:1.65em}
+/* While 클릭이 talks it takes the label row too; the labels come back when it tucks away */
+.model-stage .stage-top{transition:opacity .25s}.model-stage.has-coach .stage-top{opacity:0}
+#stage{transition:top .35s ease}.model-stage.has-coach #stage,.model-stage.is-layer-view.has-coach #stage{top:var(--coach-bottom,150px)}
 .coach-face{position:relative;flex-shrink:0;width:58px;height:58px;padding:0;border:0;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px var(--ink),0 5px 0 3px #17284622;cursor:pointer}
 .coach-face .mascot.tiny{transform:scale(.72) rotate(-8deg);margin-top:-6px}
 .coach-tip.is-collapsed .game-dialog{display:none}
@@ -197,6 +201,6 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
  .heading p{display:none}
  .tour-coach{bottom:76px}.tour-speech.game-dialog{padding:15px 38px 9px 18px;margin-top:14px}.heading .eyebrow{padding:2px 10px 1px}
  .result-panel{border-width:2px}.result-panel .eyebrow{padding:2px 16px 2px 10px;font-size:11px}.tour-speech.game-dialog h2{font-size:17px}.tour-speech.game-dialog p{font-size:13px;line-height:1.55}
- .coach-tip{top:54px}.game-dialog p{font-size:14px}
+ .coach-tip{top:10px;right:18px;max-width:none}.coach-face{width:50px;height:50px}.coach-tip .game-dialog{margin-top:14px;padding:16px 38px 10px 18px}.game-dialog p{font-size:14px}
 }
-@media(max-width:700px){.coach-tip{left:10px;top:48px;max-width:calc(100% - 20px)}.coach-face{width:46px;height:46px}.game-dialog p{font-size:13px}}
+@media(max-width:700px){.coach-tip{left:10px;top:10px;max-width:calc(100% - 20px)}.coach-face{width:46px;height:46px}.game-dialog p{font-size:13px}}

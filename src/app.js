@@ -10,8 +10,12 @@ const ready=()=>current&&built===revision&&contentOK();
 const modelName=()=>S.content==='icon'?symbolNames[S.icon]:S.text;
 const geometries=()=>current.parts.plate.concat(current.parts.relief);
 // 클릭이, the workshop helper, speaks on the model stage like a game NPC, then tucks away so the model stays visible.
-const COACH=['안녕하세요! 공방 도우미 클릭이에요. 오른쪽에 이름을 쓰고, 글씨 느낌과 작은 포인트를 골라봐요!','프린터는 작품을 아주 얇은 층으로 잘라 한 층씩 쌓아요. ▶를 누르면 밑판부터 쌓이는 모습이 보여요!'];let coachTimer;
-function coachSay(text,{replay=false}={}){const tip=$('coachTip'),line=$('coachText');if(!tip||!text)return;tip.classList.remove('is-collapsed');clearTimeout(coachTimer);if(replay)delete line.dataset.full;GameDialog.say(line,text,{onDone:()=>{clearTimeout(coachTimer);coachTimer=setTimeout(()=>tip.classList.add('is-collapsed'),9000);}});}
+const COACH=['안녕하세요, 클릭이에요! 오른쪽에서 이름을 쓰고 글씨 느낌을 골라봐요.','프린터는 작품을 얇은 층으로 잘라 쌓아요. ▶를 눌러 밑판부터 봐요!'];let coachTimer;
+// While 클릭이 talks, the 3D view starts below the dialog (the renderer follows #stage's size), so the model stays in sight.
+const coachStage=()=>document.querySelector('.model-stage');
+function coachFit(){const tip=$('coachTip');if(tip&&!tip.classList.contains('is-collapsed'))coachStage().style.setProperty('--coach-bottom',Math.round(tip.offsetTop+tip.offsetHeight+6)+'px');}
+function coachHide(){clearTimeout(coachTimer);$('coachTip').classList.add('is-collapsed');coachStage().classList.remove('has-coach');}
+function coachSay(text,{replay=false}={}){const tip=$('coachTip'),line=$('coachText');if(!tip||!text)return;tip.classList.remove('is-collapsed');coachFit();coachStage().classList.add('has-coach');clearTimeout(coachTimer);if(replay)delete line.dataset.full;GameDialog.say(line,text,{onDone:()=>{clearTimeout(coachTimer);coachTimer=setTimeout(coachHide,9000);}});}
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,6500);}
 function beep(f=560){if(!sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.connect(gain);gain.connect(audioCtx.destination);osc.type='sine';osc.frequency.setValueAtTime(f,audioCtx.currentTime);gain.gain.setValueAtTime(.07,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.12);osc.start();osc.stop(audioCtx.currentTime+.13);}catch{}}
 function begin(){if(!startedAt){startedAt=Date.now();workshopStats.begin();}}
@@ -152,7 +156,7 @@ function bind(){
 try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
 const workshopStats=new WorkshopStatistics();
 bind();bindBoothConnection();bindPairing();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();
-coachSay(COACH[0]);$('coachToggle').onclick=()=>{if($('coachTip').classList.contains('is-collapsed'))coachSay($('coachText').dataset.full||COACH[step]||COACH[0],{replay:true});else{clearTimeout(coachTimer);$('coachTip').classList.add('is-collapsed');}};
-$('stage').addEventListener('pointerdown',()=>{if(!$('coachTip').classList.contains('is-collapsed')&&!document.querySelector('#coachTip .is-typing')){clearTimeout(coachTimer);$('coachTip').classList.add('is-collapsed');}});
+coachSay(COACH[0]);$('coachToggle').onclick=()=>{if($('coachTip').classList.contains('is-collapsed'))coachSay($('coachText').dataset.full||COACH[step]||COACH[0],{replay:true});else coachHide();};
+new ResizeObserver(coachFit).observe($('coachTip'));
 
 $('studioEntry').href='studio.html'+(new URLSearchParams(location.hash.slice(1)).has('booth')?location.hash:'');
