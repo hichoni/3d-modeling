@@ -22,11 +22,14 @@ Chrome의 **Isolated Web App(IWA)** 은 서명된 웹 앱 묶음(`.swbn`)으로 
 ### A. 개인/개발자 크롬북 (지금 바로 가능)
 
 1. Chrome 주소창에 `chrome://flags/#enable-isolated-web-app-dev-mode` 입력 → **Enabled** → 다시 시작.
-2. 앱 파일 받기: <https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn> (약 14 MB)
-3. 주소창에 `chrome://web-app-internals` → **Isolated Web Apps** 영역의 **Install IWA from Signed Web Bundle** → 받은 `click-studio.swbn` 선택.
+2. `chrome://iwa-dev` 열기 (Chrome 154부터 설치 화면이 여기로 옮겨짐. 이전 버전은 `chrome://web-app-internals` 맨 위).
+3. **+ Install** → **Update Manifest** 탭 → `https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json` → **Fetch** → **Install**.
+   또는 **Signed Bundle** 탭 → **Install** → [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) 선택.
 4. 런처(앱 목록)에서 **Click Studio** 를 엽니다.
 
-ChromeOS 150부터는 관리 정책(`IsolatedWebAppUserInstallationEnabled`)이 허용하면 사용자가 IWA를 직접 설치할 수 있다고 Google 릴리스 노트에 적혀 있습니다. 이 경로의 실제 화면은 아직 확인하지 못했으므로, 안 되면 위 개발자 모드 방법을 쓰세요.
+Chrome 154.0.8037.0에서 `chrome://iwa-dev`의 Update Manifest 설치·실행·Direct Sockets 사용 가능을 확인했습니다. 파일 앱에서 `.swbn`을 더블클릭하는 설치는 실제 크롬북(Chrome 154)에서 “앱을 설치할 수 없음”으로 거절됐습니다. Google 허용 목록 등록 전이라서로 보입니다.
+
+ChromeOS 150부터는 관리 정책(`IsolatedWebAppUserInstallationEnabled`)이 허용하면 사용자가 IWA를 직접 설치할 수 있다고 Google 릴리스 노트에 적혀 있지만, 이 앱은 그 경로(파일 더블클릭)로 설치되지 않았습니다. 위 개발자 모드 방법을 쓰세요.
 
 ### B. 학교 관리 크롬북
 
