@@ -32,3 +32,21 @@ test('operator ZIP and Windows payload include every module the relay requires',
  for(const file of seen){assert.ok(zip.has(file),'ZIP missing '+file);assert.ok(payload.has(file),'payload missing '+file);}
  assert.ok(seen.has('src/print-job.js'));
 });
+
+test('studio accepts 4-decimal micro-segments as rounding residue but keeps the per-file cap',()=>{
+ const {analyzeToolpaths}=require('../src/toolpaths.js');
+ const base=['G90','M82','G92 E0','G1 Z0.2 F600','G1 X80 Y80 F6000','G1 X100 Y80 E0.7000 F4200'];
+ // The engine's real failure: a 0.0011mm infill move carrying the minimum 0.0001mm E step at F4200 (reads as 14.9mm³/s).
+ const micro=[...base,'G1 X100.0008 Y80.0008 E0.7001','G1 X100 Y90 E1.0500'].join('\n');
+ const a=analyzeToolpaths(micro,{studio:true,height:.2,strict:true,layerHeight:.2});assert.equal(a.layers,1);assert.ok(Math.abs(a.filamentMM-1.05)<1e-9);
+ const flood=[...base];let e=.7,x=100;for(let i=0;i<1100;i++){x+=.002;e+=.0005;flood.push(`G1 X${x.toFixed(4)} Y80 E${e.toFixed(4)}`);}
+ assert.throws(()=>analyzeToolpaths(flood.join('\n'),{studio:true,height:.2,strict:true,layerHeight:.2}),/미세 압출 잔여량/);
+ assert.throws(()=>analyzeToolpaths([...base,'G1 X100.0050 Y80 E0.7400'].join('\n'),{studio:true,height:.2,strict:true,layerHeight:.2}),/압출 경로 또는 재료량/);
+});
+
+test('a torus with five walls slices and builds (regression: infill micro-segment flow false positive)',async()=>{
+ const g=new THREE.TorusGeometry(12,3,24,64).translate(0,0,3).toNonIndexed(),v=new Float32Array(g.getAttribute('position').array);g.dispose();
+ const studio=core.settings({walls:5}),stl=core.binarySTL(core.transform(v,{position:[90,90]})),r=await slice(stl,studio);
+ const job=await PrintJob.prepareJob({studio,profile:r.profile,gcode:r.gcode,stl:Buffer.from(stl).toString('base64'),seconds:r.summary.time},{studio:true,machine});
+ assert.ok(job.slice.layers>=25);assert.ok(job.slice.weightG>1);
+});
