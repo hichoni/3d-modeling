@@ -1193,7 +1193,10 @@ function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=fa
   const nx=v.X??x,ny=v.Y??y,nz=v.Z??z,ne=v.E===undefined?e:relativeE?e+v.E:v.E,delta=ne-e,distance=Math.hypot(nx-x,ny-y),travel=Math.hypot(distance,nz-z);
   if(![nx,ny,nz,ne,feed].every(Number.isFinite)||feed<=0||!inside(nx,ny)||nz<0||nz>height+.61)throw Error('경로가 키캡 또는 높이 범위를 벗어났어요.');
   if(delta < -1.21 || delta>1.21&&distance<.001)throw Error('압출 또는 리트랙션 양을 확인해주세요.');
-  if(delta>0&&distance>.001){
+  // Four-decimal output: a ~0.001mm segment carrying the 0.0001mm E step reads as 14mm³/s. Studio counts such
+  // quantization-scale moves as rounding residue below (capped per file) instead of a real extrusion line.
+  const residue=studio&&delta>0&&delta<=.00051&&distance<.01;
+  if(delta>0&&distance>.001&&!residue){
    if(nz<=0||nz>height+.11||Math.abs(nz-z)>.001||delta/distance>.09||delta/distance*feed/60*Math.PI*(1.75/2)**2>12.01||debt>.001||!inside(x,y))throw Error('압출 경로 또는 재료량이 올바르지 않아요.');
    extruded+=delta;if(!layer||Math.abs(layer.z-nz)>.001){if(layer&&Math.abs(nz-layer.z-layerHeight)>.011||!layer&&Math.abs(nz-.2)>.011)throw Error('선택한 출력 층 순서가 올바르지 않아요.');layer={z:round(nz),segments:[],features:[]};layers.push(layer);}
    if(layer.segments.length>=20000)throw Error('한 층의 경로가 너무 많아요.');layer.segments.push([x-90,y-90,nx-90,ny-90].map(round));layer.features.push(feature);
