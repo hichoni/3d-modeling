@@ -33,6 +33,15 @@ test('FTPS rejection keeps the reply code and text for the job error',async t=>{
  await assert.rejects(ftp.upload('click_test.3mf',new Uint8Array(10)),e=>e.code==='FTPS_553'&&e.ftpReply==='Could not create file.');
 });
 
+test('FTPS waits for a late size report, and names both sizes when it never matches',async t=>{
+ const late=await new MockPrinter({sizeLag:2}).start();t.after(()=>late.stop());
+ const ftp=new Ftps(late.device());await ftp.connect();t.after(()=>ftp.close());
+ assert.equal((await ftp.upload('click_late.3mf',new Uint8Array(5000))).bytes,5000);
+ const short=await new MockPrinter({sizeLag:9}).start();t.after(()=>short.stop());
+ const bad=new Ftps(short.device());await bad.connect();t.after(()=>bad.close());
+ await assert.rejects(bad.upload('click_short.3mf',new Uint8Array(5000)),e=>e.code==='FTPS_SIZE_MISMATCH'&&e.ftpReply==='2500/5000');
+});
+
 test('upload then project_file runs to FINISH on the mock printer',async t=>{
  const printer=await new MockPrinter({printSeconds:1.5}).start();t.after(()=>printer.stop());
  const mqtt=new Mqtt(printer.device());await mqtt.connect();t.after(()=>mqtt.close());

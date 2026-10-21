@@ -14,7 +14,7 @@ function cube(){const f=[],v=[[0,0,0],[20,0,0],[20,16,0],[0,16,0],[0,0,10],[20,0
 const pagePatch=`<script>${patch.slice(1)}</script>`;let appId='';
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.webmanifest':'application/manifest+json','.png':'image/png'};
 (async()=>{
- const printer=await new MockPrinter({host:'127.0.0.1',mqttPort:8883,ftpsPort:990,printSeconds:8}).start();
+ const printer=await new MockPrinter({host:'127.0.0.1',mqttPort:8883,ftpsPort:990,printSeconds:8,dataRate:Number(process.env.MOCK_DATA_RATE)||0}).start();
  const ssdp=dgram.createSocket('udp4'),notify=Buffer.from('NOTIFY * HTTP/1.1\r\nHost: 239.255.255.250:1990\r\nServer: UPnP/1.0\r\nLocation: 127.0.0.1\r\nNT: urn:bambulab-com:device:3dprinter:1\r\nUSN: TESTSERIAL01\r\nCache-Control: max-age=1800\r\nDevModel.bambu.com: N1\r\nDevName.bambu.com: Test mini\r\nDevConnect.bambu.com: lan\r\nDevBind.bambu.com: free\r\nDevVersion.bambu.com: 01.07.00.00\r\n\r\n');
  const beacon=setInterval(()=>ssdp.send(notify,2021,'127.0.0.1',()=>{}),700);
  const server=http.createServer((q,r)=>{let p=decodeURIComponent(new URL(q.url,'http://x').pathname);if(p.endsWith('/'))p+='index.html';const file=path.join(app,p);if(!file.startsWith(app)||!fs.existsSync(file)){r.writeHead(404);return r.end();}

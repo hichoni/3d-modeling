@@ -169,7 +169,10 @@ class TlsConnection{
    throw tlsError('TLS_PROTOCOL','예상하지 못한 TLS 응답입니다.');}
  }
  write(data){const parts=[];for(let o=0;o<data.length;o+=16384)parts.push(this.queue(23,data.subarray(o,o+16384)));return Promise.all(parts).then(()=>{});}
- async close(){if(!this.closing){this.closing=true;try{if(this.writer)await this.queue(21,Uint8Array.of(1,0));}catch{}}try{await this.transport.close();}catch{}}
+ async notify(){if(!this.closing){this.closing=true;try{if(this.writer)await this.queue(21,Uint8Array.of(1,0));}catch{}}}
+ // close_notify + FIN while still reading, so the peer finishes reading before either side closes.
+ async end(){await this.notify();try{await this.transport.end?.();}catch{}}
+ async close(){await this.notify();try{await this.transport.close();}catch{}}
 }
 async function connect(transport,options={}){const t=new TlsConnection(transport,options);try{return await t.handshake();}catch(e){try{await transport.close();}catch{}throw e;}}
 const api={connect,parsePem,parseCertificate,verifyChain};root.DirectTLS=api;if(typeof module==='object'&&module.exports)module.exports=api;
