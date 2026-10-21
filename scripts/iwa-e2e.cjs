@@ -71,6 +71,10 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
   const booth=await ctx.newPage();booth.on('pageerror',e=>errors.push('booth: '+e.message));const boothUi=await open(booth,'booth');await booth.waitForTimeout(1500);
   console.log('booth direct:',await boothUi.evaluate(()=>document.documentElement.dataset.direct==='1'&&document.getElementById('boothBtn').textContent));
   if(shots){await booth.setViewportSize({width:1366,height:690});await boothUi.evaluate(()=>setStep(2));await booth.waitForTimeout(2000);await booth.screenshot({path:path.join(shots,'iwa-6-booth-print.png')});await boothUi.click('#operatorBtn');await booth.waitForTimeout(400);await booth.screenshot({path:path.join(shots,'iwa-7-settings.png')});}
+  // Android app: a 3MF caught from MakerWorld's "Bambu Studio로 열기" reaches Studio through the bridge.
+  if(androidMode){const {bambuProject}=require('../tests/helpers/make-3mf.cjs');const mw=await ctx.newPage();await mw.goto('https://127.0.0.1:8443/studio.html');await mw.waitForFunction(()=>window.ClickAndroid?.version);
+   natives.get(mw).queueImport('keychain.3mf',bambuProject());await mw.goto('https://127.0.0.1:8443/studio.html#makerworld-import');await mw.waitForSelector('#plateDialog[open]',{timeout:20000});
+   await mw.click('#plateImport');await mw.waitForFunction(()=>studioModels.length===2,null,{timeout:10000});console.log('makerworld import:',await mw.evaluate(()=>studioModels.map(m=>m.name).join(' + ')+' · '+studioSettings().quality));await mw.close();}
   // Chrome's Direct Sockets drops bytes on back-to-back writes and on early close; the transport must still deliver
   // every byte, then a FIN, to a receiver that reads as slowly as an A1 mini writing to its SD card.
   {const slow=await new Promise(res=>{let got=0,fin=false;const srv=net.createServer(c=>{c.on('data',b=>{got+=b.length;c.pause();setTimeout(()=>c.resume(),b.length/30000*1000);});c.on('end',()=>{fin=true;c.end();});}).listen(6000,'127.0.0.1',()=>res({srv,stat:()=>({got,fin})}));});

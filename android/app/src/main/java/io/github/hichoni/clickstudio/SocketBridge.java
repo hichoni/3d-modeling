@@ -176,6 +176,13 @@ final class SocketBridge implements WebViewCompat.WebMessageListener {
                     else ((MulticastSocket) e.udp).leaveGroup(InetAddress.getByName(GROUP));
                     reply(proxy, id, ok());
                     return;
+                case "takeImport": {
+                    ModelImport.Pending p = ModelImport.take();
+                    JSONObject r = ok();
+                    if (p != null) r.put("name", p.name).put("data", Base64.encodeToString(p.data, Base64.NO_WRAP));
+                    reply(proxy, id, r);
+                    return;
+                }
                 case "save":
                     reply(proxy, id, ok().put("path", save(m.optString("name"), m.optString("mime"), Base64.decode(m.optString("data"), Base64.NO_WRAP))));
                     return;
