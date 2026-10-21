@@ -9,3 +9,5 @@
 .cb-faq{padding:28px 32px;scroll-margin-top:16px}.cb-faq details{border-top:1px solid #edf0f5;padding:14px 0}.cb-faq summary{cursor:pointer;font-size:14px;font-weight:650;color:#314b6e}.cb-faq details p{margin:10px 0}
 .cb-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#203048;color:white;padding:12px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px #0003}
 @media(max-width:760px){.cb-step{grid-template-columns:1fr;padding:22px 18px}.cb-faq{padding:22px 18px}.cb-toc{display:none}}
+.cb-figure{margin:16px 0;border:1px solid #e0e7f1;border-radius:12px;overflow:hidden;background:white}.cb-figure img{display:block;width:100%;height:auto}.cb-figure figcaption{font-size:12px;line-height:1.7;color:#61738b;padding:10px 14px;border-top:1px solid #edf0f5}
+.cb-warn{margin:12px 0}.cb-sub{font-size:15px;color:#314b6e;margin:20px 0 4px}.short-steps code{font-size:12px;background:#f4f7fb;padding:2px 6px;border-radius:5px}
