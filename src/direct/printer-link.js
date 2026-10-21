@@ -63,17 +63,20 @@ class Ftps{
   const timer=setTimeout(()=>{this.waiters=this.waiters.filter(x=>x!==waiter);reject(linkError('FTPS_TIMEOUT','파일 전송 응답 시간이 초과됐습니다.'));},timeout);
   const waiter={resolve:r=>{clearTimeout(timer);resolve(r);},reject:e=>{clearTimeout(timer);reject(e);}};this.waiters.push(waiter);});}
  async command(s){await this.control.write(enc.encode(s+'\r\n'));return this.read();}
- expect(r,code){if(r.code!==code)throw linkError('FTPS_'+r.code,'프린터 파일 전송이 거절됐습니다. SD 카드를 확인하세요. ('+r.code+')');return r;}
+ expect(r,code){if(r.code!==code){const e=linkError('FTPS_'+r.code,'프린터 파일 전송이 거절됐습니다. SD 카드를 확인하세요. ('+r.code+')');e.ftpReply=r.text.replace(/[^\x20-\x7e가-힣]/g,'').slice(4,80);throw e;}return r;}
  async upload(name,data,onProgress=()=>{}){
   if(!/^[a-z0-9_-]+\.3mf$/.test(name))throw linkError('FTPS_NAME','파일 이름이 올바르지 않습니다.');
   const pasv=this.expect(await this.command('PASV'),227),m=/\((\d+,\d+,\d+,\d+),(\d+),(\d+)\)/.exec(pasv.text);if(!m)throw linkError('FTPS_PASV','프린터의 파일 전송 주소를 읽지 못했습니다.');
-  const raw=await Sockets().openTcp(this.device.ip,Number(m[2])*256+Number(m[3]),{timeout:15000});let channel=null;
+  // Data-channel failures carry a DATA_ prefix so they read differently from the control channel's.
+  const data_=e=>{if(e?.code&&!/^(DATA_|FTPS_)/.test(e.code))e.code='DATA_'+e.code;return e;};
+  const raw=await Sockets().openTcp(this.device.ip,Number(m[2])*256+Number(m[3]),{timeout:15000}).catch(e=>{throw data_(e);});let channel=null;
   try{
    this.expect(await this.command('STOR '+name),150);
    // The printer's FTPS server accepts a data channel only when it resumes the control channel's TLS session.
-   channel=await TLS().connect(raw,{serverName:this.device.serial,ca:TLS().parsePem(this.device.ca),session:this.control.getSession()});
+   const session=this.control.getSession();
+   channel=await TLS().connect(raw,{serverName:this.device.serial,ca:TLS().parsePem(this.device.ca),session}).catch(e=>{throw data_(e);});
    const final=this.read(120000);final.catch(()=>{});
-   for(let o=0;o<data.length;o+=65536){await channel.write(data.subarray(o,o+65536));onProgress(Math.min(1,(o+65536)/data.length));}
+   for(let o=0;o<data.length;o+=65536){await channel.write(data.subarray(o,o+65536)).catch(e=>{throw data_(e);});onProgress(Math.min(1,(o+65536)/data.length));}
    await channel.close();channel=null;this.expect(await final,226);
    const size=this.expect(await this.command('SIZE '+name),213);if(Number(size.text.slice(3).trim())!==data.length)throw linkError('FTPS_SIZE_MISMATCH','업로드한 파일 크기가 다릅니다. 다시 시도하세요.');
    return {bytes:data.length,tlsVerified:true};
