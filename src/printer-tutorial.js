@@ -30,7 +30,7 @@ class PrinterTutorial{
   $('tourStepNumber').textContent=this.cursor>=0?String(this.cursor+1).padStart(2,'0'):'●';
   // A stopped or unconfirmed job shows its actual reason, not only the generic lesson text.
   const reason=!this.demo&&this.cursor<0&&['failed','uncertain'].includes(this.phase)?(this.job?.attention||this.job?.error||''):'';
-  $('tourTitle').textContent=lesson.title;$('tourBody').textContent=reason?lesson.body.split('.')[0]+'. '+reason:lesson.body;
+  $('tourTitle').textContent=lesson.title;const body=reason?lesson.body.split('.')[0]+'. '+reason:lesson.body;if(globalThis.GameDialog)GameDialog.say($('tourBody'),body);else $('tourBody').textContent=body;
   $('tourFocusLabel').textContent=lesson.name;
   $('tourPauseBtn').textContent=this.auto?'Ⅱ 설명 멈추기':'▶ 설명 이어보기';
   $('tourNextBtn').disabled=this.cursor===4;
