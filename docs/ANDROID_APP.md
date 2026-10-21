@@ -10,6 +10,7 @@
 | `src/direct/android-bridge.js` | 페이지 쪽. 앱이 넣어 주는 `ClickNative` 메시지 채널을 `TCPSocket`/`UDPSocket`으로 바꿔 줌. 다른 브라우저에서는 아무 일도 안 함 |
 | `tests/helpers/fake-android-native.cjs` | 테스트용 네이티브 대역(Node). 같은 메시지·같은 허용 규칙 |
 | `.github/workflows/android-app.yml` | 서명 안 된 release APK를 빌드해 `android-build` 브랜치에 올림 |
+| `ModelImport.java` | MakerWorld "Bambu Studio로 열기" 링크(`bambustudio://`)와 .3mf 파일을 받아 스튜디오로 넘김 ([MakerWorld 모드](MAKERWORLD.md)) |
 | `tools/android/sign-apk.cjs` | 그 APK를 서명해 `downloads/click-studio.apk`와 `downloads/click-studio-android.json`을 만듦 |
 
 허용 규칙(크롬북 앱의 `src/iwa-shell.js`와 같음): 사설 IPv4만, TCP 8883·990·6000, FTPS 연결이 열려 있는 동안 그 주소의 1024 이상 포트(패시브 데이터), UDP는 2021/1990에 바인드하거나 SSDP 그룹(239.255.255.250)·사설 주소의 2021/1990으로만 보냄. `ClickNative`는 `https://hichoni.github.io`와 앱 내부 화면 출처에만 주입됩니다.
