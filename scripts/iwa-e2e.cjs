@@ -3,7 +3,7 @@
 // prints to tests/helpers/mock-printer.cjs over real Direct Sockets. Test-only patches: the mock's test CA
 // is trusted and 127.0.0.1 counts as the printer's Wi-Fi address. Usage: xvfb-run -a node scripts/iwa-e2e.cjs [--shell] [screenshot-dir]
 // --shell runs the auto-updating path: the app's shell loads the public pages from a local HTTPS "website" in a frame.
-const http=require('node:http'),https=require('node:https'),fs=require('node:fs'),path=require('node:path'),dgram=require('node:dgram'),os=require('node:os');
+const http=require('node:http'),net=require('node:net'),https=require('node:https'),fs=require('node:fs'),path=require('node:path'),dgram=require('node:dgram'),os=require('node:os');
 const {MockPrinter}=require('../tests/helpers/mock-printer.cjs'),{zipEntries}=require('../bridge/core.cjs');
 const root=path.resolve(__dirname,'..'),app=path.join(root,'artifacts','iwa-app'),shellMode=process.argv.includes('--shell'),shots=process.argv.slice(2).find(a=>!a.startsWith('--'))||null;
 const playwright=(()=>{for(const p of ['playwright',path.join(process.execPath,'../../lib/node_modules/playwright')])try{return require(p);}catch{}throw Error('Playwright is required');})();
@@ -61,6 +61,12 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
   const booth=await ctx.newPage();booth.on('pageerror',e=>errors.push('booth: '+e.message));const boothUi=await open(booth,'booth');await booth.waitForTimeout(1500);
   console.log('booth direct:',await boothUi.evaluate(()=>document.documentElement.dataset.direct==='1'&&document.getElementById('boothBtn').textContent));
   if(shots){await booth.setViewportSize({width:1366,height:690});await boothUi.evaluate(()=>setStep(2));await booth.waitForTimeout(2000);await booth.screenshot({path:path.join(shots,'iwa-6-booth-print.png')});await boothUi.click('#operatorBtn');await booth.waitForTimeout(400);await booth.screenshot({path:path.join(shots,'iwa-7-settings.png')});}
+  // Chrome's Direct Sockets drops bytes on back-to-back writes and on early close; the transport must still deliver
+  // every byte, then a FIN, to a receiver that reads as slowly as an A1 mini writing to its SD card.
+  {const slow=await new Promise(res=>{let got=0,fin=false;const srv=net.createServer(c=>{c.on('data',b=>{got+=b.length;c.pause();setTimeout(()=>c.resume(),b.length/30000*1000);});c.on('end',()=>{fin=true;c.end();});}).listen(6000,'127.0.0.1',()=>res({srv,stat:()=>({got,fin})}));});
+   await boothUi.evaluate(async()=>{const t=await DirectSockets.openTcp('127.0.0.1',6000);for(let i=0;i<11;i++)await t.write(new Uint8Array(16384).fill(i));await new Promise(r=>setTimeout(r,8000));await t.close();});
+   for(let i=0;i<40&&!slow.stat().fin;i++)await booth.waitForTimeout(250);const st=slow.stat();slow.srv.close();
+   console.log('slow receiver:',st.got,'bytes',st.fin?'+ FIN':'(no FIN)');if(st.got!==11*16384||!st.fin)throw Error('Direct Sockets transport lost data or never closed');}
   const real=errors.filter(e=>!/favicon|ERR_FILE_NOT_FOUND/.test(e));console.log('page errors:',real.length?real:'none');
   if(!entries.has('Metadata/plate_1.png')||real.length)throw Error('E2E expectations failed');console.log('E2E OK');await finish(0);
  }catch(e){console.error('E2E FAILED:',e.message,errors);if(shots)await ctx.pages().at(-1)?.screenshot({path:path.join(shots,'iwa-failure.png')}).catch(()=>{});await finish(1);}

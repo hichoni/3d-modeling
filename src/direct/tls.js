@@ -170,8 +170,6 @@ class TlsConnection{
  }
  write(data){const parts=[];for(let o=0;o<data.length;o+=16384)parts.push(this.queue(23,data.subarray(o,o+16384)));return Promise.all(parts).then(()=>{});}
  async notify(){if(!this.closing){this.closing=true;try{if(this.writer)await this.queue(21,Uint8Array.of(1,0));}catch{}}}
- // close_notify + FIN while still reading, so the peer finishes reading before either side closes.
- async end(){await this.notify();try{await this.transport.end?.();}catch{}}
  async close(){await this.notify();try{await this.transport.close();}catch{}}
 }
 async function connect(transport,options={}){const t=new TlsConnection(transport,options);try{return await t.handshake();}catch(e){try{await transport.close();}catch{}throw e;}}
