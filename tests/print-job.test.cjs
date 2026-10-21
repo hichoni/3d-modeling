@@ -50,3 +50,12 @@ test('a torus with five walls slices and builds (regression: infill micro-segmen
  const job=await PrintJob.prepareJob({studio,profile:r.profile,gcode:r.gcode,stl:Buffer.from(stl).toString('base64'),seconds:r.summary.time},{studio:true,machine});
  assert.ok(job.slice.layers>=25);assert.ok(job.slice.weightG>1);
 });
+
+test('a real booth keycap whose outline rounds to zero-length wall moves passes (regression from a Chromebook report)',()=>{
+ // "SM", Do Hyeon, relief 0.8 (height 2.3), standard Generic PLA, sliced by the real booth page in Chromium.
+ const {analyzeToolpaths}=require('../src/toolpaths.js'),gcode=zlib.gunzipSync(fs.readFileSync(path.join(__dirname,'fixtures/booth-sm-dohyeon-standard.gcode.gz'))).toString();
+ const a=analyzeToolpaths(gcode,{height:2.3,strict:true,layerHeight:.2});assert.ok(a.layers>=11);assert.ok(a.filamentMM>5);
+ // The keycap allowance stays tiny: a flood of residue is still refused.
+ const flood=gcode.replace('; feature shells','; feature shells\n'+Array.from({length:600},(_,i)=>'G1 E'+(i*.0001).toFixed(4)+' F1200').join('\n'));
+ assert.throws(()=>analyzeToolpaths(flood,{height:2.3,strict:true,layerHeight:.2}),/미세 압출 잔여량/);
+});

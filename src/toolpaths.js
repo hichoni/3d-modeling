@@ -23,9 +23,9 @@ function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=fa
   const nx=v.X??x,ny=v.Y??y,nz=v.Z??z,ne=v.E===undefined?e:relativeE?e+v.E:v.E,delta=ne-e,distance=Math.hypot(nx-x,ny-y),travel=Math.hypot(distance,nz-z);
   if(![nx,ny,nz,ne,feed].every(Number.isFinite)||feed<=0||!inside(nx,ny)||nz<0||nz>height+.61)throw Error('경로가 키캡 또는 높이 범위를 벗어났어요.');
   if(delta < -1.21 || delta>1.21&&distance<.001)throw Error('압출 또는 리트랙션 양을 확인해주세요.');
-  // Four-decimal output: a ~0.001mm segment carrying the 0.0001mm E step reads as 14mm³/s. Studio counts such
-  // quantization-scale moves as rounding residue below (capped per file) instead of a real extrusion line.
-  const residue=studio&&delta>0&&delta<=.00051&&distance<.01;
+  // Four-decimal output: a ~0.001mm segment carrying the 0.0001mm E step reads as 14mm³/s or 0.09mm/mm. Such
+  // quantization-scale moves count as rounding residue below (capped per file) instead of a real extrusion line.
+  const residue=delta>0&&delta<=.00051&&distance<.01;
   if(delta>0&&distance>.001&&!residue){
    const flow=delta/distance*feed/60*Math.PI*(1.75/2)**2,why=nz<=0||nz>height+.11?'높이 Z'+round(nz)+'mm가 모델 범위 밖':Math.abs(nz-z)>.001?'압출 중 높이 변경':delta/distance>.09?'1mm당 '+(delta/distance).toFixed(3)+'mm 압출(한도 0.09)':flow>12.01?'초당 '+flow.toFixed(1)+'mm³(한도 12)':debt>.001?'리트랙션 상태에서 압출':!inside(x,y)?'안전 영역 밖':'';
    // The reason, layer and feature make a rejected slice diagnosable from a screenshot.
@@ -35,8 +35,8 @@ function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=fa
   }else if(delta<0){retract-=delta;debt-=delta;if(debt>1.22||feed>1800)throw Error('리트랙션 양 또는 속도가 너무 커요.');}
   else if(delta>0){
    // Four-decimal XY rounding can collapse a tiny fill segment to the same point.
-   // Limit the entire studio file's unpaired residue to 0.5mm of filament.
-   if(studio&&debt<.001&&delta<=.00051){roundingPrime+=delta;extruded+=delta;if(roundingPrime>.5)throw Error('미세 압출 잔여량이 너무 많습니다.');}
+   // Limit a file's unpaired residue to 0.5mm of filament (studio) or 0.05mm (one 14mm keycap).
+   if((studio||residue)&&debt<.001&&delta<=.00051){roundingPrime+=delta;extruded+=delta;if(roundingPrime>(studio?.5:.05))throw Error('미세 압출 잔여량이 너무 많습니다.');}
    else{debt-=delta;if(debt<-.001||feed>1800)throw Error('재료 복원량 또는 압출 속도가 올바르지 않아요.');}
   }
   if(feed>0)seconds+=(travel||Math.abs(delta))*60/feed;
