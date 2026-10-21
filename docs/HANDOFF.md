@@ -1,4 +1,42 @@
-# 현재 상황 인수인계 — 2026-10-21 STL 스튜디오 추가
+# 인수인계 — Click Studio·운영자 공방 (2026-10-21)
+
+## 다음 작업자는 여기부터
+
+사용자 목표는 **크롬북/노트북의 웹 화면에서 모델링 또는 STL 불러오기 → 웹 슬라이싱 → 여러 A1 mini와 현장 1:1 매칭 → 출력**이다. 14×14mm 둥근 사각 끼움판의 이름 새기기 체험과 일반 STL 스튜디오를 함께 제공한다. 프린터와 통신하는 현장 Windows 중계기가 필요하며, 학교 PC의 Smart App Control 차단을 해결하기 위해 개인 명의 Microsoft Store 앱을 준비 중이다.
+
+| 항목 | 마지막으로 확인한 상태 |
+| --- | --- |
+| 웹 | [체험 화면](https://hichoni.github.io/3d-modeling/), [STL 스튜디오](https://hichoni.github.io/3d-modeling/studio.html), [연결 안내](https://hichoni.github.io/3d-modeling/setup.html) 배포 확인 완료. 기능·검증 기록은 아래에 있다. |
+| Store 계정 | 개인 개발자 등록·본인 확인·프로필·개발자 계약·앱 예약 완료. 다시 등록하지 않는다. |
+| Store 앱 | **상상을 클릭하다! 운영자 공방**, Store ID `9N2V9KQDSJ0G`, 제출 초안 `1152921505702187840`, 버전 `3.0.0.0`, x64. |
+| 제출 파일 | 실제 Store 식별값의 MSIX 생성·MakeAppx 검증 완료. 원본을 담은 MSIXUPLOAD도 생성·내부 해시 일치 확인. 파일명·크기·해시는 [Store 진행 기록](STORE_PROGRESS_2026-10-21.md). |
+| 업로드 | 일반 Chrome의 자동·수동 MSIX와 MSIXUPLOAD 모두 Error, 재조회 시 Paused/null Bytes. 패키지 검증 성공·Save 완료 미확인. 정확한 실패 원인은 아직 불명이다. |
+| Microsoft 문의 | **2026-10-21 16:03 KST 이메일 1회 발송 완료**. Gmail 전송 완료 알림·보낸편지함·첨부 1개 확인. 답변·담당 배정·접수 번호는 발송 확인 시점에 미확인. |
+| 정식 앱 출시 | Store 심사 제출·Microsoft 서명·공개·학교 PC 설치/업데이트/제거 검증 미완료. 다운로드나 빌드 성공으로 설치 차단이 해결됐다고 안내하지 않는다. |
+| 현장 검증 | 이전 14mm 출력 완료와 일반 STL/서포트 출력 검증을 구분한다. 일반 STL·서포트 실물, 학교 Wi-Fi·크롬북 정책·6대 동시 운영은 미검증이다. |
+
+현재 문서는 위 확인 결과를 정리한 것이다. **이번 인수인계 작성에서 Gmail 답변, 프린터 상태, 로컬 서버 실행 상태를 새로 조회하지 않았다.** 아래의 ‘실행 중’, ‘현재’ 등은 해당 기록 시점의 관찰이며 다음 작업 때 필요한 범위에서 재확인한다.
+
+## 사용자 선택과 이어갈 순서
+
+- 사용자는 **전화번호 제공 없이 이메일로 진행**하겠다고 선택했다. 전화번호 필수인 문의 폼은 2/3 단계에서 멈췄고, 대신 공식 문서의 `reportapp@microsoft.com`으로 이메일을 보냈다. 전화번호를 다시 요구하거나 임의 번호를 입력하지 않는다.
+- 사용자는 Microsoft 문의 발송과 **그 문의를 위한 Gmail 접속·작성·발송**을 명시적으로 허용했다. 동일한 허락을 다시 묻지 않는다. 처음 Gmail 접속의 자동 승인 거부는 이후 사용자 명시적 승인으로 해소됐으며 우회하지 않았다.
+- 메일은 **이메일로만 회신**하고, 인증 전 업로드 문제를 담당 부서에 이관하거나 이메일 전용 지원 경로를 알려 달라고 요청했다. 메일 발송은 지원 담당 배정·티켓 생성·문제 해결과 구분한다. 같은 문의를 중복 발송하지 않는다.
+
+1. 작업 재개 요청이 오면 [문의 발송 기록](STORE_UPLOAD_SUPPORT_DRAFT.md)의 제목·발송일·앱 ID로 **해당 문의의 Microsoft 답변이나 반송 여부부터 확인**한다. 아직 자동 모니터링이나 알림 예약을 설정한 상태는 아니다.
+2. 답변의 오류 단계·계정 상태·추가 자료 요청을 확인하고 필요한 조치를 정한다. 같은 대용량 파일 선택이나 업로드를 근거 없이 반복하지 않는다. 로그인/파일 선택 권한 오류는 이미 해소됐으므로 처음부터 다시 안내하지 않는다.
+3. 업로드가 실제 성공하면 서버의 패키지 식별·검증 결과와 Windows Desktop 대상·Save 저장을 확인한다. 이후 [제출 자료](STORE_SUBMISSION.md), WACK/대상 PC 검사, 심사 절차를 진행한다. 새 약관·법적 확인이 나오면 계정 소유자의 검토와 실제 동의가 필요하다.
+4. 정식 배포 뒤 학교 PC 설치·업데이트·제거·설정 보존, 최신 중계기 API v8, 일반 STL/서포트 실물과 여러 대의 현장 매칭을 검증한다. 실제 출력을 새로 시작할 때는 그 시험에 대한 사용자 요청과 준비 상태를 확인한다.
+
+## 저장 위치와 다른 PC에서 이어가기
+
+- 저장소: `https://github.com/hichoni/3d-modeling`, 브랜치 `main`. 이 PC 작업 사본은 `C:/Users/User/Documents/ChatGPT/New project/stamp-studio`다. 메일 발송 기록을 반영한 커밋은 `b36e793`이다.
+- 공개 식별값: [desktop/store-identity.json](../desktop/store-identity.json). 재빌드에는 `desktop/build.ps1`의 실제 `NodePath`, 필요 도구 경로와 이 파일의 IdentityName/Publisher/PublisherDisplayName/Version을 명시한다. `-Mode Store`만 주거나 Preview 기본 식별값으로 제출하지 않는다.
+- 제출 파일: `artifacts/store-submission-20261021-initial/ClickBooth-3.0.0.0-x64-STORE-SUBMISSION-UNSIGNED.msix`, 같은 폴더의 `ClickBooth-3.0.0.0-x64.msixupload`.
+- 발송 증거: `artifacts/registration/microsoft-support-email-sent-2026-10-21.jpg`. 오류 화면과 보관용 `Microsoft-Store-support-email-DRAFT.eml`도 같은 폴더에 있다. EML은 보관 초안이므로 다시 보내지 않는다.
+- `artifacts/`, `runtime/`과 프린터 비공개 설정은 Git에서 제외된다. **집에서 GitHub만 내려받으면 이 파일들이 함께 오지 않는다.** 필요 파일·현장 설정은 비공개로 보존하고, 새로 빌드한 파일은 해시를 다시 계산해 기존 파일과 구분한다. 계정 이메일·인증 정보·Gmail 링크·프린터 접근 코드를 Git/Pages에 넣지 않는다.
+
+아래는 시간순 작업 근거와 이전 현장 기록이다. 현재 결과는 위 표와 이어갈 순서를 먼저 따른다.
 
 ## 최신: Microsoft 문의 이메일 발송 완료 · 16:03 KST
 
