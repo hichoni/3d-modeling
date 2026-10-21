@@ -6,7 +6,7 @@ const selectedStudioModel=()=>studioModels.find(m=>m.id===studioSelected);
 const num=n=>Number(n.toFixed(2)).toLocaleString('ko-KR');
 const duration=n=>{n=Math.ceil(n||0);return n>=3600?Math.floor(n/3600)+'시간 '+Math.floor(n%3600/60)+'분':Math.floor(n/60)+'분 '+String(n%60).padStart(2,'0')+'초';};
 function studioToast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(studioToastTimer);studioToastTimer=setTimeout(()=>$('toast').hidden=true,7000);}
-function studioDownload(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+function studioDownload(blob,name){if(globalThis.ClickAndroid){ClickAndroid.save(blob,name).then(()=>studioToast('태블릿의 Download 폴더에 저장했어요: '+name),e=>studioToast('파일을 저장하지 못했어요. '+e.message));return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
 function safeStudioName(name){return String(name||'plate-01').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,70);}
 function studioBase64(bytes){let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(text);}
 function snapshotStudio(){return {models:studioModels.map(m=>({...m,transform:{...m.transform,position:[...m.transform.position],rotation:[...m.transform.rotation]}})),selected:studioSelected};}

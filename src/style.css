@@ -196,7 +196,10 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .result-panel{border:3px solid #e7c55a;background:linear-gradient(135deg,#fff8dc,#ffefb8)}
 .result-panel .eyebrow{display:inline-block;background:var(--coral);color:#fff;padding:4px 18px 4px 12px;font:400 12px Jua,sans-serif;letter-spacing:1px;clip-path:polygon(0 0,100% 0,93% 50%,100% 100%,0 100%)}
 .result-panel .eyebrow:before{content:'★ '}
-@media(prefers-reduced-motion:reduce){.game-dialog .dialog-next,.toast:after,.coach-tip{animation:none}}
+/* The slicing button nudges when the visitor tries to skip it */
+#sliceBtn.is-calling{animation:slice-call .5s ease-in-out 3}
+@keyframes slice-call{50%{transform:scale(1.05);box-shadow:0 0 0 6px #259cf855}}
+@media(prefers-reduced-motion:reduce){.game-dialog .dialog-next,.toast:after,.coach-tip,#sliceBtn.is-calling{animation:none}}
 @media(min-width:1001px){
  .heading p{display:none}
  .tour-coach{bottom:76px}.tour-speech.game-dialog{padding:15px 38px 9px 18px;margin-top:14px}.heading .eyebrow{padding:2px 10px 1px}
