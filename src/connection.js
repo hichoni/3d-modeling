@@ -12,22 +12,25 @@ function parseBoothLink(value){
  return {base:endpoint.origin,key:p.get('key')};
 }
 function backendHeaders(extra={}){return {'X-Click-Token':local?.csrf||'',...(deviceToken?{'X-Client-Token':deviceToken}:{}),...(boothTarget?{'X-Booth-Key':boothTarget.key}:{}),...extra};}
-function backendFetch(route,options={}){return fetch((boothTarget?.base||'')+route,{...options,headers:backendHeaders(options.headers||{}),...(boothTarget?{targetAddressSpace:'local'}:{})});}
+function directMode(){return !!globalThis.DirectRelay?.enabled();}
+// In the installed Chromebook app the relay runs in-page and connects to the A1 mini itself.
+function backendFetch(route,options={}){if(directMode())return DirectRelay.fetch(route,options);return fetch((boothTarget?.base||'')+route,{...options,headers:backendHeaders(options.headers||{}),...(boothTarget?{targetAddressSpace:'local'}:{})});}
 function syncConnection(){
  const connected=!!local;
- $('boothBtn').textContent=connected?'● '+(local.operator?'출력 PC':'부스 연결됨'):'부스 연결';
- $('connection').textContent=connected?'● 공방 연결됨':'온라인 체험';
- $('boothStatus').textContent=local?.operator?'출력 PC에 연결됐어요. 아래에서 A1 mini의 액세스 코드를 입력하고 바로 연결하세요.':connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 바로 출력할 수 있어요.';
+ const direct=directMode();
+ $('boothBtn').textContent=connected?'● '+(direct?(pairing?.printerId?pairedPrinterName():'프린터 연결'):local.operator?'출력 PC':'부스 연결됨'):direct?'프린터 연결':'부스 연결';
+ $('connection').textContent=connected?(direct?'● 크롬북 직접 연결':'● 공방 연결됨'):'온라인 체험';
+ $('boothStatus').textContent=direct?'이 크롬북 앱이 같은 Wi-Fi의 A1 mini와 직접 연결해요. 출력 PC는 필요 없어요.':local?.operator?'출력 PC에 연결됐어요. 아래에서 A1 mini의 액세스 코드를 입력하고 바로 연결하세요.':connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 바로 출력할 수 있어요.';
  $('printerConnectionPanel').hidden=!local?.operator||!!boothTarget;
  $('boothLinkSection').open=!local?.operator;
  $('disconnectBoothBtn').hidden=!boothTarget;$('disconnectBoothBtn').disabled=typeof printActive==='function'&&printActive();
- $('operatorLocal').hidden=!(local?.operator||pairing?.printerId);
+ $('operatorLocal').hidden=direct||!(local?.operator||pairing?.printerId);
  $('localInstructions').hidden=connected;
  $('pairBtn').hidden=!connected;$('pairBtn').textContent=pairing?.printerId?'↔ '+pairedPrinterName():'프린터 선택';$('pairingBadge').hidden=!connected;
  $('pairingBadge').textContent=pairing?.printerId?('출력할 프린터 · '+pairedPrinterName()):'출력 화면에서 사용할 프린터를 골라요.';
  if(connected&&!local.operator)$('operatorInfo').textContent=pairing?.printerId?pairedPrinterName()+'에 매칭되어 있어요. 바로 출력 버튼으로 이 미니에 작품을 보낼 수 있어요.':'출력할 미니를 고르면 바로 출력 버튼으로 시작할 수 있어요.';
  else if(connected)$('operatorInfo').textContent='현장에서 크롬북과 미니를 1:1 매칭하고 필요할 때 해제·재매칭하세요.';
- $('boothSetupHint').hidden=!local?.operator||local?.booth;
+ $('boothSetupHint').hidden=direct||!local?.operator||local?.booth;
 }
 function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.printerId)?.name||pairing?.printerId||'미니';}
 async function connectWorkshop(target,{save=false,showError=false}={}){
@@ -48,6 +51,7 @@ async function connectWorkshop(target,{save=false,showError=false}={}){
  }
 }
 async function discoverLocal(){
+ if(directMode())return connectWorkshop(null);
  let target=null;
  try{target=parseBoothLink(location.href);
   if(!target&&['127.0.0.1','localhost'].includes(location.hostname))return connectWorkshop(null);

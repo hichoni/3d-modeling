@@ -29,3 +29,10 @@
 select:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.print-preparation legend,.printer-filament h2{font-family:'Malgun Gothic',system-ui,sans-serif;font-weight:700;font-size:17px}@media(max-width:700px){.slice-card .slice-presets{grid-column:1/-1;grid-row:auto}.slice-card .metrics{grid-row:auto;grid-column:1/-1;display:flex;justify-content:space-between;gap:12px}}
 
 .studio-entry{text-decoration:none;display:inline-flex;align-items:center;background:#edf4ff;border-color:#cbdcf3;color:#42628e;font-size:11px;font-weight:700}@media(max-width:700px){.studio-entry{font-size:9px;padding:8px}.topbar{flex-wrap:wrap}.top-actions{flex-wrap:wrap;justify-content:flex-end}}
+
+/* Installed Chromebook app (direct A1 mini connection) */
+:root:not([data-direct]) .direct-only{display:none!important}
+[data-direct] .relay-only{display:none!important}
+.direct-steps{margin:8px 0 12px;padding-left:22px;line-height:1.7}
+.direct-find{display:grid;gap:8px;margin-bottom:12px}
+#directBoothWarning{color:#b4472e;font-weight:700}

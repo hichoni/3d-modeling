@@ -5,7 +5,7 @@ async function sliceInBrowser(){
  browserSliceBusy=true;const mine=revision,id=String(++browserSliceId),beginAt=performance.now();renderSlice();
  let timer,worker,url;
  try{
-  url=URL.createObjectURL(new Blob([BROWSER_SLICE_WORKER],{type:'text/javascript'}));worker=browserSliceWorker=new Worker(url);
+  url=(typeof BROWSER_SLICE_WORKER_URL==='string'?BROWSER_SLICE_WORKER_URL:URL.createObjectURL(new Blob([BROWSER_SLICE_WORKER],{type:'text/javascript'})));worker=browserSliceWorker=new Worker(url);
   const bytes=toSTL(geometries()),stl=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
   const result=await new Promise((resolve,reject)=>{
    browserSliceCancel=reject;

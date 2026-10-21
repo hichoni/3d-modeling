@@ -2,6 +2,8 @@
 
 **[바로 체험하기 →](https://hichoni.github.io/3d-modeling/)**
 
+**[새 · 크롬북만으로 출력 — Click Studio 앱 →](docs/CHROMEBOOK_DIRECT.md)** — 크롬북에 앱(Isolated Web App)을 한 번 설치하면 출력 PC 없이 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결하고, 슬라이싱·전송·출력·일시정지·속도·조명까지 앱에서 합니다. [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) · 모의 프린터와 실제 Chromium으로 끝까지 시험했고, **실물 A1 mini·실제 크롬북 시험은 남아 있습니다.**
+
 **[Windows 연결 프로그램 받기 · 다운로드부터 프린터 연결까지 5단계 →](https://hichoni.github.io/3d-modeling/setup.html)** — 공식 Node.js 설치 파일, 연결 프로그램 ZIP, 압축 해제, 실행할 파일, 미니 검색·8자리 코드 입력을 웹에서 따라갑니다. 크롬북에는 이 프로그램을 설치하지 않습니다. 학교 PC가 개발용 ZIP 실행을 차단하면 담당자의 배포 승인이 필요합니다.
 
 **[Click Studio · STL 웹 스튜디오 →](https://hichoni.github.io/3d-modeling/studio.html)** — 일반 STL을 올려 배치·회전·크기를 조정하고, 채움·외벽·서포트·브림을 설정해 실제 레이어를 계산합니다. 프로젝트 저장과 출력 전 검토를 제공합니다. A1 mini/0.4mm/외부 PLA 베타이며, 출력에는 최신 중계기 API v8이 필요합니다. [기능·제한·검증 상태](docs/STL_STUDIO.md)를 확인하세요.
