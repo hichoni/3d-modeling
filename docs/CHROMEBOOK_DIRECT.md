@@ -42,6 +42,22 @@ ChromeOS 150부터는 관리 정책(`IsolatedWebAppUserInstallationEnabled`)이 
 
 Chrome 143부터 **관리 정책으로 설치하는 IWA는 Google이 관리하는 허용 목록에 있어야** 합니다(개발자 모드 설치는 예외). 학교 일괄 배포는 이 허용 목록 등록이 선행돼야 하며, 아직 신청하지 않았습니다.
 
+## 자동 업데이트 (앱 1.1.0부터)
+
+앱은 얇은 **껍데기(shell)** 입니다. 열면 `https://hichoni.github.io/3d-modeling/`의 최신 스튜디오·키캡 화면을 앱 안에 띄우고, 그 화면에 프린터 연결(Direct Sockets)과 저장소만 빌려줍니다. 그래서 **사이트에 배포하면 앱도 바로 최신**이 되고, 서명·재설치가 필요 없습니다.
+
+- 빌려주는 연결은 A1 mini 통신으로 제한합니다: 사설 IPv4의 MQTT 8883 · FTPS 990(열린 FTPS 연결이 있을 때만 그 데이터 포트) · 카메라 6000, SSDP용 UDP 2021/1990과 멀티캐스트 239.255.255.250. 그 밖의 주소·포트는 거절합니다.
+- 화면은 사이트 원본을 credentialless iframe으로 띄우며, 앱의 출처(`isolated-app://`+번들 ID)에서 온 연결만 받습니다. 프린터 목록·코드 등 `click-` 설정은 앱 저장소에 보관합니다.
+- 인터넷이 없거나 사이트가 응답하지 않으면 약 6–15초 뒤 앱에 들어 있는 버전으로 엽니다.
+- Chrome은 개발자 모드로 설치한 앱을 스스로 업데이트하지 않았습니다(재시작 + 90초 동안 업데이트 매니페스트 요청 없음). 껍데기 자체가 바뀔 때만 `chrome://iwa-dev`의 **Update**가 필요합니다. 앱 화면에서 `chrome://` 주소는 Chrome이 막아 직접 열 수 없습니다.
+- 시험: `xvfb-run -a node scripts/iwa-e2e.cjs --shell` (로컬 HTTPS 사이트 ↔ 설치한 앱 ↔ 모의 A1 mini, 재실행 후 설정 유지 포함).
+
+## Windows·Mac에서는?
+
+- **일반 웹 페이지만으로는 안 됩니다.** 크롬북과 마찬가지로 브라우저가 프린터의 MQTT·FTPS 통신을 막습니다.
+- **같은 앱을 설치하는 방법:** 데스크톱 Chrome은 IWA가 기본으로 꺼져 있습니다. 리눅스 Chrome 154에서는 IWA 기능을 켜야(`IsolatedWebApps`) `chrome://iwa-dev`가 열렸고, 켠 뒤에는 설치·실행·Direct Sockets 모두 됐습니다. Windows에서도 `chrome://flags`에서 **Isolated Web Apps**와 **Isolated Web App Developer Mode**를 켜면 같은 방법이 될 것으로 보이지만, **Windows 실기는 아직 확인하지 않았습니다.**
+- **확실한 방법:** Windows PC는 기존 연결 프로그램(중계기, `start-workshop.cmd`)으로 이 PC에서 바로 출력할 수 있습니다. 학교 PC의 실행 차단(Smart App Control)은 [안내](SMART_APP_CONTROL.md)를 참고하세요.
+
 ## 프린터 준비 (한 번)
 
 1. A1 mini와 크롬북을 **같은 Wi-Fi**에 연결합니다. 손님용/학생용 Wi-Fi가 기기 간 통신을 막으면(AP 격리) 연결되지 않습니다.

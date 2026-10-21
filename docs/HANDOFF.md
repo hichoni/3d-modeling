@@ -8,6 +8,7 @@
 - 중계기와 공유: 출력 파일·안전 규칙을 `src/print-job.js`로 옮기고 `bridge/browser-job.cjs`·`core.cjs`·`print-preparation.cjs`가 이를 쓴다. 출력 파일 내용은 이전과 동일함을 테스트로 확인했다. 새로 `plate_1.png`/`plate_1_small.png` 썸네일(선택)을 넣는다. ZIP·Windows 허용 목록에 `src/print-job.js`를 추가했다.
 - 검증: 자동 테스트 + `scripts/iwa-e2e.cjs`(실제 Chromium에 앱 설치 ↔ 모의 A1 mini, 검색·코드·슬라이싱·업로드·시작·일시정지/계속·완료) 통과. 서명 번들 설치·실행 확인. **실물 A1 mini·실제 ChromeOS 시험은 안 했다.** 다음 작업은 문서의 첫 실물 시험 체크리스트다.
 - 서명 키: 이번 클라우드 세션에서 새로 만든 `runtime/iwa-signing-key.pem`(Git 제외)으로 서명했다. 세션 컨테이너가 사라지면 이 키도 사라지므로 사용자가 비공개로 보관해야 한다. 키가 없으면 다음 버전은 다른 앱 ID가 되어 재설치가 필요하다. 앱 ID는 `downloads/click-studio.json`.
+- **자동 업데이트(1.1.0)**: 앱은 사이트(`hichoni.github.io/3d-modeling`) 화면을 credentialless iframe으로 띄우고 `src/iwa-shell.js`가 소켓·저장소를 빌려준다(`src/direct/shell-client.js`가 페이지 쪽). 사이트 배포 = 앱 최신. 껍데기를 바꿀 때만 `scripts/build-iwa-app.cjs`의 VERSION을 올리고 다시 서명한다. 실제 크롬북(Chrome 154)에서 `chrome://iwa-dev` 설치·검색까지 사용자 확인.
 - 학교 일괄 배포(관리 콘솔 강제 설치)는 Chrome 143+의 Google 허용 목록 등록이 필요하며 아직 신청하지 않았다.
 
 ## 다음 작업자는 여기부터

@@ -7,10 +7,11 @@ const fonts = [
 ];
 const css = fonts.map(([family,weight,file])=>`@font-face{font-family:'${family}';font-weight:${weight};font-display:block;src:url(data:font/ttf;base64,${fs.readFileSync('fonts/'+file).toString('base64')}) format('truetype');}`).join('\n') + fs.readFileSync('src/style.css','utf8');
 // Chromebook direct connection: inactive on the open web (no Direct Sockets), live in the installed app.
-const directConstants='globalThis.BAMBU_CA_PEM='+JSON.stringify(fs.readFileSync('bridge/bambu-ca.pem','utf8'))+';globalThis.A1_MINI_MACHINE='+JSON.stringify(JSON.parse(fs.readFileSync('bridge/profiles/a1-mini-pla.json','utf8')))+';\n';
+const shellOrigins=fs.existsSync('downloads/click-studio.json')?['isolated-app://'+JSON.parse(fs.readFileSync('downloads/click-studio.json','utf8')).bundleId]:[];
+const directConstants='globalThis.CLICK_SHELL_ORIGINS='+JSON.stringify(shellOrigins)+';globalThis.BAMBU_CA_PEM='+JSON.stringify(fs.readFileSync('bridge/bambu-ca.pem','utf8'))+';globalThis.A1_MINI_MACHINE='+JSON.stringify(JSON.parse(fs.readFileSync('bridge/profiles/a1-mini-pla.json','utf8')))+';\n';
 const direct=['src/statistics-core.js','src/print-job.js','src/direct/sockets.js','src/direct/tls.js','src/direct/printer-link.js','src/direct/discovery.js','src/direct/relay.js','src/direct/direct-ui.js'];
-const boothScripts=['vendor/three.min.js','vendor/OrbitControls.js','src/state.js','src/statistics-core.js','src/engine.js','src/toolpaths.js','src/layer-view.js','src/print-profiles.js','src/print-preparation.js','src/browser-slicer.js',...direct.slice(1),'src/connection.js','src/print-lesson.js','src/printer-tutorial.js','src/statistics.js','src/app.js'];
-const studioScripts=['vendor/three.min.js','vendor/OrbitControls.js','src/print-profiles.js','src/studio-core.js','src/toolpaths.js',...direct,'src/studio-api.js','src/studio-view.js','src/studio-app.js'];
+const boothScripts=['src/direct/shell-client.js','vendor/three.min.js','vendor/OrbitControls.js','src/state.js','src/statistics-core.js','src/engine.js','src/toolpaths.js','src/layer-view.js','src/print-profiles.js','src/print-preparation.js','src/browser-slicer.js',...direct.slice(1),'src/connection.js','src/print-lesson.js','src/printer-tutorial.js','src/statistics.js','src/app.js'];
+const studioScripts=['src/direct/shell-client.js','vendor/three.min.js','vendor/OrbitControls.js','src/print-profiles.js','src/studio-core.js','src/toolpaths.js',...direct,'src/studio-api.js','src/studio-view.js','src/studio-app.js'];
 const concat=list=>directConstants+list.map(f=>fs.readFileSync(f,'utf8')).join('\n;\n');
 const worker = 'const BROWSER_SLICE_WORKER='+JSON.stringify(fs.readFileSync('vendor/kiri/fdm-worker.js','utf8'))+';\n';
 const js = (worker+concat(boothScripts)).replace(/<\/script/gi,'<\\/script');

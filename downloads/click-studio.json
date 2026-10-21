@@ -1,8 +1,8 @@
 {
  "bundleId": "at56pqaemxzzojbx5idsvupqxolmoddxarz4eumk2bgzbq2ilpgaaaic",
- "version": "1.0.2",
+ "version": "1.1.0",
  "updateManifestUrl": "https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json",
  "bundleUrl": "https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn",
- "bytes": 14681737,
- "sha256": "04ec10ce88f75345f4e45baa8ce9d46f54dbc4720f9f84c81cdbe7616e2ea44c"
+ "bytes": 14697256,
+ "sha256": "234b117bbc3d99007158adeefdc3d9cf25893e113f189e7349a43f8bbee8a8a6"
 }
