@@ -38,6 +38,8 @@ select:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.print-pre
 #directBoothWarning{color:#b4472e;font-weight:700}
 .direct-version{position:fixed;left:10px;bottom:8px;z-index:50;font-size:11px;color:#6b7280;background:#ffffffcc;border-radius:999px;padding:3px 9px;pointer-events:auto}
 
+/* Settings dialog (⚙): sound, printer connection, app guide; operator tools follow in relay mode */
+.settings-list{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.settings-list>*{flex:1 1 150px;text-align:center;text-decoration:none}.settings-list b{margin-left:4px}.settings-list a{display:flex;align-items:center;justify-content:center}.settings-version{display:block;margin:-6px 0 12px;font-size:11px;color:#6b7280}.settings-section{margin:4px 0 6px;font-size:15px}
 /* One-screen layout for Chromebooks and laptops: no page scroll.
    Top row: brand · steps · today's counts · actions. Below: 3D stage left, the step's controls right. */
 @media(min-width:1001px){
@@ -133,6 +135,13 @@ select:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.print-pre
 }
 /* Narrower laptops: the date chip would collide with the step tabs; the counts stay */
 @media(min-width:1001px) and (max-width:1439px){.statistics-date{display:none}}
+/* Below 1500px only today's counts stay, so the step tabs never run under the counts */
+@media(min-width:1001px) and (max-width:1499px){.statistics-totals>div:nth-child(n+3){display:none}}
+@media(min-width:1001px){
+ .quest-nav{min-width:0;overflow:hidden}.quest-nav button{min-width:0;flex:0 1 auto}.quest-nav b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ .studio-entry{padding-inline:10px}
+ #pairingBadge{display:none!important}
+}
 @media(min-width:1001px) and (max-height:700px){
  .tour-temperatures>div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.tour-temperatures small,#tourTelemetrySource{display:none}
  .heading p{display:none}

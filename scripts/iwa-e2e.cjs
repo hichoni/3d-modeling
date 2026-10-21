@@ -60,6 +60,7 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
   if(shots){await ui.$eval('#printMonitor',e=>e.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(shots,'iwa-5-complete.png')});fs.writeFileSync(path.join(shots,'iwa-plate-thumbnail.png'),entries.get('Metadata/plate_1.png')());}
   const booth=await ctx.newPage();booth.on('pageerror',e=>errors.push('booth: '+e.message));const boothUi=await open(booth,'booth');await booth.waitForTimeout(1500);
   console.log('booth direct:',await boothUi.evaluate(()=>document.documentElement.dataset.direct==='1'&&document.getElementById('boothBtn').textContent));
+  if(shots){await booth.setViewportSize({width:1366,height:690});await boothUi.evaluate(()=>setStep(2));await booth.waitForTimeout(2000);await booth.screenshot({path:path.join(shots,'iwa-6-booth-print.png')});await boothUi.click('#operatorBtn');await booth.waitForTimeout(400);await booth.screenshot({path:path.join(shots,'iwa-7-settings.png')});}
   const real=errors.filter(e=>!/favicon|ERR_FILE_NOT_FOUND/.test(e));console.log('page errors:',real.length?real:'none');
   if(!entries.has('Metadata/plate_1.png')||real.length)throw Error('E2E expectations failed');console.log('E2E OK');await finish(0);
  }catch(e){console.error('E2E FAILED:',e.message,errors);if(shots)await ctx.pages().at(-1)?.screenshot({path:path.join(shots,'iwa-failure.png')}).catch(()=>{});await finish(1);}
