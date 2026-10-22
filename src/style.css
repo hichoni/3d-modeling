@@ -222,3 +222,10 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .brand-org{display:flex;align-items:baseline;gap:4px;margin-top:1px;line-height:1.1;white-space:nowrap}
 .brand-org b{font:800 9px/1.1 system-ui,sans-serif;letter-spacing:2px;color:var(--coral)}
 .brand-org em{font-style:normal;font-size:8px;font-weight:700;letter-spacing:-.2px;color:var(--muted)}
+/* Scale the one-screen layout up on bigger screens (--z from app.js, 1–1.2) */
+@media(min-width:1001px){body{zoom:var(--z,1)}.app-shell{height:calc(100dvh / var(--z,1))}}
+/* 클릭이's lines: larger and darker for reading at the booth */
+.game-dialog p{font-size:17px;line-height:1.55;color:var(--ink)}
+.tour-speech.game-dialog p{font-size:16px;line-height:1.5;color:var(--ink)}
+.tour-speech.game-dialog h2{font-size:21px}
+@media(min-width:1001px){.game-dialog p{font-size:16px}.tour-speech.game-dialog h2{font-size:19px}.tour-speech.game-dialog p{font-size:15px}}
