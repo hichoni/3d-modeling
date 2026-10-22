@@ -31,6 +31,8 @@ worker의 `mode:studio`, `/api/studio-jobs`, `prepareStudioJob`에만 170×170×
 
 기본 새김 높이는 0.8mm입니다. 0.6/0.8/1mm 선택을 제공합니다. 글자는 1~4자, Jua/Do Hyeon/Gaegu 3종. 글씨는 키캡 위에서 읽는 방향입니다. **도장** 모드(입체 방향의 세 번째 선택)는 글자를 좌우 반전하고 바닥판 3.0mm(키캡 밑판 홈 깊이 2.9mm와 같은 높이) + 글자 1.5mm(전체 4.5mm)로 만들어, 키캡 밑판 테두리보다 글자가 1.5mm 높게 올라와 글자만 인주가 묻습니다. 출력 검증(`print-job` STL, `toolpaths`, 브라우저 슬라이서 worker)의 높이 상한은 이에 맞춰 4.5mm입니다. 이전 프로젝트의 손잡이·크기·형태 값은 JSON 불러오기 시 허용하지 않습니다.
 
+**만들 작품**은 두 가지입니다. **키캡**(14×14mm 이름판, 키캡 밑판에 끼움 · `models/keycap-keychain`의 1구/2구 키링이나 `models/keychain` 본체)과 **큰 도장**(20×20mm 판, 항상 도장 모드 · `models/keycap-head`의 23mm 머리에 끼움)입니다. 판은 모서리 반지름이 크기의 0.2배인 둥근 사각이고, 출력 규칙(`validateSTL`, `analyzeToolpaths`의 경로 범위, 슬라이서 워커, PC 중계)은 14·20mm 두 크기만 받습니다. 20mm 작업은 베드 측정 범위와 3MF 경계 상자도 20mm로 바뀝니다(`G29 A1 X80 Y80 I20 J20`).
+
 ## 브라우저 슬라이싱 · 기본 경로
 
 `src/browser-slice-worker.js`가 고정 Kiri:Moto FDM worker의 slice/prepare/export를 호출합니다. `vendor/kiri/fdm-worker.js`를 HTML에 포함하고 Blob Worker에서 실행하므로 외부 엔진 요청이 없습니다. 재빌드는 [tools/slicer](../tools/slicer/README.md)를 참고하세요.

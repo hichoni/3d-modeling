@@ -1,12 +1,13 @@
-// Shared browser/relay validation for the fixed 14 mm, 0.4 mm nozzle profile.
+// Shared browser/relay validation for the booth plates (14 or 20 mm) and the studio, 0.4 mm nozzle profile.
 (function(root){
-function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=false}={}){
+function analyzeToolpaths(text,{height=2.5,strict=false,layerHeight=.2,studio=false,size=14}={}){
+ if(!studio&&![14,20].includes(size))throw Error('지원하지 않는 작품 크기입니다.');
  if(![.12,.16,.2].includes(layerHeight))throw Error('지원하지 않는 출력 층 높이입니다.');
  if(typeof text!=='string'||text.length>(studio?24000000:2500000))throw Error('경로 파일 크기를 확인해주세요.');
  if(!Number.isFinite(height)||height<(studio ? .2 : 2)||height>(studio?160:4.51))throw Error('지원하지 않는 모델 높이입니다.');
  let x=90,y=90,z=0,e=0,relativeE=false,feed=0,extruded=0,retract=0,debt=0,roundingPrime=0,seconds=0,layer=null,feature='path';
  const layers=[],moves=[],commands=new Set();const round=n=>Math.round(n*10000)/10000;
- const inside=(px,py)=>studio?px>=4.99&&py>=4.99&&px<=175.01&&py<=175.01:Math.abs(px-90)<=7.03&&Math.abs(py-90)<=7.03&&Math.hypot(Math.max(0,Math.abs(px-90)-4.2),Math.max(0,Math.abs(py-90)-4.2))<=2.84;
+ const inside=(px,py)=>studio?px>=4.99&&py>=4.99&&px<=175.01&&py<=175.01:Math.abs(px-90)<=size/2+.03&&Math.abs(py-90)<=size/2+.03&&Math.hypot(Math.max(0,Math.abs(px-90)-size*.3),Math.max(0,Math.abs(py-90)-size*.3))<=size*.2+.04;
  for(const source of text.split(/\r?\n/)){
   const tag=/^\s*;\s*feature\s+(.+?)\s*$/i.exec(source);if(tag)feature=({'shells':'shell','solid fill':'solid','thin fill':'solid','sparse infill':'infill','support':'support','supports':'support','support fill':'support'})[tag[1].toLowerCase()]||'path';
   const line=source.split(';')[0].trim();if(!line)continue;
