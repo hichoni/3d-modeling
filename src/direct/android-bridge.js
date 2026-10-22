@@ -48,11 +48,18 @@
   try{const info=await (await fetch('downloads/click-studio-android.json',{cache:'no-store'})).json(),latest=String(info.version||'');
    const newer=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;};
    if(!latest||!mine||!newer(latest,mine))return;try{if(localStorage.getItem('click-android-update-seen')===latest)return;}catch{}
-   const d=document,bar=d.createElement('div'),a=d.createElement('a'),x=d.createElement('button');
-   bar.setAttribute('role','status');bar.style.cssText='position:fixed;left:12px;bottom:12px;z-index:60;display:flex;gap:10px;align-items:center;padding:10px 12px 10px 16px;background:#172846;color:#fff;border-radius:14px;box-shadow:0 6px 20px #0004;font:600 14px/1.4 system-ui,sans-serif';
-   bar.append('📱 새 태블릿 앱 '+latest+'이 나왔어요');a.href='downloads/click-studio.apk';a.setAttribute('download','click-studio.apk');a.textContent='업데이트';a.style.cssText='background:#ff525f;color:#fff;padding:6px 12px;border-radius:10px;text-decoration:none';
+   // The WebView has no download manager, so the app saves the APK itself; Android installs it from Files.
+   const d=document,bar=d.createElement('div'),msg=d.createElement('span'),go=d.createElement('button'),x=d.createElement('button'),file='click-studio-v'+latest+'.apk';
+   bar.setAttribute('role','status');bar.style.cssText='position:fixed;left:12px;bottom:12px;z-index:60;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 24px);padding:10px 12px 10px 16px;background:#172846;color:#fff;border-radius:14px;box-shadow:0 6px 20px #0004;font:600 14px/1.4 system-ui,sans-serif';
+   msg.textContent='📱 새 태블릿 앱 v'+latest+'이 나왔어요 (지금 v'+mine+')';go.type='button';go.textContent='업데이트 받기';go.style.cssText='background:#ff525f;color:#fff;border:0;padding:6px 12px;border-radius:10px;font:inherit;cursor:pointer';
    x.type='button';x.textContent='×';x.setAttribute('aria-label','닫기');x.style.cssText='background:none;border:0;color:#fff;font-size:18px;cursor:pointer';
-   const close=()=>{bar.remove();try{localStorage.setItem('click-android-update-seen',latest);}catch{}};x.onclick=close;a.addEventListener('click',()=>setTimeout(close,500));bar.append(a,x);d.body.append(bar);
+   const close=()=>{bar.remove();try{localStorage.setItem('click-android-update-seen',latest);}catch{}};x.onclick=close;
+   go.onclick=async()=>{go.disabled=true;go.textContent='받는 중…';
+    try{const r=await fetch('downloads/'+(info.file||'click-studio.apk'),{cache:'no-store'});if(!r.ok)throw Error(String(r.status));
+     const where=await root.ClickAndroid.save(new Blob([await r.arrayBuffer()],{type:'application/vnd.android.package-archive'}),file);
+     msg.textContent='✅ '+where+'에 저장했어요. 파일 앱에서 열어 설치하세요.';go.remove();try{localStorage.setItem('click-android-update-seen',latest);}catch{}}
+    catch{go.disabled=false;go.textContent='다시 받기';msg.textContent='앱을 받지 못했어요. Wi-Fi를 확인하고 다시 눌러 주세요.';}};
+   bar.append(msg,go,x);d.body.append(bar);
   }catch{}
  }
 })(globalThis);

@@ -10,6 +10,7 @@
 | --- | --- |
 | `keychain-body.stl` | 본체 · 바닥 도장 면(테두리 + AIERA 음각 0.8mm) |
 | `keychain-body-plain.stl` | 본체 · 바닥 민무늬 |
+| `keychain-body-35-aiera.stl` | 35mm · 끈 구멍 · 도장 면 "AIERA"(찍힌 모습: `preview-35-aiera-print.png`) |
 | `keychain-body-35-sangsang.stl` | 35mm · 끈 구멍 · 도장 면 "상상"(찍힌 모습: `preview-35-sangsang-print.png`) |
 | `keychain-body-long-30.stl`, `-long-40.stl` | 긴 도장형(30·40mm) · 몸통을 가로지르는 끈 구멍 · 아래쪽 띠 하나 더 |
 | `switch-fit-test.stl` | 스위치 끼움 시험판 1.5mm(13.95 / 14.05 / 14.15mm 구멍, 홈 1·2·3개) — 먼저 뽑아 보면 좋아요 |
