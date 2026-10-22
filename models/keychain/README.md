@@ -1,6 +1,6 @@
 # 도장 키링 본체 (키캡 + 기계식 스위치용)
 
-부스에서 만든 14×14mm 윗판을 꽂은 **키캡 밑판**을 기계식 키보드 스위치에 끼우고, 그 스위치를 이 본체에 꽂아 열쇠고리로 씁니다. 바닥은 **도장 면**이라 인주를 묻혀 찍으면 테두리와 `AIERA`가 하얗게 나옵니다(음각).
+부스에서 만든 14×14mm 윗판을 꽂은 **키캡 밑판**(또는 본체 윗면과 같은 23mm [큰 도장 머리](../keycap-head/README.md))을 기계식 키보드 스위치에 끼우고, 그 스위치를 이 본체에 꽂아 열쇠고리로 씁니다. 바닥은 **도장 면**이라 인주를 묻혀 찍으면 테두리와 `AIERA`가 하얗게 나옵니다(음각).
 
 ![조립](preview-assembly.png)
 
@@ -10,9 +10,10 @@
 | --- | --- |
 | `keychain-body.stl` | 본체 · 바닥 도장 면(테두리 + AIERA 음각 0.8mm) |
 | `keychain-body-plain.stl` | 본체 · 바닥 민무늬 |
-| `keychain-body-35-aiera.stl` | 35mm · 끈 구멍 · 도장 면 "AIERA"(찍힌 모습: `preview-35-aiera-print.png`) |
-| `keychain-body-35-sangsang.stl` | 35mm · 끈 구멍 · 도장 면 "상상"(찍힌 모습: `preview-35-sangsang-print.png`) |
-| `keychain-body-long-30.stl`, `-long-40.stl` | 긴 도장형(30·40mm) · 몸통을 가로지르는 끈 구멍 · 아래쪽 띠 하나 더 |
+| `keychain-body-35-aiera.stl` | 35mm · 모서리 끈 구멍 · 도장 면 "AIERA"(찍힌 모습: `preview-35-aiera-print.png`) |
+| `keychain-body-35-aiera-ear.stl` | 위와 같고 끈 구멍 대신 모서리에 튀어나온 고리 |
+| `keychain-body-35-sangsang.stl` | 35mm · 모서리 끈 구멍 · 도장 면 "상상"(찍힌 모습: `preview-35-sangsang-print.png`) |
+| `keychain-body-long-30.stl`, `-long-40.stl` | 긴 도장형(30·40mm) · 모서리 끈 구멍 · 아래쪽 띠 하나 더 |
 | `switch-fit-test.stl` | 스위치 끼움 시험판 1.5mm(13.95 / 14.05 / 14.15mm 구멍, 홈 1·2·3개) — 먼저 뽑아 보면 좋아요 |
 | `keychain_body.py` | 위 파일을 만드는 스크립트(치수는 맨 위 상수) |
 
@@ -28,12 +29,13 @@
 ## 길이 맞춤
 
 ```
-python3 models/keychain/keychain_body.py --length 35            # 원하는 길이(18.5mm 이상). 24.5mm부터는 끈 구멍
-python3 models/keychain/keychain_body.py --length 28 --loop tab   # 끈 구멍 대신 고리 탭
+python3 models/keychain/keychain_body.py --length 35            # 원하는 길이(18.5mm 이상). 25.5mm부터는 모서리 끈 구멍
+python3 models/keychain/keychain_body.py --length 35 --loop ear   # 모서리에 튀어나온 고리(길이 상관없음)
+python3 models/keychain/keychain_body.py --length 28 --loop tab   # 바닥 고리 탭
 python3 models/keychain/keychain_body.py --length 45 --text 상상  # 도장 면 글자 바꾸기(약 5자 이내)
 ```
 
-한글처럼 꽉 찬 글자는 테두리 안(16.8×10mm)을 채우도록 커지고, 영문 대문자는 4.4mm 높이를 유지해요. 길이가 늘어나는 만큼 도장 면 위의 속이 찬 기둥이 길어집니다(스위치·키캡 자리는 그대로). 끈 구멍은 위가 뾰족한 물방울 모양(Ø3.6)이라 서포트 없이 뽑혀요. 필요한 패키지: `pip install manifold3d trimesh fonttools mapbox_earcut`.
+한글처럼 꽉 찬 글자는 테두리 안(16.8×10mm)을 채우도록 커지고, 영문 대문자는 4.4mm 높이를 유지해요. 길이가 늘어나는 만큼 도장 면 위의 속이 찬 기둥이 길어집니다(스위치·키캡 자리는 그대로). 끈 구멍은 한쪽 모서리를 비스듬히 가로질러(한 면으로 들어가 옆면으로 나옴) 바닥에서 약 6mm 높이에 있고, 위가 뾰족한 물방울 모양(Ø3.6)이라 서포트 없이 뽑혀요. 튀어나온 고리(`--loop ear`)는 같은 모서리에서 3.6mm 나온 세운 고리로, 아랫면이 비스듬해 역시 서포트가 필요 없어요. 예전처럼 몸통 가운데를 가로지르는 구멍은 `--loop hole`. 필요한 패키지: `pip install manifold3d trimesh fonttools mapbox_earcut`.
 
 ## 출력
 

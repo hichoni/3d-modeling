@@ -5,7 +5,8 @@ Holds a standard MX-type keyboard switch (14 mm plate cutout, 1.5 mm plate) with
 so the keychain also works as a stamp. Prints upright with the seal face on the bed, no supports.
 
     python3 models/keychain/keychain_body.py                 # standard + plain + long 30/40 mm + switch fit test
-    python3 models/keychain/keychain_body.py --length 35     # any body length (18.5 mm and up), cord hole when long
+    python3 models/keychain/keychain_body.py --length 35     # any body length (18.5 mm and up), corner cord hole when long
+    python3 models/keychain/keychain_body.py --length 35 --loop ear   # a loop sticking out of one corner instead
     python3 models/keychain/keychain_body.py --length 28 --loop tab --text CLICK --out /tmp/my-body.stl
 Requires: pip install manifold3d trimesh fonttools mapbox_earcut
 """
@@ -30,6 +31,8 @@ WELL, WELL_R, WELL_D = 19.6, 1.5, 6.0             # keycap (18 mm) sinks into th
 BAND_TOP, BAND_H, BAND_D = 4.5, 1.0, 0.5          # decorative groove ending 4.5 mm below the top (and one near the bottom when long)
 TAB_W, TAB_L, TAB_T, HOLE_D = 9.0, 5.5, 3.5, 4.2  # keyring tab at the bottom edge
 CORD_D = 3.6                                      # cord hole through a long body (teardrop, prints without support)
+CORNER_Z, CORNER_WALL = 6.3, 1.6                  # corner cord hole: centre height, wall left at the corner
+EAR_Z, EAR_R, EAR_T, EAR_OUT = 9.5, 3.6, 3.5, 3.6 # corner loop: centre height, outer radius, thickness, reach
 DEBOSS, TEXT, TEXT_H = 0.8, 'AIERA', 4.4          # seal face: border + text depth, text, cap height
 TOP_PART = CAVITY_H + PLATE_T + WELL_D            # 15.5: everything above the seal face
 STANDARD = MIN_FACE + TOP_PART                    # 18.5
@@ -95,6 +98,33 @@ def cord_hole(z):
     return m3.Manifold.extrude(drop, BODY_BOTTOM + 4).translate((0, 0, -(BODY_BOTTOM + 4) / 2)).rotate((0, 90, 0)).rotate((90, 0, 0)).rotate((0, 0, 90)).translate((0, 0, z))
 
 
+def corner_reach(z, height):
+    """Distance from the axis to the rounded corner along the diagonal at height z."""
+    w = width_at(z, height); r = BODY_R * w / BODY_BOTTOM
+    return (w / 2 - r) * 2 ** 0.5 + r
+
+
+def teardrop(r):
+    return m3.CrossSection.batch_hull([m3.CrossSection.circle(r), m3.CrossSection.square((0.01, 0.01), center=True).translate((0, r * 2 ** 0.5))])
+
+
+def corner_hole(z, height):
+    """Cord hole cutting across the +X+Y corner (in one side, out the next), point up so it prints without support."""
+    r = CORD_D / 2; s = corner_reach(z, height) - r - CORNER_WALL; d = 1 / 2 ** 0.5
+    return m3.Manifold.extrude(teardrop(r), 30).translate((0, 0, -15)).rotate((90, 0, 0)).rotate((0, 0, 45)).translate((s * d, s * d, z))
+
+
+def corner_ear(z, height):
+    """Loop sticking out of the +X+Y corner: a vertical lug with a sloped underside and a teardrop hole."""
+    prof = m3.CrossSection.batch_hull([m3.CrossSection.circle(EAR_R).translate((EAR_OUT, 0)),
+                                       m3.CrossSection.square((3, EAR_R * 2 + 3.5)).translate((-3, -EAR_R - 3.5))])
+    lug = m3.Manifold.extrude(prof, EAR_T).translate((0, 0, -EAR_T / 2))
+    hole = m3.Manifold.extrude(teardrop(CORD_D / 2 + 0.2).translate((EAR_OUT, 0)), EAR_T + 2).translate((0, 0, -EAR_T / 2 - 1))
+    s = corner_reach(z, height); d = 1 / 2 ** 0.5
+    place = lambda m: m.rotate((90, 0, 0)).rotate((0, 0, 45)).translate((s * d, s * d, z))
+    return place(lug), place(hole)
+
+
 def body(seal=True, length=STANDARD, loop='tab', text=TEXT):
     if length < STANDARD - 1e-6: raise ValueError('length must be at least %.1f mm' % STANDARD)
     face_t = length - TOP_PART; height = length
@@ -112,12 +142,18 @@ def body(seal=True, length=STANDARD, loop='tab', text=TEXT):
     if loop == 'hole':
         if face_t < 9: raise ValueError('a cord hole needs --length %.1f or more' % (TOP_PART + 9))
         cut += cord_hole(face_t / 2 + (1.5 if face_t >= 10 else 0))
+    if loop == 'corner':
+        if face_t < 10: raise ValueError('a corner cord hole needs --length %.1f or more' % (TOP_PART + 10))
+        cut += corner_hole(CORNER_Z, height)
     if seal:
         face = BODY_BOTTOM - 2 * CHAMFER - 2.4                               # border ring inside the chamfer
         ring = rounded(face, BODY_R - 1.8) - rounded(face - 1.8, BODY_R - 2.7)
         # Text reads normally from above; seen from the face (below) it is mirrored, so the stamp prints it right.
         sec = ring + text_section(text, TEXT_H) if text else ring
         cut += m3.Manifold.extrude(sec, DEBOSS + 0.01).translate((0, 0, -0.01))
+    if loop == 'ear':
+        lug, hole = corner_ear(EAR_Z, height)
+        return (outer - cut + lug) - hole
     return outer - cut
 
 
@@ -142,7 +178,8 @@ def save(man, path):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--length', type=float, help='body length in mm (%.1f and up); omit to write the standard set' % STANDARD)
-    ap.add_argument('--loop', choices=['tab', 'hole'], help='keyring tab, or cord hole through a long body (default: hole from %.0f mm)' % (TOP_PART + 9))
+    ap.add_argument('--loop', choices=['tab', 'corner', 'ear', 'hole'], help='keyring tab; cord hole across a corner (default from %.1f mm); '
+                    'loop sticking out of a corner (any length); or the old hole through the middle' % (TOP_PART + 10))
     ap.add_argument('--text', default=TEXT, help='seal face text (Latin/Korean, about 5 characters); empty for border only')
     ap.add_argument('--plain', action='store_true', help='no seal face')
     ap.add_argument('--out', help='output STL path')
@@ -150,8 +187,8 @@ if __name__ == '__main__':
     if a.length is None:
         save(body(True), os.path.join(HERE, 'keychain-body.stl'))
         save(body(False), os.path.join(HERE, 'keychain-body-plain.stl'))
-        for n in (30, 40): save(body(True, n, 'hole'), os.path.join(HERE, 'keychain-body-long-%d.stl' % n))
+        for n in (30, 40): save(body(True, n, 'corner'), os.path.join(HERE, 'keychain-body-long-%d.stl' % n))
         save(fit_test(), os.path.join(HERE, 'switch-fit-test.stl'))
     else:
-        loop = a.loop or ('hole' if a.length >= TOP_PART + 9 else 'tab')
+        loop = a.loop or ('corner' if a.length >= TOP_PART + 10 else 'tab')
         save(body(not a.plain, a.length, loop, a.text), a.out or os.path.join(HERE, 'keychain-body-%gmm.stl' % a.length))
