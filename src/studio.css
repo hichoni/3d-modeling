@@ -36,3 +36,4 @@
 .plate-warnings{margin:10px 0 14px;padding-left:18px;font-size:12px;line-height:1.7;color:#9a3412}
 .plate-dialog #plateImport{width:100%}
 #importSummary{white-space:normal;line-height:1.6;display:grid;gap:4px}#importSummary div{display:flex;justify-content:space-between;gap:12px}#importSummary span{color:#64748b}
+.connection-button.app-get{background:#16a34a;color:#fff;border-color:#15803d}

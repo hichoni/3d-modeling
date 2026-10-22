@@ -1,6 +1,7 @@
 (()=>{
  const $=id=>document.getElementById(id),info=/* BUNDLE_INFO */null;
- if(/Android/.test(navigator.userAgent)){$('platformNote').textContent='안드로이드 태블릿이네요. 아래 ';const a=document.createElement('a');a.href='#android';a.textContent='안드로이드 태블릿 앱 안내';$('platformNote').append(a,'를 따라 하세요.');$('platformNote').hidden=false;}
+ // Android tablets often browse in "desktop site" mode (X11 Linux user agent) — a touch screen gives them away.
+ if(/Android/.test(navigator.userAgent)||/X11; Linux/.test(navigator.userAgent)&&!/CrOS/.test(navigator.userAgent)&&navigator.maxTouchPoints>0){$('platformNote').textContent='안드로이드 태블릿이네요. 아래 ';const a=document.createElement('a');a.href='#android';a.textContent='안드로이드 태블릿 앱 안내';$('platformNote').append(a,'를 따라 하세요.');$('platformNote').hidden=false;}
  else if(!/CrOS/.test(navigator.userAgent))$('platformNote').hidden=false;
  const apk=/* APK_INFO */null;if(apk){$('apkInfo').textContent='Click Studio 태블릿 앱 v'+apk.version+' · '+(apk.bytes/1048576).toFixed(1)+' MB · Android 10 이상';$('apkSigner').textContent=apk.signerSha256;}
  if(info){$('bundleInfo').textContent='Click Studio 크롬북 앱 v'+info.version+' · '+(info.bytes/1048576).toFixed(1)+' MB · 서명된 웹 앱 파일';$('bundleId').textContent=info.bundleId;}
