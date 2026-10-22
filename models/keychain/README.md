@@ -10,6 +10,7 @@
 | --- | --- |
 | `keychain-body.stl` | 본체 · 바닥 도장 면(테두리 + AIERA 음각 0.8mm) |
 | `keychain-body-plain.stl` | 본체 · 바닥 민무늬 |
+| `keychain-body-35-sangsang.stl` | 35mm · 끈 구멍 · 도장 면 "상상"(찍힌 모습: `preview-35-sangsang-print.png`) |
 | `keychain-body-long-30.stl`, `-long-40.stl` | 긴 도장형(30·40mm) · 몸통을 가로지르는 끈 구멍 · 아래쪽 띠 하나 더 |
 | `switch-fit-test.stl` | 스위치 끼움 시험판 1.5mm(13.95 / 14.05 / 14.15mm 구멍, 홈 1·2·3개) — 먼저 뽑아 보면 좋아요 |
 | `keychain_body.py` | 위 파일을 만드는 스크립트(치수는 맨 위 상수) |
@@ -31,7 +32,7 @@ python3 models/keychain/keychain_body.py --length 28 --loop tab   # 끈 구멍 �
 python3 models/keychain/keychain_body.py --length 45 --text 상상  # 도장 면 글자 바꾸기(약 5자 이내)
 ```
 
-길이가 늘어나는 만큼 도장 면 위의 속이 찬 기둥이 길어집니다(스위치·키캡 자리는 그대로). 끈 구멍은 위가 뾰족한 물방울 모양(Ø3.6)이라 서포트 없이 뽑혀요. 필요한 패키지: `pip install manifold3d trimesh fonttools mapbox_earcut`.
+한글처럼 꽉 찬 글자는 테두리 안(16.8×10mm)을 채우도록 커지고, 영문 대문자는 4.4mm 높이를 유지해요. 길이가 늘어나는 만큼 도장 면 위의 속이 찬 기둥이 길어집니다(스위치·키캡 자리는 그대로). 끈 구멍은 위가 뾰족한 물방울 모양(Ø3.6)이라 서포트 없이 뽑혀요. 필요한 패키지: `pip install manifold3d trimesh fonttools mapbox_earcut`.
 
 ## 출력
 
