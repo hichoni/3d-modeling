@@ -1,7 +1,9 @@
 // Geometry adapted from the supplied stamp-maker-2.html. Units: millimetres.
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const isSquareish = sh => sh==='square'||sh==='rounded'||sh==='circle';
-function dims(){ return {w:14,h:14}; }
+// Plate size: the 14 mm keycap insert, or the 20 mm plate of the big stamp head (models/keycap-head).
+function plateSize(){ return S.kind==='stamp20'?20:14; }
+function dims(){ const s=plateSize(); return {w:s,h:s}; }
 function chars(){ return Array.from((S.text||'').replace(/\s+/g,'')).slice(0,8); }
 function fmt(v, d=1){ return String(Number(v.toFixed(d))); }
 
@@ -92,16 +94,16 @@ function drawSymbol(ctx,kind,x,y,size){
 }
 function letterLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
-  const {w,h} = dims(); const cx=cw/2, cy=ch/2;
+  const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14;
   lx.fillStyle=lx.strokeStyle='#000';
-  if(S.content==='icon'){drawSymbol(lx,S.icon,cx,cy,9.5*ppm);lastCellMinMm=9.5;return L;}
+  if(S.content==='icon'){drawSymbol(lx,S.icon,cx,cy,9.5*k*ppm);lastCellMinMm=9.5*k;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
   const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+gapMm)*ppm, n, S.layout);
   if(!box) return L;
   const g = 0.035*Math.min(box.w, box.h);
   const decorated=S.decoration!=='none';
-  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*ppm:0)}, g);
+  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*k*ppm:0)}, g);
   lastCellMinMm = Math.min(...cells.map(c=>Math.min(c.w,c.h)))/ppm;
   lx.fillStyle = '#000';
   if(mirror){ lx.translate(cw,0); lx.scale(-1,1); }
@@ -121,7 +123,7 @@ function letterLayer(cw, ch, ppm, mirror, font, list){
     lx.fillText(chr, -(r-l)/2, -(d-a)/2);
     lx.restore();
   });
-  if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*ppm,2.8*ppm);
+  if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*k*ppm,2.8*k*ppm);
   const rad = S.bold*ppm;
   if(rad>=0.4){ // 원형으로 번지게 해서 획을 굵게
     const D = mkCanvas(cw,ch), dx = D.getContext('2d');
@@ -254,9 +256,9 @@ function loopsToShapes(raw, toMm){
 
 /* ---------- 3D 모델 만들기 ---------- */
 function clampToInsert(x,y){
-  // Project raster samples onto the same 14-segment corner polygon as the base.
-  x=clamp(x,-7,7);y=clamp(y,-7,7);
-  const ax=Math.abs(x),ay=Math.abs(y),cx=4.2,cy=4.2,r=2.8;
+  // Project raster samples onto the same 14-segment corner polygon as the base (corner radius 0.2 x size).
+  const half=plateSize()/2;x=clamp(x,-half,half);y=clamp(y,-half,half);
+  const ax=Math.abs(x),ay=Math.abs(y),cx=half*0.6,cy=half*0.6,r=half*0.4;
   if(ax>cx&&ay>cy){const dx=ax-cx,dy=ay-cy,t=Math.atan2(dy,dx),step=Math.PI/28;
     const mid=(Math.min(13,Math.floor(t/step))+.5)*step;
     const maxR=r*Math.cos(step/2)/Math.cos(t-mid),dist=Math.hypot(dx,dy);
@@ -279,8 +281,9 @@ function plateShape(w,h){
 const STAMP_RELIEF=1.5;
 function buildGeometries(){
   // Stamp: letters mirrored so the print reads right; the 3.0 mm plate fills the keycap base's 2.9 mm pocket and the
-  // letters stand 1.5 mm above its rim, so only the letters take ink.
-  const stamp=S.mode==='stamp';Object.assign(S,{w:14,h:14,base:stamp?3:1.5,shape:'rounded',handle:'none',mirror:stamp});const relief=stamp?STAMP_RELIEF:S.relief;
+  // letters stand 1.5 mm above its rim, so only the letters take ink. The 20 mm plate is always a stamp.
+  if(S.kind==='stamp20')S.mode='stamp';
+  const stamp=S.mode==='stamp',size=plateSize();Object.assign(S,{w:size,h:size,base:stamp?3:1.5,shape:'rounded',handle:'none',mirror:stamp});const relief=stamp?STAMP_RELIEF:S.relief;
   const {w,h}=dims(); const font=fontById(S.font);
   const ppm = clamp(640/Math.max(w,h), 10, 40), margin = 1.5 + S.bold;
   const cw = Math.ceil((w+2*margin)*ppm)+2, ch = Math.ceil((h+2*margin)*ppm)+2;
@@ -328,7 +331,7 @@ function meshStats(list){
 function toSTL(list){
   const arrs=list.map(geomTris); const tris=arrs.reduce((s,a)=>s+a.length/9,0);
   const buf=new ArrayBuffer(84+tris*50), dv=new DataView(buf);
-  const head='Click Imagination | 14mm keycap insert | millimetres'; for(let i=0;i<80;i++) dv.setUint8(i, i<head.length?head.charCodeAt(i):32);
+  const head='Click Imagination | '+plateSize()+'mm '+(S.kind==='stamp20'?'stamp plate':'keycap insert')+' | millimetres'; for(let i=0;i<80;i++) dv.setUint8(i, i<head.length?head.charCodeAt(i):32);
   dv.setUint32(80,tris,true); let o=84;
   for(const p of arrs){ for(let i=0;i<p.length;i+=9){
     const ux=p[i+3]-p[i], uy=p[i+4]-p[i+1], uz=p[i+5]-p[i+2], vx=p[i+6]-p[i], vy=p[i+7]-p[i+1], vz=p[i+8]-p[i+2];
