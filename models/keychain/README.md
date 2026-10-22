@@ -4,10 +4,13 @@
 
 ![조립](preview-assembly.png)
 
+![길이 비교: 18.5 · 30 · 40mm](preview-lengths.png)
+
 | 파일 | 내용 |
 | --- | --- |
 | `keychain-body.stl` | 본체 · 바닥 도장 면(테두리 + AIERA 음각 0.8mm) |
 | `keychain-body-plain.stl` | 본체 · 바닥 민무늬 |
+| `keychain-body-long-30.stl`, `-long-40.stl` | 긴 도장형(30·40mm) · 몸통을 가로지르는 끈 구멍 · 아래쪽 띠 하나 더 |
 | `switch-fit-test.stl` | 스위치 끼움 시험판 1.5mm(13.95 / 14.05 / 14.15mm 구멍, 홈 1·2·3개) — 먼저 뽑아 보면 좋아요 |
 | `keychain_body.py` | 위 파일을 만드는 스크립트(치수는 맨 위 상수) |
 
@@ -19,6 +22,16 @@
 - 바닥 도장 면 두께 3, 고리 구멍 Ø4.2(탭 두께 3.5)
 
 받은 키캡 밑판 STL을 재 보니 바깥이 **18×18mm**(아래 18 → 위 16.9, 높이 9.2), 윗면 홈이 14.3×14.3(깊이 2.8)입니다. 23×23으로 보였던 건 대각선(약 25mm)이나 다른 부품일 수 있어요. 키캡이 더 크면 `WELL`(우물 크기)만 키우면 됩니다.
+
+## 길이 맞춤
+
+```
+python3 models/keychain/keychain_body.py --length 35            # 원하는 길이(18.5mm 이상). 24.5mm부터는 끈 구멍
+python3 models/keychain/keychain_body.py --length 28 --loop tab   # 끈 구멍 대신 고리 탭
+python3 models/keychain/keychain_body.py --length 45 --text 상상  # 도장 면 글자 바꾸기(약 5자 이내)
+```
+
+길이가 늘어나는 만큼 도장 면 위의 속이 찬 기둥이 길어집니다(스위치·키캡 자리는 그대로). 끈 구멍은 위가 뾰족한 물방울 모양(Ø3.6)이라 서포트 없이 뽑혀요. 필요한 패키지: `pip install manifold3d trimesh fonttools mapbox_earcut`.
 
 ## 출력
 

@@ -139,7 +139,7 @@ function drawFace(ctx, cw, ch, ppm, mirror, color, font){
   ctx.save(); ctx.clearRect(0,0,cw,ch);
   const L = letterLayer(cw, ch, ppm, mirror, font, chars());
   ctx.fillStyle = color;
-  if(S.mode==='relief'){
+  if(S.mode!=='engrave'){
     if(S.border>0.001){
       shapePath(ctx,cx,cy,wpx,hpx,S.shape,0,ppm); ctx.fill();
       ctx.globalCompositeOperation='destination-out';
@@ -276,8 +276,11 @@ function plateShape(w,h){
   const clean=pts.filter((q,i)=>{ const n=pts[(i+1)%pts.length]; return Math.hypot(q[0]-n[0],q[1]-n[1])>1e-6; });
   return new THREE.Shape(clean.map(q=>new THREE.Vector2(q[0],q[1])));
 }
+const STAMP_RELIEF=1.5;
 function buildGeometries(){
-  Object.assign(S,{w:14,h:14,base:1.5,shape:'rounded',handle:'none',mirror:false});
+  // Stamp: letters mirrored so the print reads right; the 3.0 mm plate fills the keycap base's 2.9 mm pocket and the
+  // letters stand 1.5 mm above its rim, so only the letters take ink.
+  const stamp=S.mode==='stamp';Object.assign(S,{w:14,h:14,base:stamp?3:1.5,shape:'rounded',handle:'none',mirror:stamp});const relief=stamp?STAMP_RELIEF:S.relief;
   const {w,h}=dims(); const font=fontById(S.font);
   const ppm = clamp(640/Math.max(w,h), 10, 40), margin = 1.5 + S.bold;
   const cw = Math.ceil((w+2*margin)*ppm)+2, ch = Math.ceil((h+2*margin)*ppm)+2;
@@ -307,10 +310,10 @@ function buildGeometries(){
   plate.translate(0,0,zPlate); parts.plate.push(plate);
   const zTop = zPlate + S.base + (zPlate>0?EPS:0);
   if(shapes.length){
-    const rel = new THREE.ExtrudeGeometry(shapes, {depth:S.relief+EPS, bevelEnabled:false, curveSegments:4});
+    const rel = new THREE.ExtrudeGeometry(shapes, {depth:relief+EPS, bevelEnabled:false, curveSegments:4});
     rel.translate(0,0,zTop-EPS); parts.relief.push(rel);
   }
-  return {parts, totalH: zTop + S.relief, w, h, handleTop};
+  return {parts, totalH: zTop + relief, w, h, handleTop};
 }
 
 /* ---------- STL / ZIP ---------- */

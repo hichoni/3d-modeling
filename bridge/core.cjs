@@ -19,7 +19,7 @@ function parseGcode(text){
   if(command==='M83'){relativeE=true;continue;}if(command==='M82'){relativeE=false;continue;}if(command==='G90'){relativeXYZ=false;continue;}if(command==='G91'){relativeXYZ=true;continue;}
   const vals={};for(const m of code.matchAll(/([XYZE])(-?\d*\.?\d+)/g))vals[m[1]]=Number(m[2]);if(command==='G92'){if(vals.E!==undefined)e=vals.E;continue;}if(command!=='G0'&&command!=='G1')continue;
   const nx=vals.X===undefined?x:vals.X+(relativeXYZ?x:0),ny=vals.Y===undefined?y:vals.Y+(relativeXYZ?y:0),nz=vals.Z===undefined?z:vals.Z+(relativeXYZ?z:0),ne=vals.E===undefined?e:vals.E+(relativeE?e:0);
-  if(ne>e+.00001&&(nx!==x||ny!==y)&&nz>0&&nz<=2.51&&nx>=82.9&&nx<=97.1&&ny>=82.9&&ny<=97.1&&x>=82.9&&x<=97.1&&y>=82.9&&y<=97.1){
+  if(ne>e+.00001&&(nx!==x||ny!==y)&&nz>0&&nz<=4.51&&nx>=82.9&&nx<=97.1&&ny>=82.9&&ny<=97.1&&x>=82.9&&x<=97.1&&y>=82.9&&y<=97.1){
    if(!current||layerPending&&Math.abs(current.z-nz)>.01){current={z:nz,segments:[]};layers.push(current);}layerPending=false;
    if(current.segments.length<15000)current.segments.push([x-90,y-90,nx-90,ny-90].map(n=>Math.round(n*1000)/1000));
   }

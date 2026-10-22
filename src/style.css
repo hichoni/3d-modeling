@@ -229,3 +229,5 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .tour-speech.game-dialog p{font-size:16px;line-height:1.5;color:var(--ink)}
 .tour-speech.game-dialog h2{font-size:21px}
 @media(min-width:1001px){.game-dialog p{font-size:16px}.tour-speech.game-dialog h2{font-size:19px}.tour-speech.game-dialog p{font-size:15px}}
+/* Three mode buttons (볼록·오목·도장) stay on one row on laptop screens */
+@media(min-width:1001px){.label-tail{display:none}}

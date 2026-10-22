@@ -47,7 +47,7 @@ self.onmessage=async event=>{
   let position=[0,0];if(studio){const absolute=new Float32Array(vertices);for(let i=0;i<absolute.length;i++)if(i%3!==2)absolute[i]+=90;const b=globalThis.StudioCore.validateVertices(absolute);position=b.center.slice(0,2).map(n=>n-90);}
   const widget=newWidget('source').setInWorker().loadVertices(vertices).center();
   const bounds=widget.getBoundingBox(),height=bounds.max.z-bounds.min.z;
-  if(!studio&&(Math.abs(bounds.max.x-bounds.min.x-14)>.03||Math.abs(bounds.max.y-bounds.min.y-14)>.03||height<2||height>2.51))throw Error('14mm 키캡 조각만 계산할 수 있어요.');
+  if(!studio&&(Math.abs(bounds.max.x-bounds.min.x-14)>.03||Math.abs(bounds.max.y-bounds.min.y-14)>.03||height<2||height>4.51))throw Error('14mm 키캡 조각만 계산할 수 있어요.');
   widget.setTopZ(height);
   if(studio)widget.move(position[0],position[1],0,true);
   await invoke('sync',{id:'click-model',group:'click-model',meta:{file:'keycap.stl'},anno:{},track:widget.track,vertices:widget.getGeoVertices()});

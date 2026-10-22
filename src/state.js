@@ -8,7 +8,7 @@ function safeName(value){return String(value).replace(/[<>:"/\\|?*\u0000-\u001f]
 function validText(text){return /^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]+$/.test(text.replace(/\s/g,''));}
 function restoreDesign(input){
  const out={...DEFAULTS};
- const enums={content:['text','initials','icon'],icon:['heart','star','smile','leaf'],decoration:['none','heart','star','smile','leaf'],font:FONTS.map(f=>f.id),mode:['relief','engrave'],layout:['auto','row'],color:['#ff7b92','#ffd45f','#65baff','#77cbb6','#b7a0e9','#f5f0e5']};
+ const enums={content:['text','initials','icon'],icon:['heart','star','smile','leaf'],decoration:['none','heart','star','smile','leaf'],font:FONTS.map(f=>f.id),mode:['relief','engrave','stamp'],layout:['auto','row'],color:['#ff7b92','#ffd45f','#65baff','#77cbb6','#b7a0e9','#f5f0e5']};
  for(const [key,allowed] of Object.entries(enums))if(allowed.includes(input?.[key]))out[key]=input[key];
  if(typeof input?.text==='string'&&validText(input.text)&&Array.from(input.text).length<=4)out.text=input.text;
  if([.6,.8,1].includes(input?.relief))out.relief=input.relief;
