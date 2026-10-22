@@ -41,5 +41,18 @@
  root.ClickAndroid={version:null,async save(blob,name){const r=await request({op:'save',name:String(name).replace(/[\\/:*?"<>|]/g,'_').slice(0,120),mime:blob.type||'application/octet-stream',data:b64(new Uint8Array(await blob.arrayBuffer()))});return r.path;}};
  // A 3MF the app caught from MakerWorld's "Bambu Studio로 열기" link, downloaded natively; taken once.
  root.ClickAndroid.takeImport=async()=>{const r=await request({op:'takeImport'});if(!r.name)return null;return {name:r.name,blob:new Blob([unb64(r.data)],{type:'model/3mf'})};};
- request({op:'hello',page:root.location.pathname}).then(m=>{root.ClickAndroid.version=String(m.version||'');},()=>{});
+ request({op:'hello',page:root.location.pathname}).then(m=>{root.ClickAndroid.version=String(m.version||'');void offerUpdate(root.ClickAndroid.version);},()=>{});
+ // Screens come from the site and are always current; only the app shell needs a new APK now and then.
+ // When the site publishes a newer one, offer it once per version (Android asks before installing).
+ async function offerUpdate(mine){
+  try{const info=await (await fetch('downloads/click-studio-android.json',{cache:'no-store'})).json(),latest=String(info.version||'');
+   const newer=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;};
+   if(!latest||!mine||!newer(latest,mine))return;try{if(localStorage.getItem('click-android-update-seen')===latest)return;}catch{}
+   const d=document,bar=d.createElement('div'),a=d.createElement('a'),x=d.createElement('button');
+   bar.setAttribute('role','status');bar.style.cssText='position:fixed;left:12px;bottom:12px;z-index:60;display:flex;gap:10px;align-items:center;padding:10px 12px 10px 16px;background:#172846;color:#fff;border-radius:14px;box-shadow:0 6px 20px #0004;font:600 14px/1.4 system-ui,sans-serif';
+   bar.append('📱 새 태블릿 앱 '+latest+'이 나왔어요');a.href='downloads/click-studio.apk';a.setAttribute('download','click-studio.apk');a.textContent='업데이트';a.style.cssText='background:#ff525f;color:#fff;padding:6px 12px;border-radius:10px;text-decoration:none';
+   x.type='button';x.textContent='×';x.setAttribute('aria-label','닫기');x.style.cssText='background:none;border:0;color:#fff;font-size:18px;cursor:pointer';
+   const close=()=>{bar.remove();try{localStorage.setItem('click-android-update-seen',latest);}catch{}};x.onclick=close;a.addEventListener('click',()=>setTimeout(close,500));bar.append(a,x);d.body.append(bar);
+  }catch{}
+ }
 })(globalThis);

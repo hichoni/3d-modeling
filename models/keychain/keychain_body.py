@@ -74,7 +74,8 @@ def text_section(text, cap_height):
         x += glyphs[name].width
     sec = m3.CrossSection(polys, m3.FillRule.NonZero)
     (x0, y0), (x1, y1) = sec.bounds()[:2], sec.bounds()[2:]
-    k = cap_height / (y1 - y0)
+    # Latin caps keep the given cap height; Hangul and other full-height glyphs grow to fill the face (16.8 x 10 mm).
+    k = min((cap_height if text.isascii() else 10.0) / (y1 - y0), 16.8 / (x1 - x0))
     return sec.translate((-(x0 + x1) / 2, -(y0 + y1) / 2)).scale((k, k))
 
 
