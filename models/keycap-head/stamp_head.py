@@ -6,8 +6,8 @@ the switch bottoms out (4 mm), so stamping pressure goes into the body, not the 
 
     python3 models/keycap-head/stamp_head.py      # head + sample name plates (상상, AIERA)
 
-Z below is in use orientation (0 = skirt bottom); the STL is written upside down (top face on the bed), which prints
-without supports (only the pocket floor bridges).
+The STL is in use orientation and prints that way, skirt and socket on the bed: the socket mouth comes out crisp, the
+pocket floor is a clean top surface, and the only unsupported faces (cavity roof, underside ledge) face the switch.
 Requires: pip install manifold3d trimesh fonttools mapbox_earcut
 """
 import os, sys
@@ -25,12 +25,15 @@ RIM = 6.0                        # body top above P
 HEAD, HEAD_R = BODY_TOP, BODY_R * BODY_TOP / BODY_BOTTOM   # 23 mm, matching the body's top edge
 SKIRT, SKIRT_R, SKIRT_WALL = 19.0, 1.2, 1.2                # inside the 19.6 mm well
 SLAB_Z = RIM + STOP - REST                                 # 1.8: underside of the wide head
+LEDGE = 21.0                                               # flat underside ring that lands on the body top (19.6-21)
+SLOPE = (HEAD - LEDGE) / 2                                 # then 45 degrees out to the edge: no supports
 CAVITY_TOP = 4.6                                           # housing top reaches 2.8 at full travel (switch model); room to spare
 ROOF = 1.0
 PLATE, PLATE_R, PLATE_T = 20.0, 4.0, 3.0                   # name plate (booth stamp plate: 3.0 base + 1.5 letters)
 POCKET, POCKET_R, POCKET_D = PLATE + 0.3, 4.15, 2.9
 TOP = CAVITY_TOP + ROOF + POCKET_D                         # 8.5
-TUBE, CROSS_L, CROSS_W, CROSS_D = 5.5, 4.16, 1.24, 3.7      # socket, as on the booth keycap base
+POST_D, CROSS_L, CROSS_W, CROSS_D = 5.5, 4.16, 1.24, 4.2    # round socket post and cross, as on the booth keycap base
+FOOT = 0.3                                                  # bed-side chamfer on skirt and post (elephant's foot)
 EDGE = 0.5                                                  # top edge chamfer (also the bed-side edge when printing)
 LIFT_D, LIFT_X = 2.2, 5.6                                   # holes to push the plate out from below
 
@@ -41,10 +44,12 @@ def cross(length, width, h):
 
 
 def head():
-    body = prism(SKIRT, SKIRT_R, 0, SLAB_Z + 0.01)
-    body += prism(HEAD, HEAD_R, SLAB_Z, TOP - EDGE) + prism(HEAD, HEAD_R, TOP - EDGE, TOP, top=HEAD - 2 * EDGE)
+    body = prism(SKIRT - 2 * FOOT, SKIRT_R, 0, FOOT, top=SKIRT) + prism(SKIRT, SKIRT_R, FOOT, SLAB_Z + 0.01)
+    body += prism(LEDGE, HEAD_R, SLAB_Z, SLAB_Z + 0.01) + prism(LEDGE, HEAD_R, SLAB_Z, SLAB_Z + SLOPE, top=HEAD)
+    body += prism(HEAD, HEAD_R, SLAB_Z + SLOPE, TOP - EDGE) + prism(HEAD, HEAD_R, TOP - EDGE, TOP, top=HEAD - 2 * EDGE)
     body -= prism(SKIRT - 2 * SKIRT_WALL, SKIRT_R, -1, CAVITY_TOP)
-    body += prism(TUBE, 0.3, 0, CAVITY_TOP + 0.01)
+    r = POST_D / 2
+    body += m3.Manifold.cylinder(FOOT, r - FOOT, r, 96) + m3.Manifold.cylinder(CAVITY_TOP + 0.01 - FOOT, r, r, 96).translate((0, 0, FOOT))
     body -= cross(CROSS_L, CROSS_W, CROSS_D + 1).translate((0, 0, -1))
     k = (CROSS_L + 0.44) / CROSS_L                          # lead-in at the socket mouth
     body -= m3.Manifold.extrude(m3.CrossSection.square((CROSS_L, CROSS_W), center=True) + m3.CrossSection.square((CROSS_W, CROSS_L), center=True),
@@ -63,11 +68,7 @@ def plate(text):
     return prism(PLATE, PLATE_R, 0, PLATE_T) + m3.Manifold.extrude(sec, 1.5 + 0.01).translate((0, 0, PLATE_T - 0.01))
 
 
-def upside_down(man):
-    return man.rotate((180, 0, 0)).translate((0, 0, TOP))
-
-
 if __name__ == '__main__':
-    save(upside_down(head()), os.path.join(HERE, 'stamp-head-23.stl'))
+    save(head(), os.path.join(HERE, 'stamp-head-23.stl'))
     for name, text in (('sangsang', '상상'), ('aiera', 'AIERA')):
         save(plate(text), os.path.join(HERE, 'stamp-plate-20-%s.stl' % name))

@@ -1,7 +1,7 @@
 """Compact keyboard-style keychain for the booth keycap (18 mm base + 14 mm plate): 1 or 2 MX switches.
 
-A low case holds the switches like a keyboard plate (top housing and keycap stand above it), keys at the standard
-19.05 mm pitch. A flat loop sticks out diagonally from one bottom corner. Prints as is, floor on the bed, no supports.
+A low case holds the switches like a keyboard plate, with a 2 mm wall above the plate around each switch so the gap
+under the keycap stays small; keys at the standard 19.05 mm pitch. A flat loop sticks out diagonally from one bottom corner. Prints as is, floor on the bed, no supports.
 
     python3 models/keycap-keychain/compact_case.py            # 1-key and 2-key cases
 Requires: pip install manifold3d trimesh fonttools mapbox_earcut
@@ -18,7 +18,9 @@ R = 2.0                           # case corner radius
 FLOOR = 1.2
 CAVITY, CAVITY_R, CAVITY_H = 16.0, 1.0, 7.4   # switch bottom housing (3.5 below the plate) + pins/post (3.3) + 0.6
 PLATE_T, CUTOUT, CUTOUT_R = 1.5, 14.05, 0.3   # same plate as the stamp body
-HEIGHT = FLOOR + CAVITY_H + PLATE_T           # 10.1
+RIM, OPENING, OPENING_R = 2.0, 16.2, 1.0       # wall above the plate; the switch's top housing (15.6) sits inside
+PLATE_TOP = FLOOR + CAVITY_H + PLATE_T        # 10.1
+HEIGHT = PLATE_TOP + RIM                      # 12.1: keycap skirts (MX travel 4) stay clear of it
 EDGE = 0.6                                    # top and bottom edge chamfer
 EAR_R, EAR_T, HOLE_D, EAR_OUT = 4.0, 3.0, 4.2, 4.0   # corner loop: radius, thickness, ring hole, reach past the corner
 LOGO, LOGO_D = 'AIERA', 0.4                   # under the floor, reads right from below
@@ -43,7 +45,8 @@ def case(keys):
     for i in range(keys):
         x = (i - (keys - 1) / 2) * PITCH
         out -= prism(CAVITY, CAVITY_R, FLOOR, FLOOR + CAVITY_H).translate((x, 0, 0))
-        out -= prism(CUTOUT, CUTOUT_R, FLOOR + CAVITY_H - 0.01, HEIGHT + 1).translate((x, 0, 0))
+        out -= prism(CUTOUT, CUTOUT_R, FLOOR + CAVITY_H - 0.01, PLATE_TOP + 0.01).translate((x, 0, 0))
+        out -= prism(OPENING, OPENING_R, PLATE_TOP, HEIGHT + 1).translate((x, 0, 0))
     logo = text_section(LOGO, 3.2 if keys == 1 else 4.4).scale((-1, 1))
     return out - m3.Manifold.extrude(logo, LOGO_D + 0.01).translate((0, 0, -0.01))
 
