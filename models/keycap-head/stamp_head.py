@@ -31,6 +31,11 @@ CAVITY_TOP = 4.6                                           # housing top reaches
 ROOF = 1.0
 PLATE, PLATE_R, PLATE_T = 20.0, 4.0, 3.0                   # name plate (booth stamp plate: 3.0 base + 1.5 letters)
 POCKET, POCKET_R, POCKET_D = PLATE + 0.3, 4.15, 2.9
+# Plate retention copied from the booth keycap base's 14 mm pocket: half-round crush ribs (r 0.5) standing 0.45 off the
+# wall, so they press 0.3 mm into the plate and it clicks in; a 0.25 mm relief groove round the floor for the plate's
+# first-layer flare; a 0.25 mm lead-in at the rim. The base has two ribs per side at +-3.5 mm; scaled to +-5 mm here.
+RIB_R, RIB_IN, RIB_AT, RIB_TIP = 0.5, 0.45, 5.0, 0.6
+RELIEF_W, RELIEF_H, LEAD = 0.25, 0.3, 0.25
 TOP = CAVITY_TOP + ROOF + POCKET_D                         # 8.5
 POST_D, CROSS_L, CROSS_W, CROSS_D = 5.5, 4.16, 1.24, 4.2    # round socket post and cross, as on the booth keycap base
 FOOT = 0.3                                                  # bed-side chamfer on skirt and post (elephant's foot)
@@ -54,7 +59,14 @@ def head():
     k = (CROSS_L + 0.44) / CROSS_L                          # lead-in at the socket mouth
     body -= m3.Manifold.extrude(m3.CrossSection.square((CROSS_L, CROSS_W), center=True) + m3.CrossSection.square((CROSS_W, CROSS_L), center=True),
                                 0.4, scale_top=(1 / k, 1 / k)).scale((k, k, 1)).translate((0, 0, -0.001))
-    body -= prism(POCKET, POCKET_R, TOP - POCKET_D, TOP + 1)
+    floor = TOP - POCKET_D
+    body -= prism(POCKET, POCKET_R, floor, TOP + 1)
+    body -= prism(POCKET + 2 * RELIEF_W, POCKET_R + RELIEF_W, floor, floor + RELIEF_H)
+    body -= prism(POCKET, POCKET_R, TOP - LEAD, TOP + 0.001, top=POCKET + 2 * LEAD)
+    c = POCKET / 2 + RIB_R - RIB_IN; h = POCKET_D - RELIEF_H - RIB_TIP
+    rib = (m3.Manifold.cylinder(h, RIB_R, RIB_R, 32) + m3.Manifold.cylinder(RIB_TIP, RIB_R, 0.05, 32).translate((0, 0, h))).translate((0, 0, floor + RELIEF_H))
+    for x, y in ((c, RIB_AT), (c, -RIB_AT), (-c, RIB_AT), (-c, -RIB_AT), (RIB_AT, c), (-RIB_AT, c), (RIB_AT, -c), (-RIB_AT, -c)):
+        body += rib.translate((x, y, 0)) ^ prism(POCKET + 2, POCKET_R, floor, TOP)
     for x in (-LIFT_X, LIFT_X):
         body -= m3.Manifold.cylinder(ROOF + 2, LIFT_D / 2, LIFT_D / 2, 24).translate((x, 0, CAVITY_TOP - 1))
     return body
