@@ -4,8 +4,11 @@
 (function(root){
  const SITE='https://hichoni.github.io/3d-modeling/';
  function platform(){
-  const ua=root.navigator?.userAgent||'',touchMac=/Macintosh/.test(ua)&&root.navigator.maxTouchPoints>1;
-  return /CrOS/.test(ua)?'chromeos':/Android/.test(ua)?'android':/iPad|iPhone|iPod/.test(ua)||touchMac?'ios':/Windows/.test(ua)?'windows':/Macintosh/.test(ua)?'mac':'desktop';
+  const nav=root.navigator||{},ua=nav.userAgent||'',touch=nav.maxTouchPoints>0,touchMac=/Macintosh/.test(ua)&&nav.maxTouchPoints>1;
+  // Chrome and Samsung Internet on Android tablets default to "desktop site", which reports X11 Linux; a touch
+  // screen on a non-ChromeOS Linux browser is almost always such a tablet.
+  const android=/Android/.test(ua)||nav.userAgentData?.platform==='Android'||/X11; Linux/.test(ua)&&!/CrOS/.test(ua)&&touch;
+  return /CrOS/.test(ua)?'chromeos':android?'android':/iPad|iPhone|iPod/.test(ua)||touchMac?'ios':/Windows/.test(ua)?'windows':/Macintosh/.test(ua)?'mac':'desktop';
  }
  const GUIDES={
   android:{icon:'📱',title:'안드로이드 태블릿',text:'Click Studio 태블릿 앱을 설치하면 같은 Wi-Fi의 A1 mini로 바로 출력해요.',link:{href:SITE+'downloads/click-studio.apk',label:'태블릿 앱 받기 (APK)',download:true},more:{href:SITE+'chromebook.html#android',label:'설치 방법'}},
@@ -26,5 +29,7 @@
   if(g.more&&!compact){const a=doc.createElement('a');a.className='text-btn';a.href=g.more.href;a.target='_blank';a.rel='noopener';a.textContent=g.more.label+' ↗';row.append(a);}
   box.append(row);return kind;
  }
- root.ClickPlatform={platform,render};
+ // Top-bar button on the plain website for devices that have an app: Android tablet → APK, Chromebook → app guide.
+ function appButton(el,open){if(!el)return;const kind=platform(),label={android:'📱 태블릿 앱 받기',chromeos:'💻 크롬북 앱 설치'}[kind];el.hidden=!label;if(label){el.textContent=label;el.onclick=e=>{e.preventDefault();open();};}}
+ root.ClickPlatform={platform,render,appButton};
 })(globalThis);
