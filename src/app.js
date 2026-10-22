@@ -10,6 +10,9 @@ const ready=()=>current&&built===revision&&contentOK();
 const modelName=()=>S.content==='icon'?symbolNames[S.icon]:S.text;
 const geometries=()=>current.parts.plate.concat(current.parts.relief);
 // 클릭이, the workshop helper, speaks on the model stage like a game NPC, then tucks away so the model stays visible.
+// Bigger screens get the whole one-screen layout scaled up (designed at 1280×640), at most 120%.
+function fitZoom(){const z=innerWidth>1000?Math.max(1,Math.min(innerWidth/1280,innerHeight/640,1.2)):1;document.documentElement.style.setProperty('--z',z.toFixed(3));}
+addEventListener('resize',fitZoom);fitZoom();
 const COACH=['안녕하세요, 클릭이에요! 오른쪽에서 이름을 쓰고 글씨 느낌을 골라봐요.','오른쪽 ✦ 슬라이싱 버튼을 눌러봐요! 작품을 얇은 층으로 잘라 노즐 길을 만들어요.'];let coachTimer;
 // While 클릭이 talks, the 3D view starts below the dialog (the renderer follows #stage's size), so the model stays in sight.
 const coachStage=()=>document.querySelector('.model-stage');
