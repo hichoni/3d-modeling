@@ -218,3 +218,7 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .print-card.is-guide>:not(#platformPrint):not(.card-kicker){display:none!important}
 .makerworld-entry{background:#1f2937;color:#fff;border-color:#1f2937}
 .app-get{background:var(--coral);color:#fff;border-color:#d13c48;font-weight:800}
+/* Maker credit under the logo: AIERA (안동발명교육연구회) */
+.brand-org{display:flex;align-items:baseline;gap:4px;margin-top:1px;line-height:1.1;white-space:nowrap}
+.brand-org b{font:800 9px/1.1 system-ui,sans-serif;letter-spacing:2px;color:var(--coral)}
+.brand-org em{font-style:normal;font-size:8px;font-weight:700;letter-spacing:-.2px;color:var(--muted)}

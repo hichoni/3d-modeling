@@ -37,3 +37,7 @@
 .plate-dialog #plateImport{width:100%}
 #importSummary{white-space:normal;line-height:1.6;display:grid;gap:4px}#importSummary div{display:flex;justify-content:space-between;gap:12px}#importSummary span{color:#64748b}
 .connection-button.app-get{background:#16a34a;color:#fff;border-color:#15803d}
+/* Maker credit under the logo: AIERA (안동발명교육연구회) */
+.studio-brand .brand-org{display:flex;align-items:baseline;gap:5px;margin-top:3px;line-height:1.1;white-space:nowrap}
+.studio-brand .brand-org b{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#2563eb}
+.studio-brand .brand-org em{font-style:normal;font-size:8px;letter-spacing:0;color:var(--muted)}
