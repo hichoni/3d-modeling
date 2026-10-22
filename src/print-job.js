@@ -10,7 +10,7 @@ function validateSTL(b){
  if(b.length<134||b.length>6*1024*1024)throw Error('STL 크기가 올바르지 않습니다.');const v=new DataView(b.buffer,b.byteOffset,b.byteLength),n=v.getUint32(80,true);if(!n||84+n*50!==b.length)throw Error('공방에서 만든 바이너리 STL이 필요합니다.');
  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
  for(let o=84;o<b.length;o+=50){for(let k=0;k<3;k++){const p=[0,1,2].map(i=>v.getFloat32(o+12+k*12+i*4,true));if(!p.every(Number.isFinite))throw Error('STL에 유효하지 않은 좌표가 있습니다.');for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]);hi[i]=Math.max(hi[i],p[i]);}const dx=Math.max(0,Math.abs(p[0])-4.2),dy=Math.max(0,Math.abs(p[1])-4.2);if(Math.hypot(dx,dy)>2.802||Math.abs(p[0])>7.002||Math.abs(p[1])>7.002)throw Error('고정된 14mm 둥근 사각 바깥으로 모델이 벗어납니다.');}}
- if(Math.abs(hi[0]-lo[0]-14)>.005||Math.abs(hi[1]-lo[1]-14)>.005||Math.abs(lo[2])>.005||hi[2]<2||hi[2]>2.505)throw Error('14×14mm, 바닥 Z=0, 전체 높이 2.0~2.5mm 모델만 지원합니다.');
+ if(Math.abs(hi[0]-lo[0]-14)>.005||Math.abs(hi[1]-lo[1]-14)>.005||Math.abs(lo[2])>.005||hi[2]<2||hi[2]>4.505)throw Error('14×14mm, 바닥 Z=0, 전체 높이 2.0~4.5mm(도장) 모델만 지원합니다.');
  return {triangles:n,width:hi[0]-lo[0],depth:hi[1]-lo[1],height:hi[2]};
 }
 function checkReady(mqtt){if(!mqtt?.online||Date.now()-mqtt.lastReportAt>15000)throw Error('프린터의 최신 상태를 확인할 수 없습니다.');const s=mqtt.state;if(!['IDLE','FINISH'].includes(s.gcode_state))throw Error('프린터가 대기 상태가 아닙니다.');if(s.sdcard!==true)throw Error('SD 카드를 확인하세요.');if(Number(s.print_error)!==0)throw Error('프린터 본체의 안내를 확인하세요.');if(String(s.nozzle_diameter)!=='0.4')throw Error('0.4mm 노즐 설정이 필요합니다.');}
