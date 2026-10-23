@@ -19,7 +19,7 @@ test('saved designs accept the puffy mode and the characters, nothing else',()=>
  assert.equal(run(`restoreDesign({mode:'puffy'}).mode`),'puffy');
  for(const id of ['click','bear','cat','rabbit','chick','frog','puppy','panda','penguin','pig','ghost','whale','badge','cloud','bubble'])assert.equal(run(`restoreDesign({content:'icon',icon:'${id}'}).icon`),id);
  assert.equal(run(`restoreDesign({icon:'dragon'}).icon`),'heart');assert.equal(run(`restoreDesign({mode:'balloon'}).mode`),'relief');
- assert.equal(run('Object.keys(CHARACTERS).length'),12);
+ assert.equal(run('Object.values(CHARACTERS).filter(c=>!c.pixel).length'),12);assert.equal(run('Object.values(CHARACTERS).filter(c=>c.pixel).length'),7);
  assert.equal(run(`restoreDesign({tag:'SM'}).tag`),'SM');for(const bad of ['sm','ABCD','S M','김'])assert.equal(run(`restoreDesign({tag:${JSON.stringify(bad)}}).tag`),'');
 });
 test('initials: a frame gets them on a second level, the plain heart stays one level without them',()=>{
