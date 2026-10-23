@@ -100,24 +100,61 @@ const CHARACTERS={
  chick:{name:'병아리',label:'🐥',base:c=>{circ(c,0,.9,5);circ(c,-.5,-4.6,.9);circ(c,.6,-4.9,.8);},
   top:c=>{circ(c,-1.9,-.3,.62);circ(c,1.9,-.3,.62);poly(c,[[-1.1,.9],[1.1,.9],[0,2.3]],.4);ell(c,-3.2,1.6,.95,.65);ell(c,3.2,1.6,.95,.65);}},
  frog:{name:'개구리',label:'🐸',base:c=>{ell(c,0,1.8,5.6,3.9);circ(c,-2.9,-2.3,2.1);circ(c,2.9,-2.3,2.1);},
-  top:c=>{circ(c,-2.9,-2.3,1.35);circ(c,2.9,-2.3,1.35);cut(c,()=>{circ(c,-2.9,-2.1,.55);circ(c,2.9,-2.1,.55);});arcLine(c,0,1.4,2.6,.45,Math.PI-.45,.85);ell(c,-4.1,2,.8,.6);ell(c,4.1,2,.8,.6);}}
+  top:c=>{circ(c,-2.9,-2.3,1.35);circ(c,2.9,-2.3,1.35);cut(c,()=>{circ(c,-2.9,-2.1,.55);circ(c,2.9,-2.1,.55);});arcLine(c,0,1.4,2.6,.45,Math.PI-.45,.85);ell(c,-4.1,2,.8,.6);ell(c,4.1,2,.8,.6);}},
+ puppy:{name:'강아지',label:'🐶',base:c=>{ell(c,0,.9,4.4,4.1);ell(c,-4.1,.2,1.6,3.1,.35);ell(c,4.1,.2,1.6,3.1,-.35);},
+  top:c=>{ell(c,-4.1,.4,1.05,2.4,.35);ell(c,4.1,.4,1.05,2.4,-.35);circ(c,-1.6,.1,.62);circ(c,1.6,.1,.62);ell(c,0,2.1,.95,.7);}},
+ panda:{name:'판다',label:'🐼',base:c=>{circ(c,0,1,4.8);circ(c,-3.8,-3.1,1.7);circ(c,3.8,-3.1,1.7);},
+  top:c=>{circ(c,-3.8,-3.1,1.2);circ(c,3.8,-3.1,1.2);ell(c,-1.9,.6,1.15,1.5,.5);ell(c,1.9,.6,1.15,1.5,-.5);cut(c,()=>{circ(c,-1.8,.4,.48);circ(c,1.8,.4,.48);});ell(c,0,2.9,.75,.55);}},
+ penguin:{name:'펭귄',label:'🐧',base:c=>{ell(c,0,.7,4.6,5.5);},
+  top:c=>{circ(c,-1.55,-.8,1.9);circ(c,1.55,-.8,1.9);ell(c,0,1.4,3.1,2.6);cut(c,()=>{circ(c,-1.4,-.9,.5);circ(c,1.4,-.9,.5);poly(c,[[-.75,.55],[.75,.55],[0,1.6]],.3);});}},
+ pig:{name:'돼지',label:'🐷',base:c=>{ell(c,0,.9,5,4.3);poly(c,[[-4.6,-1.4],[-3.9,-4.9],[-1.6,-3.2]],.9);poly(c,[[4.6,-1.4],[3.9,-4.9],[1.6,-3.2]],.9);},
+  top:c=>{ell(c,0,1.9,2.1,1.45);cut(c,()=>{ell(c,-.7,1.9,.42,.55);ell(c,.7,1.9,.42,.55);});circ(c,-2.2,-.5,.58);circ(c,2.2,-.5,.58);}},
+ ghost:{name:'유령',label:'👻',base:c=>{c.beginPath();c.moveTo(-4.4,-.8);c.arc(0,-.8,4.4,Math.PI,0);c.lineTo(4.4,4.4);for(let i=0;i<3;i++){const x=4.4-i*2.933;c.quadraticCurveTo(x-.73,6.3,x-1.47,4.6);c.quadraticCurveTo(x-2.2,6.3,x-2.933,4.4);}c.closePath();c.fill();},
+  top:c=>{ell(c,-1.5,-.8,.62,.88);ell(c,1.5,-.8,.62,.88);ell(c,0,1.4,.8,.6);ell(c,-2.8,.7,.85,.58);ell(c,2.8,.7,.85,.58);}},
+ whale:{name:'고래',label:'🐳',base:c=>{ell(c,.8,1.4,4.8,3.6);poly(c,[[-3.6,.9],[-6,-2.8],[-4.7,-1.2],[-3.3,-2.9]],.6);circ(c,1.6,-3.3,.7);circ(c,.7,-4.4,.62);circ(c,2.5,-4.4,.62);},
+  top:c=>{circ(c,2.2,.6,.6);arcLine(c,2.4,1.8,1.1,.35,Math.PI-.35,.7);}}
 };
+/* Frames that hold initials (heart, badge, cloud, speech bubble): the frame is the body, the initials stand on it. */
+const FRAMES={
+ heart:{name:'하트',base:c=>{c.beginPath();c.moveTo(0,5.6);c.bezierCurveTo(-9.5,-.2,-5.4,-8.2,0,-3.1);c.bezierCurveTo(5.4,-8.2,9.5,-.2,0,5.6);c.fill();},inner:[0,-.5,7.4,4.4]},
+ badge:{name:'뱃지',label:'🏷',base:c=>circ(c,0,0,5.9),top:c=>{circ(c,0,0,5.3);cut(c,()=>circ(c,0,0,4.5));},inner:[0,0,7.2,4.6]},
+ cloud:{name:'구름',label:'☁',base:c=>{circ(c,-3.2,1,2.6);circ(c,0,-.8,3.4);circ(c,3.2,1,2.6);rr(c,-5.3,.4,10.6,3.2,1.6);},inner:[0,1,7.4,3.6]},
+ bubble:{name:'말풍선',label:'💬',base:c=>{rr(c,-6,-5,12,8.6,3);poly(c,[[-2.8,3.2],[-4.4,6.2],[.2,3.2]],.4);},inner:[0,-.7,9,5]}
+};
+const PICTURE_TAG=/^[A-Z0-9]{1,3}$/;
+// Initials in mm, fitted into a w x h box centred at (x, y); bold widens the strokes like the letter mode does.
+function fitText(c,text,x,y,w,h,font,bold){
+  c.save();c.font=`${font.weight} 100px "${font.family}", "Apple SD Gothic Neo", sans-serif`;c.textBaseline='alphabetic';c.textAlign='left';
+  const m=c.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight||0,a=m.actualBoundingBoxAscent||0,d=m.actualBoundingBoxDescent||0;
+  if(l+r>0&&a+d>0){const s=Math.min((w-2*bold)/(l+r),(h-2*bold)/(a+d));c.translate(x,y);c.scale(s,s);c.fillText(text,-(r-l)/2,-(d-a)/2);if(bold>0){c.lineWidth=2*bold/s;c.lineJoin='round';c.strokeText(text,-(r-l)/2,-(d-a)/2);}}
+  c.restore();
+}
 function circ(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
 function ell(c,x,y,rx,ry,rot=0){c.beginPath();c.ellipse(x,y,rx,ry,rot,0,Math.PI*2);c.fill();}
 function rr(c,x,y,w,h,r){c.beginPath();roundRectPath(c,x,y,w,h,r);c.fill();}
 function poly(c,pts,round=0){c.beginPath();pts.forEach(([x,y],i)=>c[i?'lineTo':'moveTo'](x,y));c.closePath();c.fill();if(round){c.lineJoin='round';c.lineWidth=round;c.stroke();}}
 function arcLine(c,x,y,r,a0,a1,width){c.beginPath();c.arc(x,y,r,a0,a1);c.lineWidth=width;c.lineCap='round';c.stroke();}
 function cut(c,draw){c.save();c.globalCompositeOperation='destination-out';draw();c.restore();}
-// part: 'base' | 'top' | 'flat' (body minus details: what engrave and stamp use, and the picker thumbnail)
-function drawCharacter(ctx,id,x,y,mmPx,part='flat'){
-  const ch=CHARACTERS[id];ctx.save();ctx.translate(x,y);ctx.scale(mmPx,mmPx);ctx.fillStyle=ctx.strokeStyle='#000';
-  if(part==='top')ch.top(ctx);else ch.base(ctx);
-  if(part==='flat'){ // details drawn apart (their own holes intact), then cleared out of the body
-    const T=mkCanvas(ctx.canvas.width,ctx.canvas.height),tc=T.getContext('2d');tc.setTransform(ctx.getTransform());tc.fillStyle=tc.strokeStyle='#000';ch.top(tc);
+// A picture's two levels. part: 'base' (body) | 'top' (details standing on it) | 'flat' (body minus details: what
+// engrave and stamp use). tag: initials, inside a frame or under a smaller picture.
+function pictureLevels(id,tag,font,bold){
+  const ch=CHARACTERS[id],fr=FRAMES[id],t=tag&&PICTURE_TAG.test(tag)?tag:'';
+  // The plain heart keeps the classic icon; with initials it becomes the bigger frame.
+  if(fr&&(t||id!=='heart'))return {base:c=>fr.base(c),top:fr.top||t?c=>{fr.top?.(c);if(t)fitText(c,t,...fr.inner,font,bold);}:null};
+  const below=draw=>t?c=>{c.save();c.translate(0,-2.2);c.scale(.74,.74);draw(c);c.restore();}:draw,tagBelow=c=>{if(t)fitText(c,t,0,4.5,8.6,3.2,font,bold);};
+  if(ch)return {base:c=>{below(ch.base)(c);tagBelow(c);},top:below(ch.top)};
+  return {base:c=>{below(c=>drawSymbol(c,id,0,0,9.5))(c);tagBelow(c);},top:null};
+}
+function drawAsset(ctx,id,x,y,mmPx,part='flat',tag='',font=FONTS[0],bold=0){
+  const lv=pictureLevels(id,tag,font,bold);ctx.save();ctx.translate(x,y);ctx.scale(mmPx,mmPx);ctx.fillStyle=ctx.strokeStyle='#000';
+  if(part==='top')lv.top?.(ctx);else lv.base(ctx);
+  if(part==='flat'&&lv.top){ // details drawn apart (their own holes intact), then cleared out of the body
+    const T=mkCanvas(ctx.canvas.width,ctx.canvas.height),tc=T.getContext('2d');tc.setTransform(ctx.getTransform());tc.fillStyle=tc.strokeStyle='#000';lv.top(tc);
     ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='destination-out';ctx.drawImage(T,0,0);
   }
   ctx.restore();
 }
+const pictureHasTop=()=>S.content==='icon'&&!!pictureLevels(S.icon,S.tag,FONTS[0],0).top;
 let characterPart='flat';
 function drawSymbol(ctx,kind,x,y,size){
   ctx.save();ctx.translate(x,y);ctx.scale(size/10,size/10);ctx.beginPath();
@@ -131,8 +168,7 @@ function letterLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
   const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14;
   lx.fillStyle=lx.strokeStyle='#000';
-  if(S.content==='icon'&&CHARACTERS[S.icon]){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawCharacter(lx,S.icon,cx,cy,k*ppm,characterPart);lastCellMinMm=12*k;return L;}
-  if(S.content==='icon'){drawSymbol(lx,S.icon,cx,cy,9.5*k*ppm);lastCellMinMm=9.5*k;return L;}
+  if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*ppm,characterPart,S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
   const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+gapMm)*ppm, n, S.layout);
@@ -329,7 +365,7 @@ function buildGeometries(){
     for(let x=0;x<cw;x++){a[x]=0;a[(ch-1)*cw+x]=0;}for(let y=0;y<ch;y++){a[y*cw]=0;a[y*cw+cw-1]=0;}return a;};
   // Relief levels: one for letters and icons; a character in a raised mode stacks its details on its body. Puffy
   // levels are domed (see puffSlabs); the others are flat extrusions.
-  const puffy=S.mode==='puffy',layered=S.content==='icon'&&CHARACTERS[S.icon]&&(S.mode==='relief'||puffy);
+  const puffy=S.mode==='puffy',layered=pictureHasTop()&&(S.mode==='relief'||puffy);
   const levels=layered?[{alpha:face('base'),h:puffy?relief+PUFF_EXTRA:relief},{alpha:face('top'),h:CHAR_STEP}]:[{alpha:face('flat'),h:puffy?relief+PUFF_EXTRA:relief}];
 
   const parts = {plate:[], relief:[]}; const EPS=0.02;

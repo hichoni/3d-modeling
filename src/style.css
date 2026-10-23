@@ -242,3 +242,5 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 /* Four raised modes on one line; the picture picker wraps (the font row is hidden in picture mode) */
 #modeRow .options{gap:4px;min-width:0}#modeRow .options button{padding:7px 3px;font-size:12px;min-width:0}
 .symbols{flex-wrap:wrap}
+/* 19 pictures: two rows visible, the rest scroll */
+.symbols.pictures{max-height:84px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 4px 2px 2px;align-content:flex-start}
