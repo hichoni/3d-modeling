@@ -220,8 +220,10 @@ const EDGES={
 };
 // Initials under a shrunk picture leave no room for a border.
 const edgeAllowed=()=>!(S.content==='icon'&&PICTURE_TAG.test(S.tag||'')&&!FRAMES[S.icon]);
-const activeEdge=()=>EDGES[S.edge]&&edgeAllowed()?S.edge:'none';
-function contentScale(){if(activeEdge()==='none')return 1;const half=plateSize()/2,gap=Math.max(.5,.05*plateSize());return (half-EDGE_MARGIN)/(half-gap);}
+// Cut-through (뚫림) plates can only take borders of separate holes; a continuous ring would cut the plate in two.
+const THROUGH_EDGES=['dots','stitch'];
+const activeEdge=()=>EDGES[S.edge]&&edgeAllowed()&&(S.mode!=='through'||THROUGH_EDGES.includes(S.edge))?S.edge:'none';
+function contentScale(){if(activeEdge()==='none')return S.mode==='through'?THROUGH_SCALE:1;const half=plateSize()/2,gap=Math.max(.5,.05*plateSize());return (half-EDGE_MARGIN)/(half-gap);}
 function drawEdge(ctx,cx,cy,ppm,style){
   const w=plateSize(),side=w-2*EDGE_CENTER,r=Math.max(.3,cornerR(w,w)-EDGE_CENTER),P=4*(side-2*r)+2*Math.PI*r;
   ctx.save();ctx.strokeStyle='#000';
@@ -234,14 +236,14 @@ function drawEdge(ctx,cx,cy,ppm,style){
 }
 function letterLayer(cw, ch, ppm, mirror, font, list){
   const out=contentLayer(cw, ch, ppm, mirror, font, list),edge=activeEdge();
-  if(edge!=='none'&&characterPart!=='top')drawEdge(out.getContext('2d'),cw/2,ch/2,ppm,edge);
+  if(edge!=='none'&&characterPart!=='top'&&S.mode!=='through')drawEdge(out.getContext('2d'),cw/2,ch/2,ppm,edge);
   return out;
 }
 function contentLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
   const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14, cs=contentScale();
   lx.fillStyle=lx.strokeStyle='#000';
-  if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*cs*ppm,characterPart,S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k*cs;return L;}
+  if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*cs*ppm,characterPart,S.mode==='through'?'':S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k*cs;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
   const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+(activeEdge()==='none'?gapMm:EDGE_MARGIN))*ppm, n, S.layout);
@@ -443,6 +445,7 @@ function buildGeometries(){
     for(let x=0;x<cw;x++){a[x]=0;a[(ch-1)*cw+x]=0;}for(let y=0;y<ch;y++){a[y*cw]=0;a[y*cw+cw-1]=0;}return a;};
   // Relief levels: one for letters and icons; a character in a raised mode stacks its details on its body. Puffy
   // levels are domed (see puffSlabs); the others are flat extrusions.
+  if(S.mode==='through')return throughGeometries(w,h,cw,ch,ppm,face,toShapes);
   const puffy=S.mode==='puffy',layered=pictureHasTop()&&(S.mode==='relief'||puffy);
   const levels=layered?[{alpha:face('base'),h:puffy?relief+PUFF_EXTRA:relief},{alpha:face('top'),h:CHAR_STEP}]:[{alpha:face('flat'),h:puffy?relief+PUFF_EXTRA:relief}];
 
@@ -469,6 +472,30 @@ function buildGeometries(){
     z+=level.h;
   }
   return {parts, totalH: top, w, h, handleTop};
+}
+/* Cut-through (뚫림): the picture's silhouette is cut through a 2.1 mm plate so the keycap base shows. Only pictures,
+   and the cut is made island-free: holes closer than 1 mm merge (no thin webs), enclosed bits (a leaf's vein, the
+   inside of a ring) join the hole, and the plate left over must be one piece. Details and initials are dropped. */
+const THROUGH_T=2.1,THROUGH_SCALE=.82,THROUGH_CLOSE=.5;
+function throughGeometries(w,h,cw,ch,ppm,face,toShapes){
+  const n=cw*ch,pic=face('base'),inv=new Float32Array(n);for(let i=0;i<n;i++)inv[i]=1-pic[i];
+  const out=distanceInside(inv,cw,ch),r=THROUGH_CLOSE*ppm,dil=new Float32Array(n);for(let i=0;i<n;i++)dil[i]=pic[i]>=.5||out[i]<=r?1:0;
+  const din=distanceInside(dil,cw,ch),cut=new Uint8Array(n);for(let i=0;i<n;i++)cut[i]=din[i]>=r?1:0;
+  // fill enclosed pockets: whatever is not cut and not reachable from the canvas edge joins the hole
+  const reach=new Uint8Array(n),stack=[];for(let x=0;x<cw;x++)stack.push(x,(ch-1)*cw+x);for(let y=0;y<ch;y++)stack.push(y*cw,y*cw+cw-1);
+  while(stack.length){const i=stack.pop();if(reach[i]||cut[i])continue;reach[i]=1;const x=i%cw;if(x>0)stack.push(i-1);if(x<cw-1)stack.push(i+1);if(i>=cw)stack.push(i-cw);if(i<n-cw)stack.push(i+cw);}
+  for(let i=0;i<n;i++)if(!reach[i])cut[i]=1;
+  const edge=activeEdge();
+  if(edge!=='none'){const cv=mkCanvas(cw,ch),c=cv.getContext('2d',{willReadFrequently:true});drawEdge(c,cw/2,ch/2,ppm,edge);const d=c.getImageData(0,0,cw,ch).data;for(let i=0;i<n;i++)if(d[i*4+3]>=128)cut[i]=1;}
+  // the plate left over must be one piece
+  const pc=mkCanvas(cw,ch),px=pc.getContext('2d',{willReadFrequently:true});px.fillStyle='#000';shapePath(px,cw/2,ch/2,w*ppm,h*ppm,'rounded',0,ppm);px.fill();
+  const pd=px.getImageData(0,0,cw,ch).data,mat=new Uint8Array(n);let first=-1,total=0;for(let i=0;i<n;i++)if(pd[i*4+3]>=128&&!cut[i]){mat[i]=1;total++;if(first<0)first=i;}
+  let seen=0;if(first>=0){const st=[first];mat[first]=2;while(st.length){const i=st.pop();seen++;const x=i%cw;for(const j of [x>0?i-1:-1,x<cw-1?i+1:-1,i-cw,i+cw])if(j>=0&&j<n&&mat[j]===1){mat[j]=2;st.push(j);}}}
+  if(seen!==total)throw Error('이 모양은 뚫으면 조각이 떨어져 나가요. 다른 그림이나 테두리를 골라 주세요.');
+  const holes=toShapes(Float32Array.from(cut));
+  const shape=plateShape(w,h);for(const s of holes)shape.holes.push(new THREE.Path(s.getPoints()));
+  const plate=new THREE.ExtrudeGeometry(shape,{depth:THROUGH_T,bevelEnabled:false,curveSegments:72});
+  return {parts:{plate:[plate],relief:[]},totalH:THROUGH_T,w,h,handleTop:0,holes:holes.length};
 }
 /* Puffy (말랑): a 0.4 mm straight wall, then a quarter-round dome reaching full height 1.1 mm in from the edge.
    Built as 0.2 mm slabs (one per printed layer), each the region at least d(z) inside the outline. */
