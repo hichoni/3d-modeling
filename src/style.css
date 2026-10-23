@@ -244,3 +244,7 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .symbols{flex-wrap:wrap}
 /* 19 pictures: two rows visible, the rest scroll */
 .symbols.pictures{max-height:84px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 4px 2px 2px;align-content:flex-start}
+/* Border picker: small preview tiles on one line */
+.edge-options{display:flex;gap:4px;flex:1;min-width:0}.edge-options button{flex:1;min-width:0;height:34px;padding:2px;border-radius:10px;font-size:11px;display:grid;place-items:center}.edge-thumb{width:26px;height:26px;display:block}.edge-options button:disabled{opacity:.35;cursor:not-allowed}
+/* Short screens (1280x640 .. 1366x768): tighter label spacing in the design card so the border row fits */
+@media (max-height:780px){.control-decor{gap:3px}.control-decor>label{margin:3px 0}.swatches{margin-top:4px}.control-main .control-row{margin:3px 0}}
