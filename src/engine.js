@@ -84,6 +84,41 @@ function shapePath(ctx, cx, cy, wpx, hpx, shape, inset, ppm){
 function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w)); c.height=Math.max(1,Math.round(h)); return c; }
 
 let lastCellMinMm = 99;
+/* Characters for the 14 mm keycap: two levels so each part takes its own Posca colour. "base" is the body, "top" the
+   raised details (eyes, muzzle, cheeks, inner ears) standing on it; holes cut in "top" (a nose, pupils) stay at body
+   height. Drawn in mm, y down, centred, inside the plate's rounded square; details >= 1 mm, gaps >= 0.6 mm. */
+const CHAR_STEP=.6;
+const CHARACTERS={
+ click:{name:'클릭이',label:'클릭',base:c=>{c.save();c.rotate(-.1);rr(c,-5.2,-4.8,10.4,9.6,2.8);c.restore();},
+  top:c=>{ell(c,-2,-.6,.65,1.05);ell(c,2,-.6,.65,1.05);arcLine(c,0,.9,1.6,.35,Math.PI-.35,.9);ell(c,-3.6,2,.95,.7);ell(c,3.6,2,.95,.7);}},
+ bear:{name:'곰돌이',label:'🐻',base:c=>{circ(c,0,.9,4.7);circ(c,-3.7,-3.2,1.9);circ(c,3.7,-3.2,1.9);},
+  top:c=>{circ(c,-3.7,-3.2,.95);circ(c,3.7,-3.2,.95);ell(c,0,2.5,2.5,1.8);circ(c,-1.9,-.1,.62);circ(c,1.9,-.1,.62);cut(c,()=>ell(c,0,1.8,.9,.6));}},
+ cat:{name:'고양이',label:'🐱',base:c=>{ell(c,0,1,4.9,4.1);poly(c,[[-4.6,-1.2],[-3.9,-5.6],[-1,-2.9]],.8);poly(c,[[4.6,-1.2],[3.9,-5.6],[1,-2.9]],.8);},
+  top:c=>{poly(c,[[-3.75,-2.3],[-3.55,-4.3],[-2.1,-2.95]],.5);poly(c,[[3.75,-2.3],[3.55,-4.3],[2.1,-2.95]],.5);ell(c,-1.9,.4,.6,.85);ell(c,1.9,.4,.6,.85);poly(c,[[-.65,1.7],[.65,1.7],[0,2.5]],.45);}},
+ rabbit:{name:'토끼',label:'🐰',base:c=>{circ(c,0,2.2,3.9);ell(c,-1.7,-2.9,1.35,3.2,-.15);ell(c,1.7,-2.9,1.35,3.2,.15);},
+  top:c=>{ell(c,-1.7,-2.9,.6,2.2,-.15);ell(c,1.7,-2.9,.6,2.2,.15);circ(c,-1.45,1.7,.6);circ(c,1.45,1.7,.6);ell(c,0,3.2,.5,.4);ell(c,-2.5,3.6,.9,.6);ell(c,2.5,3.6,.9,.6);}},
+ chick:{name:'병아리',label:'🐥',base:c=>{circ(c,0,.9,5);circ(c,-.5,-4.6,.9);circ(c,.6,-4.9,.8);},
+  top:c=>{circ(c,-1.9,-.3,.62);circ(c,1.9,-.3,.62);poly(c,[[-1.1,.9],[1.1,.9],[0,2.3]],.4);ell(c,-3.2,1.6,.95,.65);ell(c,3.2,1.6,.95,.65);}},
+ frog:{name:'개구리',label:'🐸',base:c=>{ell(c,0,1.8,5.6,3.9);circ(c,-2.9,-2.3,2.1);circ(c,2.9,-2.3,2.1);},
+  top:c=>{circ(c,-2.9,-2.3,1.35);circ(c,2.9,-2.3,1.35);cut(c,()=>{circ(c,-2.9,-2.1,.55);circ(c,2.9,-2.1,.55);});arcLine(c,0,1.4,2.6,.45,Math.PI-.45,.85);ell(c,-4.1,2,.8,.6);ell(c,4.1,2,.8,.6);}}
+};
+function circ(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
+function ell(c,x,y,rx,ry,rot=0){c.beginPath();c.ellipse(x,y,rx,ry,rot,0,Math.PI*2);c.fill();}
+function rr(c,x,y,w,h,r){c.beginPath();roundRectPath(c,x,y,w,h,r);c.fill();}
+function poly(c,pts,round=0){c.beginPath();pts.forEach(([x,y],i)=>c[i?'lineTo':'moveTo'](x,y));c.closePath();c.fill();if(round){c.lineJoin='round';c.lineWidth=round;c.stroke();}}
+function arcLine(c,x,y,r,a0,a1,width){c.beginPath();c.arc(x,y,r,a0,a1);c.lineWidth=width;c.lineCap='round';c.stroke();}
+function cut(c,draw){c.save();c.globalCompositeOperation='destination-out';draw();c.restore();}
+// part: 'base' | 'top' | 'flat' (body minus details: what engrave and stamp use, and the picker thumbnail)
+function drawCharacter(ctx,id,x,y,mmPx,part='flat'){
+  const ch=CHARACTERS[id];ctx.save();ctx.translate(x,y);ctx.scale(mmPx,mmPx);ctx.fillStyle=ctx.strokeStyle='#000';
+  if(part==='top')ch.top(ctx);else ch.base(ctx);
+  if(part==='flat'){ // details drawn apart (their own holes intact), then cleared out of the body
+    const T=mkCanvas(ctx.canvas.width,ctx.canvas.height),tc=T.getContext('2d');tc.setTransform(ctx.getTransform());tc.fillStyle=tc.strokeStyle='#000';ch.top(tc);
+    ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='destination-out';ctx.drawImage(T,0,0);
+  }
+  ctx.restore();
+}
+let characterPart='flat';
 function drawSymbol(ctx,kind,x,y,size){
   ctx.save();ctx.translate(x,y);ctx.scale(size/10,size/10);ctx.beginPath();
   if(kind==='heart'){ctx.moveTo(0,4.5);ctx.bezierCurveTo(-8,-.5,-4.5,-7,0,-2.7);ctx.bezierCurveTo(4.5,-7,8,-.5,0,4.5);ctx.fill();}
@@ -96,6 +131,7 @@ function letterLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
   const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14;
   lx.fillStyle=lx.strokeStyle='#000';
+  if(S.content==='icon'&&CHARACTERS[S.icon]){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawCharacter(lx,S.icon,cx,cy,k*ppm,characterPart);lastCellMinMm=12*k;return L;}
   if(S.content==='icon'){drawSymbol(lx,S.icon,cx,cy,9.5*k*ppm);lastCellMinMm=9.5*k;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
@@ -287,15 +323,14 @@ function buildGeometries(){
   const {w,h}=dims(); const font=fontById(S.font);
   const ppm = clamp(640/Math.max(w,h), 10, 40), margin = 1.5 + S.bold;
   const cw = Math.ceil((w+2*margin)*ppm)+2, ch = Math.ceil((h+2*margin)*ppm)+2;
-  const cv = mkCanvas(cw,ch), ctx = cv.getContext('2d', {willReadFrequently:true});
-  drawFace(ctx, cw, ch, ppm, S.mirror, '#000', font);
-  const data = ctx.getImageData(0,0,cw,ch).data;
-  const alpha = new Float32Array(cw*ch);
-  for(let i=0,j=3;i<alpha.length;i++,j+=4) alpha[i]=data[j]/255;
-  for(let x=0;x<cw;x++){ alpha[x]=0; alpha[(ch-1)*cw+x]=0; } for(let y=0;y<ch;y++){ alpha[y*cw]=0; alpha[y*cw+cw-1]=0; }
-  const loops = traceContours(alpha, cw, ch, 0.5);
-  const ox=cw/2, oy=ch/2;
-  const shapes = loopsToShapes(loops, q=>clampToInsert((q[0]+.5-ox)/ppm, -(q[1]+.5-oy)/ppm));
+  const ox=cw/2, oy=ch/2, toShapes=a=>loopsToShapes(traceContours(a, cw, ch, 0.5), q=>clampToInsert((q[0]+.5-ox)/ppm, -(q[1]+.5-oy)/ppm));
+  const face=part=>{characterPart=part;const cv=mkCanvas(cw,ch),ctx=cv.getContext('2d',{willReadFrequently:true});drawFace(ctx,cw,ch,ppm,S.mirror,'#000',font);characterPart='flat';
+    const data=ctx.getImageData(0,0,cw,ch).data,a=new Float32Array(cw*ch);for(let i=0,j=3;i<a.length;i++,j+=4)a[i]=data[j]/255;
+    for(let x=0;x<cw;x++){a[x]=0;a[(ch-1)*cw+x]=0;}for(let y=0;y<ch;y++){a[y*cw]=0;a[y*cw+cw-1]=0;}return a;};
+  // Relief levels: one for letters and icons; a character in a raised mode stacks its details on its body. Puffy
+  // levels are domed (see puffSlabs); the others are flat extrusions.
+  const puffy=S.mode==='puffy',layered=S.content==='icon'&&CHARACTERS[S.icon]&&(S.mode==='relief'||puffy);
+  const levels=layered?[{alpha:face('base'),h:puffy?relief+PUFF_EXTRA:relief},{alpha:face('top'),h:CHAR_STEP}]:[{alpha:face('flat'),h:puffy?relief+PUFF_EXTRA:relief}];
 
   const parts = {plate:[], relief:[]}; const EPS=0.02;
   const m = Math.min(w,h);
@@ -312,11 +347,38 @@ function buildGeometries(){
   const plate = new THREE.ExtrudeGeometry(plateShape(w,h), {depth:S.base+(zPlate>0?EPS:0), bevelEnabled:false, curveSegments:72});
   plate.translate(0,0,zPlate); parts.plate.push(plate);
   const zTop = zPlate + S.base + (zPlate>0?EPS:0);
-  if(shapes.length){
-    const rel = new THREE.ExtrudeGeometry(shapes, {depth:relief+EPS, bevelEnabled:false, curveSegments:4});
-    rel.translate(0,0,zTop-EPS); parts.relief.push(rel);
+  let z=zTop,top=zTop;
+  for(const level of levels){
+    const slabs=puffy?puffSlabs(level.alpha,cw,ch,ppm,level.h):[{alpha:level.alpha,z0:0,z1:level.h}];
+    for(const s of slabs){const shapes=toShapes(s.alpha);if(!shapes.length)continue;
+      const rel=new THREE.ExtrudeGeometry(shapes,{depth:s.z1-s.z0+EPS,bevelEnabled:false,curveSegments:4});rel.translate(0,0,z+s.z0-EPS);parts.relief.push(rel);top=Math.max(top,z+s.z1);}
+    z+=level.h;
   }
-  return {parts, totalH: zTop + relief, w, h, handleTop};
+  return {parts, totalH: top, w, h, handleTop};
+}
+/* Puffy (말랑): a 0.4 mm straight wall, then a quarter-round dome reaching full height 1.1 mm in from the edge.
+   Built as 0.2 mm slabs (one per printed layer), each the region at least d(z) inside the outline. */
+const PUFF_WALL=.4,PUFF_R=1.1,PUFF_EXTRA=.4,PUFF_STEP=.2;
+function puffSlabs(alpha,cw,ch,ppm,H){
+  const inside=distanceInside(alpha,cw,ch),n=Math.max(1,Math.round(H/PUFF_STEP)),out=[];
+  for(let k=0;k<n;k++){
+    const z0=k*H/n,z1=(k+1)*H/n,zm=(z0+z1)/2;
+    if(zm<=PUFF_WALL){out.push({alpha,z0,z1});continue;}
+    const t=Math.min(1,(zm-PUFF_WALL)/(H-PUFF_WALL)),d=PUFF_R*(1-Math.sqrt(1-t*t))*ppm,a=new Float32Array(alpha.length);
+    for(let i=0;i<a.length;i++)a[i]=Math.max(0,Math.min(1,inside[i]-d+.5));
+    out.push({alpha:a,z0,z1});
+  }
+  return out;
+}
+// Distance in pixels from each inside pixel (alpha >= 0.5) to the outline; exact squared EDT (Felzenszwalb).
+function distanceInside(alpha,W,H){
+  const INF=1e12,f=new Float64Array(Math.max(W,H)),d=new Float64Array(Math.max(W,H)),v=new Int32Array(Math.max(W,H)),zz=new Float64Array(Math.max(W,H)+1),g=new Float64Array(W*H);
+  const pass=n=>{let k=0;v[0]=0;zz[0]=-INF;zz[1]=INF;for(let q=1;q<n;q++){let s;do{const p=v[k];s=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p);if(s<=zz[k])k--;else break;}while(k>=0);k++;v[k]=q;zz[k]=s;zz[k+1]=INF;}k=0;for(let q=0;q<n;q++){while(zz[k+1]<q)k++;const p=v[k];d[q]=(q-p)*(q-p)+f[p];}};
+  for(let i=0;i<W*H;i++)g[i]=alpha[i]>=.5?INF:0;
+  for(let x=0;x<W;x++){for(let y=0;y<H;y++)f[y]=g[y*W+x];pass(H);for(let y=0;y<H;y++)g[y*W+x]=d[y];}
+  const out=new Float32Array(W*H);
+  for(let y=0;y<H;y++){for(let x=0;x<W;x++)f[x]=g[y*W+x];pass(W);for(let x=0;x<W;x++)out[y*W+x]=Math.max(0,Math.sqrt(d[x])-.5);}
+  return out;
 }
 
 /* ---------- STL / ZIP ---------- */
