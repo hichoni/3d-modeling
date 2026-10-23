@@ -88,6 +88,41 @@ let lastCellMinMm = 99;
    raised details (eyes, muzzle, cheeks, inner ears) standing on it; holes cut in "top" (a nose, pupils) stay at body
    height. Drawn in mm, y down, centred, inside the plate's rounded square; details >= 1 mm, gaps >= 0.6 mm. */
 const CHAR_STEP=.6;
+/* Pixel theme (픽셀): an own 5x7 block font for A-Z/0-9, Hangul from Galmuri11's 11x11 bitmaps (vendor/galmuri, OFL),
+   and 12x12 sprites at 1 mm per block ('#' body, 'o' raised detail on it), which print crisply on a 0.4 mm nozzle. */
+const PIXEL_FONT={'A':'.###.#...##...#######...##...##...#','B':'####.#...##...#####.#...##...#####.','C':'.###.#...##....#....#....#...#.###.','D':'####.#...##...##...##...##...#####.','E':'######....#....####.#....#....#####','F':'######....#....####.#....#....#....','G':'.###.#...##....#.####...##...#.####','H':'#...##...##...#######...##...##...#','I':'.###...#....#....#....#....#...###.','J':'..###...#....#....#....#.#..#..##..','K':'#...##..#.#.#..##...#.#..#..#.#...#','L':'#....#....#....#....#....#....#####','M':'#...###.###.#.##.#.##...##...##...#','N':'#...##...###..##.#.##..###...##...#','O':'.###.#...##...##...##...##...#.###.','P':'####.#...##...#####.#....#....#....','Q':'.###.#...##...##...##.#.##..#..##.#','R':'####.#...##...#####.#.#..#..#.#...#','S':'.#####....#.....###.....#....#####.','T':'#####..#....#....#....#....#....#..','U':'#...##...##...##...##...##...#.###.','V':'#...##...##...##...##...#.#.#...#..','W':'#...##...##...##.#.##.#.##.#.#.#.#.','X':'#...##...#.#.#...#...#.#.#...##...#','Y':'#...##...#.#.#...#....#....#....#..','Z':'#####....#...#...#...#...#....#####','0':'.###.#...##..###.#.###..##...#.###.','1':'..#...##....#....#....#....#...###.','2':'.###.#...#....#...#...#...#...#####','3':'####.....#....#.###.....#....#####.','4':'...#...##..#.#.#..#.#####...#....#.','5':'######....####.....#....##...#.###.','6':'..##..#...#....####.#...##...#.###.','7':'#####....#...#...#...#....#....#...','8':'.###.#...##...#.###.#...##...#.###.','9':'.###.#...##...#.####....#...#..##..'};
+function sprite(rows){
+  const cells=[];rows.forEach((r,y)=>[...r].forEach((v,x)=>{if(v!=='.')cells.push([x,y,v]);}));
+  const xs=cells.map(c=>c[0]),ys=cells.map(c=>c[1]),ox=(Math.min(...xs)+Math.max(...xs)+1)/2,oy=(Math.min(...ys)+Math.max(...ys)+1)/2,e=.02;
+  const draw=(c,keep)=>{c.beginPath();for(const [x,y,v] of cells)if(keep(v))c.rect(x-ox-e,y-oy-e,1+2*e,1+2*e);c.fill();};
+  return {base:c=>draw(c,()=>true),top:c=>draw(c,v=>v==='o')};
+}
+let galmuri=null;
+function galmuriRows(ch){
+  const G=globalThis.GALMURI11;if(!G)return null;
+  galmuri||=G.ranges.map(r=>{const s=atob(r.data),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return {...r,u16:new Uint16Array(b.buffer)};});
+  const cp=ch.codePointAt(0);for(const r of galmuri)if(cp>=r.first&&cp<r.first+r.count){const rows=r.u16.subarray((cp-r.first)*G.rows,(cp-r.first+1)*G.rows);return rows.some(Boolean)?rows:null;}
+  return null;
+}
+// Blocks of one glyph: the 5x7 font for Latin letters and digits, Galmuri for Hangul (on its 11-block grid, centred on
+// the inked part), otherwise the glyph sampled on an n x n grid. grid: blocks per cell side, for the block size.
+function pixelBits(ch,n){
+  const g=PIXEL_FONT[ch.toUpperCase()];if(g)return {cols:5,rows:7,grid:[5,7],on:(x,y)=>g[y*5+x]==='#'};
+  const gr=galmuriRows(ch);
+  if(gr){let x0=11,x1=-1,y0=11,y1=-1;gr.forEach((m,y)=>{for(let x=0;x<11;x++)if(m>>x&1){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}});
+    return {cols:x1-x0+1,rows:y1-y0+1,grid:[11,11],on:(x,y)=>gr[y+y0]>>(x+x0)&1};}
+  const k=8,cv=mkCanvas(n*k,n*k),c=cv.getContext('2d',{willReadFrequently:true});c.font='400 100px "Do Hyeon", sans-serif';c.textBaseline='alphabetic';
+  const m=c.measureText(ch),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight||0,a=m.actualBoundingBoxAscent||0,d=m.actualBoundingBoxDescent||0;
+  if(l+r<=0||a+d<=0)return {cols:n,rows:n,on:()=>false};
+  const s=Math.min(n*k/(l+r),n*k/(a+d));c.translate(n*k/2,n*k/2);c.scale(s,s);c.fillText(ch,-(r-l)/2,-(d-a)/2);
+  const px=c.getImageData(0,0,n*k,n*k).data,bits=new Uint8Array(n*n);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){let sum=0;for(let j=0;j<k;j++)for(let i=0;i<k;i++)sum+=px[((y*k+j)*n*k+x*k+i)*4+3];bits[y*n+x]=sum/(k*k*255)>.42;}
+  return {cols:n,rows:n,grid:[n,n],on:(x,y)=>bits[y*n+x]};
+}
+function drawPixelGlyph(c,ch,x,y,w,h,ppm){
+  const n=Math.max(8,Math.min(16,Math.floor(Math.min(w,h)/(.62*ppm)))),b=pixelBits(ch,n),p=Math.min(w/b.grid[0],h/b.grid[1]),x0=x-b.cols*p/2,y0=y-b.rows*p/2,e=.02*ppm;
+  c.beginPath();for(let j=0;j<b.rows;j++)for(let i=0;i<b.cols;i++)if(b.on(i,j))c.rect(x0+i*p-e,y0+j*p-e,p+2*e,p+2*e);c.fill();
+}
 const CHARACTERS={
  click:{name:'클릭이',label:'클릭',base:c=>{c.save();c.rotate(-.1);rr(c,-5.2,-4.8,10.4,9.6,2.8);c.restore();},
   top:c=>{ell(c,-2,-.6,.65,1.05);ell(c,2,-.6,.65,1.05);arcLine(c,0,.9,1.6,.35,Math.PI-.35,.9);ell(c,-3.6,2,.95,.7);ell(c,3.6,2,.95,.7);}},
@@ -112,7 +147,14 @@ const CHARACTERS={
  ghost:{name:'유령',label:'👻',base:c=>{c.beginPath();c.moveTo(-4.4,-.8);c.arc(0,-.8,4.4,Math.PI,0);c.lineTo(4.4,4.4);for(let i=0;i<3;i++){const x=4.4-i*2.933;c.quadraticCurveTo(x-.73,6.3,x-1.47,4.6);c.quadraticCurveTo(x-2.2,6.3,x-2.933,4.4);}c.closePath();c.fill();},
   top:c=>{ell(c,-1.5,-.8,.62,.88);ell(c,1.5,-.8,.62,.88);ell(c,0,1.4,.8,.6);ell(c,-2.8,.7,.85,.58);ell(c,2.8,.7,.85,.58);}},
  whale:{name:'고래',label:'🐳',base:c=>{ell(c,.8,1.4,4.8,3.6);poly(c,[[-3.6,.9],[-6,-2.8],[-4.7,-1.2],[-3.3,-2.9]],.6);circ(c,1.6,-3.3,.7);circ(c,.7,-4.4,.62);circ(c,2.5,-4.4,.62);},
-  top:c=>{circ(c,2.2,.6,.6);arcLine(c,2.4,1.8,1.1,.35,Math.PI-.35,.7);}}
+  top:c=>{circ(c,2.2,.6,.6);arcLine(c,2.4,1.8,1.1,.35,Math.PI-.35,.7);}},
+ slime:{name:'슬라임',label:'▦',pixel:true,...sprite(["..########..", ".#oooooooo#.", ".#oooooooo#.", ".#o##oo##o#.", ".#o##oo##o#.", ".#oooooooo#.", ".#ooo##ooo#.", ".#oooooooo#.", ".#oooooooo#.", "..########.."])},
+ pheart:{name:'픽셀 하트',label:'▦',pixel:true,...sprite(["..##....##..", ".####..####.", "############", "#oo#########", "#o##########", "############", ".##########.", "..########..", "...######...", "....####....", ".....##....."])},
+ mushroom:{name:'버섯',label:'▦',pixel:true,...sprite(["...######...", "..##oo####..", ".###oo##oo#.", ".#######oo#.", ".##oo######.", ".##oo######.", "....####....", "....#oo#....", "....#oo#....", "...######..."])},
+ gem:{name:'보석',label:'▦',pixel:true,...sprite(["...######...", "..#oooooo#..", ".#oo####oo#.", "############", ".##oooooo##.", "..##oooo##..", "...##oo##...", "....####....", ".....##....."])},
+ pcat:{name:'픽셀 고양이',label:'▦',pixel:true,...sprite([".#........#.", ".##......##.", ".###....###.", ".##########.", ".#oooooooo#.", ".#o#oooo#o#.", ".#oooooooo#.", ".#ooo##ooo#.", ".#oooooooo#.", "..########.."])},
+ grass:{name:'잔디 블록',label:'▦',pixel:true,...sprite(["oooooooooooo", "oooooooooooo", "oooooooooooo", "o#oo#ooo#oo#", "##o####o####", "############", "###o#####o##", "############", "#o######o###", "############", "####o#######", "############"])},
+ sword:{name:'검',label:'▦',pixel:true,...sprite([".....##.....", "....#oo#....", "....#oo#....", "....#oo#....", "....#oo#....", "....#oo#....", "....#oo#....", "..########..", "..########..", ".....##.....", ".....##.....", "....####...."])}
 };
 /* Frames that hold initials (heart, badge, cloud, speech bubble): the frame is the body, the initials stand on it. */
 const FRAMES={
@@ -124,6 +166,7 @@ const FRAMES={
 const PICTURE_TAG=/^[A-Z0-9]{1,3}$/;
 // Initials in mm, fitted into a w x h box centred at (x, y); bold widens the strokes like the letter mode does.
 function fitText(c,text,x,y,w,h,font,bold){
+  if(font.pixel){const n=[...text],gw=w/(n.length*6-1);n.forEach((ch,i)=>drawPixelGlyph(c,ch,x-w/2+gw*(i*6+2.5),y,gw*5,h,1));return;}
   c.save();c.font=`${font.weight} 100px "${font.family}", "Apple SD Gothic Neo", sans-serif`;c.textBaseline='alphabetic';c.textAlign='left';
   const m=c.measureText(text),l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight||0,a=m.actualBoundingBoxAscent||0,d=m.actualBoundingBoxDescent||0;
   if(l+r>0&&a+d>0){const s=Math.min((w-2*bold)/(l+r),(h-2*bold)/(a+d));c.translate(x,y);c.scale(s,s);c.fillText(text,-(r-l)/2,-(d-a)/2);if(bold>0){c.lineWidth=2*bold/s;c.lineJoin='round';c.strokeText(text,-(r-l)/2,-(d-a)/2);}}
@@ -138,7 +181,7 @@ function cut(c,draw){c.save();c.globalCompositeOperation='destination-out';draw(
 // A picture's two levels. part: 'base' (body) | 'top' (details standing on it) | 'flat' (body minus details: what
 // engrave and stamp use). tag: initials, inside a frame or under a smaller picture.
 function pictureLevels(id,tag,font,bold){
-  const ch=CHARACTERS[id],fr=FRAMES[id],t=tag&&PICTURE_TAG.test(tag)?tag:'';
+  const ch=CHARACTERS[id],fr=FRAMES[id],t=tag&&PICTURE_TAG.test(tag)?tag:'';if(ch?.pixel)font=PIXEL_FONT_FACE;
   // The plain heart keeps the classic icon; with initials it becomes the bigger frame.
   if(fr&&(t||id!=='heart'))return {base:c=>fr.base(c),top:fr.top||t?c=>{fr.top?.(c);if(t)fitText(c,t,...fr.inner,font,bold);}:null};
   const below=draw=>t?c=>{c.save();c.translate(0,-2.2);c.scale(.74,.74);draw(c);c.restore();}:draw,tagBelow=c=>{if(t)fitText(c,t,0,4.5,8.6,3.2,font,bold);};
@@ -212,6 +255,11 @@ function contentLayer(cw, ch, ppm, mirror, font, list){
   const fs = 200;
   lx.font = `${font.weight} ${fs}px "${font.family}", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`;
   lx.textBaseline='alphabetic'; lx.textAlign='left';
+  if(font.pixel){ // blocks, no rounded bold (it would melt the corners)
+    list.forEach((chr,i)=>{const cell=cells[i];if(cell)drawPixelGlyph(lx,chr,cell.x+cell.w/2,cell.y+cell.h/2,cell.w,cell.h,ppm);});
+    if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*k*cs*ppm,2.8*k*cs*ppm);
+    return L;
+  }
   list.forEach((chr,i)=>{
     const cell = cells[i]; if(!cell) return;
     const m = lx.measureText(chr);
