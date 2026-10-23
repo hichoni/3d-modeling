@@ -77,10 +77,15 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
    await mw.click('#plateImport');await mw.waitForFunction(()=>studioModels.length===2,null,{timeout:10000});console.log('makerworld import:',await mw.evaluate(()=>studioModels.map(m=>m.name).join(' + ')+' · '+studioSettings().quality));await mw.close();}
   // Chrome's Direct Sockets drops bytes on back-to-back writes and on early close; the transport must still deliver
   // every byte, then a FIN, to a receiver that reads as slowly as an A1 mini writing to its SD card.
-  {const slow=await new Promise(res=>{let got=0,fin=false;const srv=net.createServer(c=>{c.on('data',b=>{got+=b.length;c.pause();setTimeout(()=>c.resume(),b.length/30000*1000);});c.on('end',()=>{fin=true;c.end();});}).listen(6000,'127.0.0.1',()=>res({srv,stat:()=>({got,fin})}));});
-   await boothUi.evaluate(async()=>{const t=await DirectSockets.openTcp('127.0.0.1',6000);for(let i=0;i<11;i++)await t.write(new Uint8Array(16384).fill(i));await new Promise(r=>setTimeout(r,8000));await t.close();});
+  // Closing a TCPSocket drops bytes it has not sent yet (the app waits for the printer's reply before closing), so
+  // close only once the receiver has everything, up to 30 s. Record which chunk each byte came from: a lost tail is
+  // that timing; a hole in the middle is the overwritten-write bug.
+  {const slow=await new Promise(res=>{let got=0,fin=false;const seen=new Map();const srv=net.createServer(c=>{c.on('data',b=>{got+=b.length;for(const v of b)seen.set(v,(seen.get(v)||0)+1);c.pause();setTimeout(()=>c.resume(),b.length/30000*1000);});c.on('end',()=>{fin=true;c.end();});}).listen(6000,'127.0.0.1',()=>res({srv,stat:()=>({got,fin,chunks:[...seen].map(([v,n])=>v+':'+n).join(' ')})}));});
+   await boothUi.evaluate(async()=>{const t=await DirectSockets.openTcp('127.0.0.1',6000);for(let i=0;i<11;i++)await t.write(new Uint8Array(16384).fill(i));window.__slow=t;});
+   for(let i=0;i<120&&slow.stat().got<11*16384;i++)await booth.waitForTimeout(250);
+   await boothUi.evaluate(()=>window.__slow.close());
    for(let i=0;i<40&&!slow.stat().fin;i++)await booth.waitForTimeout(250);const st=slow.stat();slow.srv.close();
-   console.log('slow receiver:',st.got,'bytes',st.fin?'+ FIN':'(no FIN)');if(st.got!==11*16384||!st.fin)throw Error('Direct Sockets transport lost data or never closed');}
+   console.log('slow receiver:',st.got,'bytes',st.fin?'+ FIN':'(no FIN)');if(st.got!==11*16384||!st.fin)throw Error('Direct Sockets transport lost data or never closed · chunks '+st.chunks);}
   const real=errors.filter(e=>!/favicon|ERR_FILE_NOT_FOUND/.test(e));console.log('page errors:',real.length?real:'none');
   if(!entries.has('Metadata/plate_1.png')||real.length)throw Error('E2E expectations failed');console.log('E2E OK');await finish(0);
  }catch(e){console.error('E2E FAILED:',e.message,errors);try{const pg=ctx.pages().at(-1);console.error('state:',await pg.evaluate(()=>document.getElementById('printMonitor')?.innerText+' | toast: '+document.getElementById('toast')?.textContent+' | dialog: '+(document.getElementById('printDialog')?.open?document.getElementById('printDialog').innerText.slice(-300):'closed')).catch(x=>x.message));console.error('console:',consoleLog.slice(-15));}catch{}if(shots)await ctx.pages().at(-1)?.screenshot({path:path.join(shots,'iwa-failure.png')}).catch(()=>{});await finish(1);}
