@@ -29,7 +29,7 @@ const LAUNCHER=launcher({FONTS:'/fonts/',DEVICE:'크롬북',BOOTH:'/open.html?pa
  NOTE:'항상 최신 버전으로 열려요(인터넷이 없으면 앱 안의 <a href="/booth.html">키캡 체험</a>·<a href="/studio.html#connect=1">스튜디오</a>). 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.'});
 function launcher(values){return fs.readFileSync(path.join(root,'src/launcher.html'),'utf8').replace(/<!-- The launcher[^>]*-->/,'').replace(/\{\{(\w+)\}\}/g,(_,k)=>{if(!(k in values))throw Error('launcher: no value for '+k);return values[k];});}
 function page(template,{cssMark,css,jsMark,script,licenseMark,licenses}){
- const html=fs.readFileSync(path.join(root,template),'utf8').replace(/<!-- SITE_ONLY -->[\s\S]*?<!-- \/SITE_ONLY -->/g,'').replace(cssMark,()=>css).replace(`<script>${jsMark}</script>`,()=>`<script src="/tt.js"></script><script src="/${script}"></script>`).replace(licenseMark,()=>`<!-- Bundled third-party licenses\n${licenses.replace(/-->/g,'')}\n-->`);
+ const html=fs.readFileSync(path.join(root,template),'utf8').replace(/<!-- SITE_ONLY -->[\s\S]*?<!-- \/SITE_ONLY -->/g,'').replace(/href="home\.html"/g,'href="/"').replace(cssMark,()=>css).replace(`<script>${jsMark}</script>`,()=>`<script src="/tt.js"></script><script src="/${script}"></script>`).replace(licenseMark,()=>`<!-- Bundled third-party licenses\n${licenses.replace(/-->/g,'')}\n-->`);
  if(/<script>(?!<\/script>)/.test(html.replace(/<script src="\/[a-z-]+\.js"><\/script>/g,'')))throw Error(template+': inline script left in the IWA page');
  return html.replace(/\r\n/g,'\n');
 }

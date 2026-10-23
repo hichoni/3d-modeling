@@ -41,3 +41,7 @@
 .studio-brand .brand-org{display:flex;align-items:baseline;gap:5px;margin-top:3px;line-height:1.1;white-space:nowrap}
 .studio-brand .brand-org b{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#2563eb}
 .studio-brand .brand-org em{font-style:normal;font-size:8px;letter-spacing:0;color:var(--muted)}
+/* Launcher link and AIERA credit */
+.home-link{display:inline-flex;align-items:center;height:36px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:#fff;color:inherit;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.home-link:hover{border-color:#2563eb;color:#2563eb}
+.made-by{display:inline-flex;align-items:center;gap:7px;margin:10px auto 4px;padding:5px 12px 5px 5px;border-radius:999px;background:#172846;color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.made-by b{background:#ff525f;border-radius:999px;padding:2px 9px;font-size:11px;letter-spacing:1.5px}.made-by:hover{outline:2px solid #2563eb;outline-offset:2px}
+.brand-org b{font-size:11px}.brand-org em{font-size:10px}
