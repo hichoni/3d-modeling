@@ -25,7 +25,9 @@ function icon(size){
 const TRUSTED_TYPES="if(self.trustedTypes&&trustedTypes.createPolicy&&!trustedTypes.defaultPolicy)trustedTypes.createPolicy('default',{createHTML:s=>s,createScriptURL:s=>s});\n";
 const OPEN_PAGE=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio</title><style>html,body{margin:0;height:100%;background:#f6f1e8;font-family:system-ui,sans-serif;color:#5b6475}body::before{content:'최신 Click Studio를 여는 중…';position:fixed;inset:0;display:grid;place-items:center;font-size:14px}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent}</style></head><body><script src="/tt.js"></script><script src="/shell.js"></script></body></html>`;
 // The launcher (대문): who made the app and why, then the two ways in. Source in src/launcher.html.
-const LAUNCHER=fs.readFileSync(path.join(root,'src/launcher.html'),'utf8').replace('{{VERSION}}',VERSION);
+const LAUNCHER=launcher({FONTS:'/fonts/',DEVICE:'크롬북',BOOTH:'/open.html?page=booth',STUDIO:'/open.html?page=studio#connect=1',VERSION:'v'+VERSION,
+ NOTE:'항상 최신 버전으로 열려요(인터넷이 없으면 앱 안의 <a href="/booth.html">키캡 체험</a>·<a href="/studio.html#connect=1">스튜디오</a>). 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.'});
+function launcher(values){return fs.readFileSync(path.join(root,'src/launcher.html'),'utf8').replace(/<!-- The launcher[^>]*-->/,'').replace(/\{\{(\w+)\}\}/g,(_,k)=>{if(!(k in values))throw Error('launcher: no value for '+k);return values[k];});}
 function page(template,{cssMark,css,jsMark,script,licenseMark,licenses}){
  const html=fs.readFileSync(path.join(root,template),'utf8').replace(cssMark,()=>css).replace(`<script>${jsMark}</script>`,()=>`<script src="/tt.js"></script><script src="/${script}"></script>`).replace(licenseMark,()=>`<!-- Bundled third-party licenses\n${licenses.replace(/-->/g,'')}\n-->`);
  if(/<script>(?!<\/script>)/.test(html.replace(/<script src="\/[a-z-]+\.js"><\/script>/g,'')))throw Error(template+': inline script left in the IWA page');
@@ -47,4 +49,4 @@ function buildApp({fonts,licenses,boothJS,studioJS}){
  for(const [name,data] of Object.entries(files))fs.writeFileSync(path.join(out,name),data);
  console.log('Built Isolated Web App files in artifacts/iwa-app ('+Object.keys(files).length+' files, v'+VERSION+')');return {out,version:VERSION,files:Object.keys(files)};
 }
-module.exports={buildApp,manifest,VERSION,UPDATE_URL,REMOTE,out};
+module.exports={launcher,buildApp,manifest,VERSION,UPDATE_URL,REMOTE,out};

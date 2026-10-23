@@ -31,5 +31,9 @@ fs.writeFileSync('setup.html',setup.replace(/\r\n/g,'\n'));console.log('Built of
 const bundleInfo=fs.existsSync('downloads/click-studio.json')?JSON.parse(fs.readFileSync('downloads/click-studio.json','utf8')):null;
 const chromebook=fs.readFileSync('src/chromebook.html','utf8').replace('/* SETUP_CSS */',fs.readFileSync('src/setup.css','utf8')).replace('/* CHROMEBOOK_CSS */',fs.readFileSync('src/chromebook.css','utf8')).replace('/* CHROMEBOOK_JS */',()=>fs.readFileSync('src/chromebook.js','utf8').replace('/* APK_INFO */null',()=>{const f='downloads/click-studio-android.json';if(!fs.existsSync(f))return 'null';const a=JSON.parse(fs.readFileSync(f,'utf8'));return JSON.stringify({version:a.version,bytes:a.bytes,signerSha256:a.signerSha256});}).replace('/* BUNDLE_INFO */null',JSON.stringify(bundleInfo&&{version:bundleInfo.version,bytes:bundleInfo.bytes,bundleId:bundleInfo.bundleId})).replace(/<\/script/gi,'<\\/script'));
 fs.writeFileSync('chromebook.html',chromebook.replace(/\r\n/g,'\n'));console.log('Built offline chromebook.html ('+(Buffer.byteLength(chromebook)/1024).toFixed(0)+' KB)');
+// The tablet app's launcher (대문): the Chromebook app's, pointing at the site's pages (android-bridge.js opens it).
+const home=require('./build-iwa-app.cjs').launcher({FONTS:'fonts/',DEVICE:'크롬북·태블릿',BOOTH:'index.html',STUDIO:'studio.html#connect=1',VERSION:apkVersion?'태블릿 앱 v'+apkVersion:'',
+ NOTE:'항상 사이트의 최신 화면으로 열려요. 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.'});
+fs.writeFileSync('home.html',home.replace(/\r\n/g,'\n'));console.log('Built home.html (tablet app launcher)');
 require('./package-operator.cjs').packageOperator();
 require('./build-iwa-app.cjs').buildApp({fonts,licenses,boothJS:concat(boothScripts),studioJS:concat(studioScripts)});

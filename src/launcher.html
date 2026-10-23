@@ -1,6 +1,6 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio · AIERA</title><style>
-@font-face{font-family:'Jua';src:url(/fonts/Jua-Regular.ttf) format('truetype');font-display:swap}
-@font-face{font-family:'Do Hyeon';src:url(/fonts/DoHyeon-Regular.ttf) format('truetype');font-display:swap}
+<!doctype html><!-- The launcher (대문) for the Chromebook app (scripts/build-iwa-app.cjs) and the tablet app (home.html, scripts/build.cjs); {{…}} are filled per build. --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio · AIERA</title><style>
+@font-face{font-family:'Jua';src:url({{FONTS}}Jua-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Do Hyeon';src:url({{FONTS}}DoHyeon-Regular.ttf) format('truetype');font-display:swap}
 :root{--ink:#172846;--muted:#5b6475;--coral:#ff525f;--orange:#ff7a45;--paper:#fff8ec;--line:#eadfcd}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%}
 body{min-height:100vh;display:grid;place-items:center;padding:28px 20px;font-family:system-ui,'Noto Sans KR',sans-serif;color:var(--ink);
@@ -43,19 +43,19 @@ footer a{color:var(--muted)}
  <span class="seal" aria-label="AIERA 자체 제작"><span><b>AIERA</b>자체 제작<br>교육용 앱</span></span>
  <div class="title"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="6" width="56" height="52" rx="15" fill="#ff525f"/><rect x="4" y="6" width="56" height="52" rx="15" fill="none" stroke="#172846" stroke-width="3"/><ellipse cx="23" cy="29" rx="4.2" ry="6" fill="#172846"/><ellipse cx="41" cy="29" rx="4.2" ry="6" fill="#172846"/><path d="M24 42q8 7 16 0" fill="none" stroke="#172846" stroke-width="3.4" stroke-linecap="round"/><ellipse cx="14" cy="41" rx="4" ry="2.6" fill="#ffb0b6"/><ellipse cx="50" cy="41" rx="4" ry="2.6" fill="#ffb0b6"/></svg>
   <h1>Click Studio<small>상상을 클릭하다 · 3D 프린팅 교육 앱</small></h1></div>
- <p class="pitch">크롬북이 3D 프린터와<br><em>직접 이야기</em>해요</p>
- <p class="lead"><b>안동발명교육연구회(AIERA)</b>가 학생 교육을 위해 <b>직접 만든 앱</b>이에요. 원래 3D 프린터는 출력 PC와 전용 프로그램이 있어야 했지만, Click Studio는 <b>크롬북에서 프린터와 바로 통신</b>하도록 새로 만들었어요. 학생들이 디자인부터 슬라이싱, 진짜 출력까지 한자리에서 해보며 3D 프린터를 <b>쉽고 재미있게</b> 처음 만나요.</p>
+ <p class="pitch">{{DEVICE}}이 3D 프린터와<br><em>직접 이야기</em>해요</p>
+ <p class="lead"><b>안동발명교육연구회(AIERA)</b>가 학생 교육을 위해 <b>직접 만든 앱</b>이에요. 원래 3D 프린터는 출력 PC와 전용 프로그램이 있어야 했지만, Click Studio는 <b>{{DEVICE}}에서 프린터와 바로 통신</b>하도록 새로 만들었어요. 학생들이 디자인부터 슬라이싱, 진짜 출력까지 한자리에서 해보며 3D 프린터를 <b>쉽고 재미있게</b> 처음 만나요.</p>
  <ul class="points">
-  <li><span>🔌</span>크롬북 ↔ 프린터 직접 연결</li>
+  <li><span>🔌</span>{{DEVICE}} ↔ 프린터 직접 연결</li>
   <li><span>🖥️</span>출력 PC 필요 없음</li>
   <li><span>⏱️</span>5분 만에 내 작품</li>
-  <li><span>🏫</span>학교 크롬북 그대로</li>
+  <li><span>🏫</span>학교 {{DEVICE}} 그대로</li>
  </ul>
 </section>
 <nav class="cards" aria-label="시작하기">
- <a class="card booth" href="/open.html?page=booth"><span class="tag">부스 체험 · 처음이라면 여기!</span><b>3D 키캡 클리커 만들기</b><small>이름·그림·캐릭터·픽셀·도장으로 나만의 조각을 만들고,<br>층층이 쌓이는 원리를 본 뒤 바로 출력해요.</small><i>→</i></a>
- <a class="card" href="/open.html?page=studio#connect=1"><span class="tag">STL 스튜디오</span><b>내 모델 출력하기</b><small>STL·MakerWorld 모델을 불러와 배치하고,<br>레이어를 계산해 A1 mini로 보내요.</small><i>→</i></a>
+ <a class="card booth" href="{{BOOTH}}"><span class="tag">부스 체험 · 처음이라면 여기!</span><b>3D 키캡 클리커 만들기</b><small>이름·그림·캐릭터·픽셀·도장으로 나만의 조각을 만들고,<br>층층이 쌓이는 원리를 본 뒤 바로 출력해요.</small><i>→</i></a>
+ <a class="card" href="{{STUDIO}}"><span class="tag">STL 스튜디오</span><b>내 모델 출력하기</b><small>STL·MakerWorld 모델을 불러와 배치하고,<br>레이어를 계산해 A1 mini로 보내요.</small><i>→</i></a>
 </nav>
-<footer><span>© AIERA 안동발명교육연구회 · 학생 3D 프린팅 교육용 자체 제작 앱 · v{{VERSION}}</span>
- <span>항상 최신 버전으로 열려요(인터넷이 없으면 앱 안의 <a href="/booth.html">키캡 체험</a>·<a href="/studio.html#connect=1">스튜디오</a>). 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.</span></footer>
+<footer><span>© AIERA 안동발명교육연구회 · 학생 3D 프린팅 교육용 자체 제작 앱 · {{VERSION}}</span>
+ <span>{{NOTE}}</span></footer>
 </main></body></html>
