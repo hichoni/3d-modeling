@@ -5,9 +5,6 @@
 (function(root){
  const native=root.ClickNative;
  if(!native||typeof native.postMessage!=='function'||root.TCPSocket)return;
- // Like the Chromebook app, the tablet app opens on the launcher (home.html), once per app session. Only on the live
- // site: the copy packaged in the app for offline use has no launcher.
- try{if(root.location.hostname==='hichoni.github.io'&&/\/(index\.html)?$/.test(root.location.pathname)&&!root.sessionStorage.getItem('click-home')){root.sessionStorage.setItem('click-home','1');root.location.replace('home.html');return;}}catch{}
  const waiting=new Map(),sockets=new Map();let next=1;
  const b64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s);};
  const unb64=text=>{const s=atob(text||''),out=new Uint8Array(s.length);for(let i=0;i<s.length;i++)out[i]=s.charCodeAt(i);return out;};
