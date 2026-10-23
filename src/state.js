@@ -14,7 +14,6 @@ function restoreDesign(input){
  if(typeof input?.text==='string'&&validText(input.text)&&Array.from(input.text).length<=4)out.text=input.text;
  if([.6,.8,1].includes(input?.relief))out.relief=input.relief;
  if(typeof input?.tag==='string'&&/^[A-Z0-9]{0,3}$/.test(input.tag))out.tag=input.tag;
- if(out.mode==='through'&&out.content!=='icon')out.mode='relief';
  if(out.kind==='stamp20')out.mode='stamp';
  return out;
 }

@@ -246,9 +246,9 @@ function contentLayer(cw, ch, ppm, mirror, font, list){
   if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*cs*ppm,characterPart,S.mode==='through'?'':S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k*cs;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
-  const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+(activeEdge()==='none'?gapMm:EDGE_MARGIN))*ppm, n, S.layout);
+  const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+(activeEdge()!=='none'?EDGE_MARGIN:S.mode==='through'?THROUGH_RIM:gapMm))*ppm, n, S.layout);
   if(!box) return L;
-  const g = 0.035*Math.min(box.w, box.h);
+  const g = Math.max(0.035*Math.min(box.w, box.h), S.mode==='through'?1.1*ppm:0); // cut-through: >= 1 mm wall between letters
   const decorated=S.decoration!=='none';
   const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*k*cs*ppm:0)}, g);
   lastCellMinMm = Math.min(...cells.map(c=>Math.min(c.w,c.h)))/ppm;
@@ -473,29 +473,80 @@ function buildGeometries(){
   }
   return {parts, totalH: top, w, h, handleTop};
 }
-/* Cut-through (뚫림): the picture's silhouette is cut through a 2.1 mm plate so the keycap base shows. Only pictures,
-   and the cut is made island-free: holes closer than 1 mm merge (no thin webs), enclosed bits (a leaf's vein, the
-   inside of a ring) join the hole, and the plate left over must be one piece. Details and initials are dropped. */
-const THROUGH_T=2.1,THROUGH_SCALE=.82,THROUGH_CLOSE=.5;
+/* Cut-through (뚫림): the design is cut through a 2.1 mm plate so the keycap base shows, with nothing that can fall
+   out or snap on an A1 mini's 0.4 mm nozzle (lines ~0.42 mm):
+   - holes closer than 1 mm merge (0.5 mm closing), so every wall left is >= 1 mm (0.8 mm, two lines, in letters);
+   - pictures: enclosed bits (a leaf's vein, the inside of a ring) join the hole; details and initials are dropped;
+   - letters (stencil): every loose centre (ㅁ, ㅇ, A) is tied to the plate by 1.2 mm bridges, about three printed lines,
+     through the full plate depth - two on opposite sides when the piece is bigger than 3 mm²; smaller ones and
+     hole slivers under 0.5 mm² are dropped;
+   - the plate left over must be one piece, or the design is refused. */
+const THROUGH_T=2.1,THROUGH_SCALE=.82,THROUGH_CLOSE=.5,THROUGH_CLOSE_TEXT=.4,THROUGH_RIM=1.6,THROUGH_BRIDGE=1.2,THROUGH_TWO_BRIDGES=3,THROUGH_MIN_PIECE=.5;
+// What a cut-through text may hold on a 14 mm plate: one Hangul syllable, or up to two Latin letters/digits. Two Hangul
+// syllables leave the gaps between strokes under 0.8 mm, which a 0.4 mm nozzle cannot keep apart.
+function throughTextIssue(){
+  if(S.mode!=='through'||S.content==='icon')return '';const list=chars(),hangul=list.some(c=>!PIXEL_FONT[c.toUpperCase()]);
+  if(hangul&&list.length>1)return '뚫림 한글은 1자만 돼요. 2자면 획 사이가 0.8mm보다 좁아 0.4mm 노즐로 뚫리지 않아요.';
+  if(list.length>2)return '뚫림 영문·숫자는 2자까지예요.';
+  if(fontById(S.font).pixel&&list.length>1)return '픽셀 글씨 뚫림은 1자만 돼요. 블록 하나짜리 구멍에 다리를 놓으면 글자가 무너져요.';
+  return '';
+}
+// Pixels of each 4-connected component of mask (values > 0), largest first.
+function components(mask,W,H){
+  const seen=new Uint8Array(W*H),out=[];
+  for(let s=0;s<W*H;s++){if(!mask[s]||seen[s])continue;const list=[s],st=[s];seen[s]=1;
+    while(st.length){const i=st.pop(),x=i%W;for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(j>=0&&j<W*H&&mask[j]&&!seen[j]){seen[j]=1;st.push(j);list.push(j);}}
+    out.push(list);}
+  return out.sort((a,b)=>b.length-a.length);
+}
+// Ties each loose piece of material to the main plate with bridges painted across the hole (cut: 1 = hole).
+function bridgeIslands(cut,inside,W,H,ppm){
+  for(let round=0;round<4;round++){
+    const mat=new Uint8Array(W*H);for(let i=0;i<W*H;i++)mat[i]=inside[i]&&!cut[i]?1:0;
+    const parts=components(mat,W,H);if(parts.length<=1)return;
+    const main=parts[0],dist=new Int32Array(W*H).fill(-1),from=new Int32Array(W*H).fill(-1),q=new Int32Array(W*H);let qh=0,qt=0;
+    for(const i of main){dist[i]=0;q[qt++]=i;}
+    while(qh<qt){const i=q[qh++],x=i%W;for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(j>=0&&j<W*H&&dist[j]<0&&cut[j]&&inside[j]){dist[j]=dist[i]+1;from[j]=i;q[qt++]=j;}}
+    const r=THROUGH_BRIDGE/2*ppm,paint=i=>{const cx=i%W,cy=(i-cx)/W;for(let y=Math.floor(cy-r);y<=cy+r;y++)for(let x=Math.floor(cx-r);x<=cx+r;x++){if(x<0||y<0||x>=W||y>=H)continue;const k=y*W+x;if((x-cx)**2+(y-cy)**2<=r*r&&inside[k])cut[k]=0;}};
+    for(const piece of parts.slice(1)){
+      if(piece.length<THROUGH_MIN_PIECE*ppm*ppm){for(const i of piece)cut[i]=1;continue;} // a crumb: let it be hole
+      // landing points: hole pixels next to the piece, nearest the main plate first
+      const land=[];for(const i of piece){const x=i%W;for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(j>=0&&j<W*H&&cut[j]&&dist[j]>0)land.push([dist[j],j,i]);}
+      if(!land.length)continue;land.sort((a,b)=>a[0]-b[0]);
+      const ends=[land[0]];
+      if(piece.length>=THROUGH_TWO_BRIDGES*ppm*ppm){const [,,p0]=land[0],x0=p0%W,y0=(p0-x0)/W;let best=null,bestD=0;
+        for(const l of land){const x=l[2]%W,y=(l[2]-x)/W,d=Math.hypot(x-x0,y-y0);if(d>bestD+1e-9&&l[0]<=land[0][0]*2.5+2*ppm){bestD=d;best=l;}}
+        if(best&&bestD>=2.5*ppm)ends.push(best);}
+      for(const [,start,at] of ends){paint(at);for(let j=start;j>=0&&dist[j]>0;j=from[j])paint(j);}
+    }
+  }
+}
 function throughGeometries(w,h,cw,ch,ppm,face,toShapes){
+  const issue=throughTextIssue();if(issue)throw Error(issue);
+  const text=S.content!=='icon';
   const n=cw*ch,pic=face('base'),inv=new Float32Array(n);for(let i=0;i<n;i++)inv[i]=1-pic[i];
-  const out=distanceInside(inv,cw,ch),r=THROUGH_CLOSE*ppm,dil=new Float32Array(n);for(let i=0;i<n;i++)dil[i]=pic[i]>=.5||out[i]<=r?1:0;
+  const out=distanceInside(inv,cw,ch),r=(text?THROUGH_CLOSE_TEXT:THROUGH_CLOSE)*ppm,dil=new Float32Array(n);for(let i=0;i<n;i++)dil[i]=pic[i]>=.5||out[i]<=r?1:0;
   const din=distanceInside(dil,cw,ch),cut=new Uint8Array(n);for(let i=0;i<n;i++)cut[i]=din[i]>=r?1:0;
-  // fill enclosed pockets: whatever is not cut and not reachable from the canvas edge joins the hole
-  const reach=new Uint8Array(n),stack=[];for(let x=0;x<cw;x++)stack.push(x,(ch-1)*cw+x);for(let y=0;y<ch;y++)stack.push(y*cw,y*cw+cw-1);
+  // pictures: fill enclosed pockets (whatever is not cut and not reachable from the canvas edge joins the hole)
+  const reach=new Uint8Array(n),stack=[];if(text)for(let i=0;i<n;i++)reach[i]=1;for(let x=0;x<cw;x++)stack.push(x,(ch-1)*cw+x);for(let y=0;y<ch;y++)stack.push(y*cw,y*cw+cw-1);
   while(stack.length){const i=stack.pop();if(reach[i]||cut[i])continue;reach[i]=1;const x=i%cw;if(x>0)stack.push(i-1);if(x<cw-1)stack.push(i+1);if(i>=cw)stack.push(i-cw);if(i<n-cw)stack.push(i+cw);}
   for(let i=0;i<n;i++)if(!reach[i])cut[i]=1;
   const edge=activeEdge();
   if(edge!=='none'){const cv=mkCanvas(cw,ch),c=cv.getContext('2d',{willReadFrequently:true});drawEdge(c,cw/2,ch/2,ppm,edge);const d=c.getImageData(0,0,cw,ch).data;for(let i=0;i<n;i++)if(d[i*4+3]>=128)cut[i]=1;}
-  // the plate left over must be one piece
   const pc=mkCanvas(cw,ch),px=pc.getContext('2d',{willReadFrequently:true});px.fillStyle='#000';shapePath(px,cw/2,ch/2,w*ppm,h*ppm,'rounded',0,ppm);px.fill();
-  const pd=px.getImageData(0,0,cw,ch).data,mat=new Uint8Array(n);let first=-1,total=0;for(let i=0;i<n;i++)if(pd[i*4+3]>=128&&!cut[i]){mat[i]=1;total++;if(first<0)first=i;}
+  const pd=px.getImageData(0,0,cw,ch).data,inside=new Uint8Array(n);for(let i=0;i<n;i++)inside[i]=pd[i*4+3]>=128?1:0;
+  // counters (ㅁ, ㅇ, A centres) the letters had, and how many are still big enough to keep after the 0.4 mm rules
+  let lost=0;if(text){const min=THROUGH_MIN_PIECE*ppm*ppm,count=solid=>components(solid,cw,ch).slice(1).filter(c=>c.length>=min).length;
+    lost=Math.max(0,count(inside.map((v,i)=>v&&pic[i]<.5?1:0))-count(inside.map((v,i)=>v&&!cut[i]?1:0)));}
+  if(text){bridgeIslands(cut,inside,cw,ch,ppm);for(const hole of components(cut,cw,ch))if(hole.length<THROUGH_MIN_PIECE*ppm*ppm)for(const i of hole)cut[i]=0;}
+  // the plate left over must be one piece
+  const mat=new Uint8Array(n);let first=-1,total=0;for(let i=0;i<n;i++)if(inside[i]&&!cut[i]){mat[i]=1;total++;if(first<0)first=i;}
   let seen=0;if(first>=0){const st=[first];mat[first]=2;while(st.length){const i=st.pop();seen++;const x=i%cw;for(const j of [x>0?i-1:-1,x<cw-1?i+1:-1,i-cw,i+cw])if(j>=0&&j<n&&mat[j]===1){mat[j]=2;st.push(j);}}}
   if(seen!==total)throw Error('이 모양은 뚫으면 조각이 떨어져 나가요. 다른 그림이나 테두리를 골라 주세요.');
   const holes=toShapes(Float32Array.from(cut));
   const shape=plateShape(w,h);for(const s of holes)shape.holes.push(new THREE.Path(s.getPoints()));
   const plate=new THREE.ExtrudeGeometry(shape,{depth:THROUGH_T,bevelEnabled:false,curveSegments:72});
-  return {parts:{plate:[plate],relief:[]},totalH:THROUGH_T,w,h,handleTop:0,holes:holes.length};
+  return {parts:{plate:[plate],relief:[]},totalH:THROUGH_T,w,h,handleTop:0,holes:holes.length,throughLost:lost};
 }
 /* Puffy (말랑): a 0.4 mm straight wall, then a quarter-round dome reaching full height 1.1 mm in from the edge.
    Built as 0.2 mm slabs (one per printed layer), each the region at least d(z) inside the outline. */

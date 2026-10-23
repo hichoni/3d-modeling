@@ -1,14 +1,19 @@
 // Direct Sockets transport. Only available inside the installed Isolated Web App (or a test polyfill).
 (function(root){
+const WRITE_PIECE=4096;
 function socketError(code,message){const e=Error(message);e.code=code;return e;}
 function available(){return typeof root.TCPSocket==='function'&&typeof root.UDPSocket==='function';}
 function streamTransport(open,socket){
  const reader=open.readable.getReader(),writer=open.writable.getWriter();let closed=false;
  return {info:{localAddress:open.localAddress,localPort:open.localPort,remoteAddress:open.remoteAddress,remotePort:open.remotePort},
   async read(){if(closed)return null;try{const {value,done}=await reader.read();return done?null:new Uint8Array(value.buffer?value.buffer.slice(value.byteOffset,value.byteOffset+value.byteLength):value);}catch(e){if(closed)return null;throw socketError('SOCKET_READ','프린터와의 연결이 끊겼습니다.');}},
-  // Chrome's TCPSocket can resolve a write before the bytes reach its send pipe, and a write issued right after it
-  // then overwrites them (a file arrives as its first 64 KB plus its last chunk). A timer turn between writes avoids it.
-  async write(data){if(closed)throw socketError('SOCKET_CLOSED','프린터와의 연결이 이미 닫혔습니다.');try{await writer.write(data);}catch{throw socketError('SOCKET_WRITE','프린터로 데이터를 보내지 못했습니다.');}await new Promise(r=>setTimeout(r,0));},
+  // Chrome's TCPSocket can resolve a write before the bytes reach its 64 KB send pipe; a write issued right after it
+  // then drops them (back-to-back writes lose everything past the first 64 KB). A timer turn between writes avoids it
+  // most of the time, but on a busy page a few 16 KB chunks still went missing. Writing in 4 KB pieces, each followed
+  // by a timer turn, keeps the pipe far from full (16 pieces to fill it). Uploads still check the size and retry.
+  async write(data){if(closed)throw socketError('SOCKET_CLOSED','프린터와의 연결이 이미 닫혔습니다.');
+   const bytes=ArrayBuffer.isView(data)?new Uint8Array(data.buffer,data.byteOffset,data.byteLength):new Uint8Array(data);
+   for(let o=0;o<bytes.length;o+=WRITE_PIECE){try{await writer.write(bytes.subarray(o,o+WRITE_PIECE));}catch{throw socketError('SOCKET_WRITE','프린터로 데이터를 보내지 못했습니다.');}await new Promise(r=>setTimeout(r,0));}},
   async close(){if(closed)return;closed=true;
    await Promise.race([writer.close().catch(()=>{}),new Promise(r=>setTimeout(r,3000))]);
    try{await reader.cancel();}catch{}try{reader.releaseLock();}catch{}try{writer.releaseLock();}catch{}try{await socket.close();}catch{}}};

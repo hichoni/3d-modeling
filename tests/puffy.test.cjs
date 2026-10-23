@@ -37,8 +37,23 @@ test('borders: saved designs keep a known style; content shrinks inside it; none
  run(`S.icon='cloud'`);assert.equal(run('activeEdge()'),'wave');run(`Object.assign(S,DEFAULTS)`);
 });
 test('cut-through (뚫림): pictures only, and only borders of separate holes',()=>{
- assert.equal(run(`restoreDesign({content:'icon',mode:'through'}).mode`),'through');assert.equal(run(`restoreDesign({content:'text',mode:'through'}).mode`),'relief');
+ assert.equal(run(`restoreDesign({content:'icon',mode:'through'}).mode`),'through');assert.equal(run(`restoreDesign({content:'text',mode:'through'}).mode`),'through');
  run(`Object.assign(S,DEFAULTS,{content:'icon',icon:'bear',mode:'through',edge:'line'})`);assert.equal(run('activeEdge()'),'none','a ring would cut the plate in two');
  run(`S.edge='dots'`);assert.equal(run('activeEdge()'),'dots');run(`S.edge='none'`);assert.equal(run('contentScale()'),run('THROUGH_SCALE'));
  assert.ok(run('THROUGH_T')>=2,'printer rules need at least 2 mm');run(`Object.assign(S,DEFAULTS)`);
+});
+test('stencil bridges: a ring hole gets two 1.2 mm bridges and the plate ends up one piece',()=>{
+ const W=200,H=200,ppm=10,cut=new Uint8Array(W*H),inside=new Uint8Array(W*H).fill(1);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const r=Math.hypot(x-100,y-100);if(r>=30&&r<60)cut[y*W+x]=1;} // ring: a 28 mm² loose centre
+ c.cut=cut;c.inside=inside;run(`bridgeIslands(cut,inside,${W},${H},${ppm})`);
+ const mat=Uint8Array.from(inside,(v,i)=>v&&!cut[i]?1:0);c.mat=mat;c.cut=cut;
+ assert.equal(run(`components(mat,${W},${H}).length`),1,'nothing loose');assert.equal(run(`components(cut,${W},${H}).length`),2,'two bridges split the ring');
+ // each bridge is at least 1.2 mm (12 px) wide: walk across the ring at the bridges' angles
+ let widest=0;for(let a=0;a<360;a+=.5){let run_=0,best=0;for(let t=-30;t<=30;t+=.5){const x=Math.round(100+45*Math.cos(a*Math.PI/180)+t*Math.sin(a*Math.PI/180)),y=Math.round(100+45*Math.sin(a*Math.PI/180)-t*Math.cos(a*Math.PI/180));if(!cut[y*W+x]){run_+=.5;best=Math.max(best,run_);}else run_=0;}widest=Math.max(widest,best);}
+ assert.ok(widest>=11.5,'bridge width '+widest+' px');
+});
+test('cut-through letters: one Hangul syllable, two Latin letters, one pixel character',()=>{
+ const issue=(text,font='jua')=>run(`(Object.assign(S,DEFAULTS,{text:${JSON.stringify(text)},font:'${font}',mode:'through'}),throughTextIssue())`);
+ assert.equal(issue('봄'),'');assert.equal(issue('SM'),'');assert.match(issue('수민'),/한글은 1자/);assert.match(issue('ABC'),/2자까지/);assert.match(issue('AB','pixel'),/1자만/);assert.equal(issue('꿈','pixel'),'');
+ run(`Object.assign(S,DEFAULTS)`);
 });
