@@ -17,7 +17,13 @@ test('puffy slabs keep a straight wall, then shrink inward as they rise to a fla
 });
 test('saved designs accept the puffy mode and the characters, nothing else',()=>{
  assert.equal(run(`restoreDesign({mode:'puffy'}).mode`),'puffy');
- for(const id of ['click','bear','cat','rabbit','chick','frog'])assert.equal(run(`restoreDesign({content:'icon',icon:'${id}'}).icon`),id);
+ for(const id of ['click','bear','cat','rabbit','chick','frog','puppy','panda','penguin','pig','ghost','whale','badge','cloud','bubble'])assert.equal(run(`restoreDesign({content:'icon',icon:'${id}'}).icon`),id);
  assert.equal(run(`restoreDesign({icon:'dragon'}).icon`),'heart');assert.equal(run(`restoreDesign({mode:'balloon'}).mode`),'relief');
- assert.equal(run('Object.keys(CHARACTERS).length'),6);
+ assert.equal(run('Object.keys(CHARACTERS).length'),12);
+ assert.equal(run(`restoreDesign({tag:'SM'}).tag`),'SM');for(const bad of ['sm','ABCD','S M','김'])assert.equal(run(`restoreDesign({tag:${JSON.stringify(bad)}}).tag`),'');
+});
+test('initials: a frame gets them on a second level, the plain heart stays one level without them',()=>{
+ const top=(id,tag)=>!!run(`pictureLevels(${JSON.stringify(id)},${JSON.stringify(tag)},FONTS[0],0).top`);
+ assert.equal(top('heart',''),false);assert.equal(top('heart','SM'),true);assert.equal(top('cloud',''),false);assert.equal(top('cloud','AB'),true);assert.equal(top('badge',''),true,'badge ring');
+ assert.equal(top('bear','SM'),true);assert.equal(top('star','SM'),false,'initials under a simple icon share its level');assert.equal(top('heart','toolong'),false);
 });
