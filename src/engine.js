@@ -164,18 +164,48 @@ function drawSymbol(ctx,kind,x,y,size){
   if(kind==='leaf'){ctx.moveTo(-4,4);ctx.bezierCurveTo(-6,-3,1,-4.5,4.5,-4.5);ctx.bezierCurveTo(5,1,2,6,-4,4);ctx.fill();ctx.globalCompositeOperation='destination-out';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(-3,3);ctx.lineTo(2.6,-2.6);ctx.stroke();}
   ctx.restore();
 }
+/* Border (테두리) round the plate's top. Its outer edge stays 0.6 mm in from the plate edge, clear of the keycap
+   base's crush ribs (they reach 0.3 mm in), so the plate fits the base exactly as without one. Dots >= 0.8 mm, gaps
+   >= 0.5 mm. The content shrinks to keep 0.5 mm clear inside the band. All sizes in mm. */
+const EDGE_CENTER=1.25,EDGE_MARGIN=2.4;
+const EDGES={
+ line:{name:'선',draw:(c,L)=>L(.9,null)},
+ stitch:{name:'점선',draw:(c,L)=>L(.8,[1.4,.9],'butt')},
+ dots:{name:'땡땡이',draw:(c,L)=>L(1.1,[0,1.9])},
+ bubbles:{name:'물방울',draw:(c,L)=>{L(1.3,[0,3.1]);L(.8,[0,3.1],'round',1.55);}},
+ wave:{name:'구름결',draw:(c,L)=>L(1.2,[0,.9])}
+};
+// Initials under a shrunk picture leave no room for a border.
+const edgeAllowed=()=>!(S.content==='icon'&&PICTURE_TAG.test(S.tag||'')&&!FRAMES[S.icon]);
+const activeEdge=()=>EDGES[S.edge]&&edgeAllowed()?S.edge:'none';
+function contentScale(){if(activeEdge()==='none')return 1;const half=plateSize()/2,gap=Math.max(.5,.05*plateSize());return (half-EDGE_MARGIN)/(half-gap);}
+function drawEdge(ctx,cx,cy,ppm,style){
+  const w=plateSize(),side=w-2*EDGE_CENTER,r=Math.max(.3,cornerR(w,w)-EDGE_CENTER),P=4*(side-2*r)+2*Math.PI*r;
+  ctx.save();ctx.strokeStyle='#000';
+  EDGES[style].draw(ctx,(width,dash,cap='round',offset=0)=>{
+    ctx.beginPath();roundRectPath(ctx,cx-side/2*ppm,cy-side/2*ppm,side*ppm,side*ppm,r*ppm);ctx.closePath();
+    ctx.lineWidth=width*ppm;ctx.lineCap=cap;ctx.lineJoin='round';
+    if(dash){const period=dash[0]+dash[1],n=Math.max(8,Math.round(P/period)),k=P/n/period;ctx.setLineDash(dash.map(v=>Math.max(.001,v*k*ppm)));ctx.lineDashOffset=-offset*k*ppm;}else ctx.setLineDash([]);
+    ctx.stroke();});
+  ctx.restore();
+}
 function letterLayer(cw, ch, ppm, mirror, font, list){
+  const out=contentLayer(cw, ch, ppm, mirror, font, list),edge=activeEdge();
+  if(edge!=='none'&&characterPart!=='top')drawEdge(out.getContext('2d'),cw/2,ch/2,ppm,edge);
+  return out;
+}
+function contentLayer(cw, ch, ppm, mirror, font, list){
   const L = mkCanvas(cw, ch), lx = L.getContext('2d');
-  const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14;
+  const {w,h} = dims(); const cx=cw/2, cy=ch/2, k=w/14, cs=contentScale();
   lx.fillStyle=lx.strokeStyle='#000';
-  if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*ppm,characterPart,S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k;return L;}
+  if(S.content==='icon'){if(mirror){lx.translate(cw,0);lx.scale(-1,1);}drawAsset(lx,S.icon,cx,cy,k*cs*ppm,characterPart,S.tag,font,S.bold);lastCellMinMm=(S.tag?7:12)*k*cs;return L;}
   const n = list.length; if(!n) return L;
   const gapMm = Math.max(0.5, 0.05*Math.min(w,h));
-  const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+gapMm)*ppm, n, S.layout);
+  const box = contentBox(w*ppm, h*ppm, S.shape, (S.border+(activeEdge()==='none'?gapMm:EDGE_MARGIN))*ppm, n, S.layout);
   if(!box) return L;
   const g = 0.035*Math.min(box.w, box.h);
   const decorated=S.decoration!=='none';
-  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*k*ppm:0)}, g);
+  const cells = layoutCells(n, S.layout, {x:cx-box.w/2, y:cy-box.h/2, w:box.w, h:box.h-(decorated?3.8*k*cs*ppm:0)}, g);
   lastCellMinMm = Math.min(...cells.map(c=>Math.min(c.w,c.h)))/ppm;
   lx.fillStyle = '#000';
   if(mirror){ lx.translate(cw,0); lx.scale(-1,1); }
@@ -195,7 +225,7 @@ function letterLayer(cw, ch, ppm, mirror, font, list){
     lx.fillText(chr, -(r-l)/2, -(d-a)/2);
     lx.restore();
   });
-  if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*k*ppm,2.8*k*ppm);
+  if(decorated)drawSymbol(lx,S.decoration,cx,cy+4.4*k*cs*ppm,2.8*k*cs*ppm);
   const rad = S.bold*ppm;
   if(rad>=0.4){ // 원형으로 번지게 해서 획을 굵게
     const D = mkCanvas(cw,ch), dx = D.getContext('2d');

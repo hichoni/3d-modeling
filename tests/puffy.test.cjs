@@ -27,3 +27,12 @@ test('initials: a frame gets them on a second level, the plain heart stays one l
  assert.equal(top('heart',''),false);assert.equal(top('heart','SM'),true);assert.equal(top('cloud',''),false);assert.equal(top('cloud','AB'),true);assert.equal(top('badge',''),true,'badge ring');
  assert.equal(top('bear','SM'),true);assert.equal(top('star','SM'),false,'initials under a simple icon share its level');assert.equal(top('heart','toolong'),false);
 });
+test('borders: saved designs keep a known style; content shrinks inside it; none under-picture initials',()=>{
+ assert.equal(run(`restoreDesign({edge:'dots'}).edge`),'dots');assert.equal(run(`restoreDesign({edge:'zigzag'}).edge`),'none');
+ run(`Object.assign(S,DEFAULTS,{edge:'none'})`);assert.equal(run('contentScale()'),1);
+ run(`S.edge='wave'`);assert.ok(Math.abs(run('contentScale()')-(7-2.4)/(7-.7))<1e-9);assert.equal(run('activeEdge()'),'wave');
+ // the band's outer edge (centre 1.25 mm in, widest dot 1.3 mm) stays 0.6 mm inside the plate, clear of the keycap base ribs (0.3 mm)
+ assert.ok(run('EDGE_CENTER')-1.3/2>=.6-1e-9);
+ run(`Object.assign(S,{content:'icon',icon:'rabbit',tag:'SM'})`);assert.equal(run('activeEdge()'),'none');
+ run(`S.icon='cloud'`);assert.equal(run('activeEdge()'),'wave');run(`Object.assign(S,DEFAULTS)`);
+});
