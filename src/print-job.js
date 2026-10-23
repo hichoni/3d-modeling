@@ -18,7 +18,10 @@ function validateSTL(b){
  for(let o=84;o<b.length;o+=50)for(let k=0;k<3;k++){const p=point(o,k);if(!insidePlate(p[0],p[1],size,.002))throw Error('고정된 '+size+'mm 둥근 사각 바깥으로 모델이 벗어납니다.');}
  return {triangles:n,width:hi[0]-lo[0],depth:hi[1]-lo[1],height:hi[2],size};
 }
-function checkReady(mqtt){if(!mqtt?.online||Date.now()-mqtt.lastReportAt>15000)throw Error('프린터의 최신 상태를 확인할 수 없습니다.');const s=mqtt.state;if(!['IDLE','FINISH'].includes(s.gcode_state))throw Error('프린터가 대기 상태가 아닙니다.');if(s.sdcard!==true)throw Error('SD 카드를 확인하세요.');if(Number(s.print_error)!==0)throw Error('프린터 본체의 안내를 확인하세요.');if(String(s.nozzle_diameter)!=='0.4')throw Error('0.4mm 노즐 설정이 필요합니다.');}
+// After a print is stopped or fails, the A1 mini waits in FAILED until the next job (a stop also leaves print_error
+// 0x0300400C, "task cancelled"). Bambu Studio prints from there, so the booth does too.
+const READY_STATES=['IDLE','FINISH','FAILED'],CANCELLED=0x0300400C,STATE_NAMES={RUNNING:'출력 중',PREPARE:'출력 준비 중',PAUSE:'일시 정지',SLICING:'파일 준비 중',INIT:'켜지는 중',OFFLINE:'오프라인'};
+function checkReady(mqtt){if(!mqtt?.online||Date.now()-mqtt.lastReportAt>15000)throw Error('프린터의 최신 상태를 확인할 수 없습니다.');const s=mqtt.state;if(!READY_STATES.includes(s.gcode_state))throw Error('프린터가 대기 상태가 아닙니다'+(s.gcode_state?' (지금: '+(STATE_NAMES[s.gcode_state]||String(s.gcode_state).replace(/[^A-Z_]/g,'').slice(0,16))+')':'')+'. 본체 화면을 확인하세요.');if(s.sdcard!==true)throw Error('SD 카드를 확인하세요.');const error=Number(s.print_error);if(error!==0&&error!==CANCELLED)throw Error('프린터 본체의 안내를 확인하세요. [오류 '+error.toString(16).toUpperCase().padStart(8,'0')+']');if(String(s.nozzle_diameter)!=='0.4')throw Error('0.4mm 노즐 설정이 필요합니다.');}
 function checkStart(job,body,mqtt,active){
  if(job.state!=='queued'||job.startAttempted)throw Error('이 작업은 시작할 수 없습니다. 시작 명령은 반복 전송하지 않습니다.');
  if(active&&!['complete','failed','cancelled'].includes(active.state))throw Error('이전 출력 결과를 먼저 확인하세요.');
@@ -26,7 +29,7 @@ function checkStart(job,body,mqtt,active){
  if(body.bedClear!==true||body.plaReady!==true||body.sha256!==job.sha256)throw Error('선택한 파일, 빈 베드, 외부 PLA 확인이 필요합니다.');
 }
 function matchesJob(state,job){return state.subtask_id!==undefined&&String(state.subtask_id)!=='0'?String(state.subtask_id)===job.printId:state.subtask_name==='Click_'+job.id;}
-function attention(s={}){if(Number(s.print_error)===50364437)return '외부 스풀 필라멘트가 감지되지 않습니다. 본체에서 외부 PLA를 로드한 뒤 다시 시작(Resume)을 선택하세요.';if(Number(s.print_error)===134184967)return '노즐에서 필라멘트가 나오는지 현장에서 확인 후 본체의 계속 또는 재시도를 선택하세요.';if(s.gcode_state==='PAUSE')return '출력이 일시 정지됐습니다. 운영자가 본체 안내를 확인하세요.';if(Number(s.print_error)>0)return '프린터에 확인이 필요한 오류가 있습니다. 본체 안내를 확인하세요.';return '';}
+function attention(s={}){if(Number(s.print_error)===50364437)return '외부 스풀 필라멘트가 감지되지 않습니다. 본체에서 외부 PLA를 로드한 뒤 다시 시작(Resume)을 선택하세요.';if(Number(s.print_error)===134184967)return '노즐에서 필라멘트가 나오는지 현장에서 확인 후 본체의 계속 또는 재시도를 선택하세요.';if(s.gcode_state==='PAUSE')return '출력이 일시 정지됐습니다. 운영자가 본체 안내를 확인하세요.';if(Number(s.print_error)>0&&Number(s.print_error)!==CANCELLED)return '프린터에 확인이 필요한 오류가 있습니다. 본체 안내를 확인하세요.';return '';}
 // Only the two reviewed firmware flags are configurable. Machine/profile settings stay fixed.
 function printOptions(input){
  if(input===undefined)return {bedLeveling:true,flowCalibration:true};
