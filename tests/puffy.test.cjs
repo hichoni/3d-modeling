@@ -36,3 +36,9 @@ test('borders: saved designs keep a known style; content shrinks inside it; none
  run(`Object.assign(S,{content:'icon',icon:'rabbit',tag:'SM'})`);assert.equal(run('activeEdge()'),'none');
  run(`S.icon='cloud'`);assert.equal(run('activeEdge()'),'wave');run(`Object.assign(S,DEFAULTS)`);
 });
+test('cut-through (뚫림): pictures only, and only borders of separate holes',()=>{
+ assert.equal(run(`restoreDesign({content:'icon',mode:'through'}).mode`),'through');assert.equal(run(`restoreDesign({content:'text',mode:'through'}).mode`),'relief');
+ run(`Object.assign(S,DEFAULTS,{content:'icon',icon:'bear',mode:'through',edge:'line'})`);assert.equal(run('activeEdge()'),'none','a ring would cut the plate in two');
+ run(`S.edge='dots'`);assert.equal(run('activeEdge()'),'dots');run(`S.edge='none'`);assert.equal(run('contentScale()'),run('THROUGH_SCALE'));
+ assert.ok(run('THROUGH_T')>=2,'printer rules need at least 2 mm');run(`Object.assign(S,DEFAULTS)`);
+});
