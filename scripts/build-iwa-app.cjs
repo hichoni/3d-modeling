@@ -3,7 +3,7 @@
 // Output: artifacts/iwa-app/ (signed into downloads/click-studio.swbn by tools/iwa/build.cjs).
 const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts','iwa-app');
-const VERSION='1.1.1',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
+const VERSION='1.1.2',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
 function manifest(){return {name:'Click Studio · A1 mini 직접 출력',short_name:'Click Studio',description:'크롬북에서 모델링·슬라이싱하고 같은 Wi-Fi의 Bambu Lab A1 mini로 바로 출력합니다.',id:'/',start_url:'/',scope:'/',display:'standalone',background_color:'#f6f1e8',theme_color:'#ff7a45',lang:'ko',version:VERSION,update_manifest_url:UPDATE_URL,
  icons:[{src:'/icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}],
  permissions_policy:{'cross-origin-isolated':['self'],'direct-sockets':['self'],'direct-sockets-private':['self'],'direct-sockets-multicast':['self'],'local-network':['self'],'loopback-network':['self']}};}
@@ -24,14 +24,8 @@ function icon(size){
 // The IWA requires Trusted Types; the app only assigns markup it builds itself, so a pass-through default policy suffices.
 const TRUSTED_TYPES="if(self.trustedTypes&&trustedTypes.createPolicy&&!trustedTypes.defaultPolicy)trustedTypes.createPolicy('default',{createHTML:s=>s,createScriptURL:s=>s});\n";
 const OPEN_PAGE=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio</title><style>html,body{margin:0;height:100%;background:#f6f1e8;font-family:system-ui,sans-serif;color:#5b6475}body::before{content:'최신 Click Studio를 여는 중…';position:fixed;inset:0;display:grid;place-items:center;font-size:14px}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent}</style></head><body><script src="/tt.js"></script><script src="/shell.js"></script></body></html>`;
-const LAUNCHER=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio</title><style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f6f1e8;font-family:system-ui,'Noto Sans KR',sans-serif;color:#2c3448}main{width:min(560px,92vw)}h1{font-size:28px;margin:0 0 6px}p{color:#5b6475;line-height:1.6}
-a.card{display:block;margin:14px 0;padding:20px 22px;border-radius:18px;background:#fff;color:inherit;text-decoration:none;box-shadow:0 2px 0 #e7dccb}a.card:hover{outline:3px solid #ff7a45}a.card b{display:block;font-size:20px;margin-bottom:4px}small{color:#5b6475}</style></head>
-<body><main><h1>Click Studio</h1><p>크롬북에서 만들고, 슬라이싱하고, 같은 Wi-Fi의 A1 mini로 바로 출력해요. 출력 PC는 필요 없어요.</p>
-<a class="card" href="/open.html?page=studio#connect=1"><b>STL 스튜디오</b><small>STL 불러오기 · 배치 · 레이어 계산 · A1 mini 출력</small></a>
-<a class="card" href="/open.html?page=booth"><b>3D 키캡 클리커 만들기</b><small>이름·그림으로 14mm 조각 만들기 체험</small></a>
-<p><small>항상 사이트의 최신 버전으로 열려요. 인터넷이 없으면 앱에 들어 있는 버전(v${VERSION})으로 열려요 · <a href="/studio.html#connect=1">앱 안의 스튜디오</a> · <a href="/booth.html">앱 안의 키캡 체험</a></small></p>
-<p><small>처음이라면: 프린터에서 LAN Only와 개발자 모드를 켠 뒤, 스튜디오의 [프린터 연결]에서 같은 Wi-Fi의 미니를 찾고 8자리 코드를 입력하세요.</small></p></main></body></html>`;
+// The launcher (대문): who made the app and why, then the two ways in. Source in src/launcher.html.
+const LAUNCHER=fs.readFileSync(path.join(root,'src/launcher.html'),'utf8').replace('{{VERSION}}',VERSION);
 function page(template,{cssMark,css,jsMark,script,licenseMark,licenses}){
  const html=fs.readFileSync(path.join(root,template),'utf8').replace(cssMark,()=>css).replace(`<script>${jsMark}</script>`,()=>`<script src="/tt.js"></script><script src="/${script}"></script>`).replace(licenseMark,()=>`<!-- Bundled third-party licenses\n${licenses.replace(/-->/g,'')}\n-->`);
  if(/<script>(?!<\/script>)/.test(html.replace(/<script src="\/[a-z-]+\.js"><\/script>/g,'')))throw Error(template+': inline script left in the IWA page');

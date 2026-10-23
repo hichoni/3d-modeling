@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Click Studio · AIERA</title><style>
+@font-face{font-family:'Jua';src:url(/fonts/Jua-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Do Hyeon';src:url(/fonts/DoHyeon-Regular.ttf) format('truetype');font-display:swap}
+:root{--ink:#172846;--muted:#5b6475;--coral:#ff525f;--orange:#ff7a45;--paper:#fff8ec;--line:#eadfcd}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{min-height:100vh;display:grid;place-items:center;padding:28px 20px;font-family:system-ui,'Noto Sans KR',sans-serif;color:var(--ink);
+ background:radial-gradient(ellipse at 12% 0,#ffe3c2 0,transparent 45%),radial-gradient(ellipse at 100% 100%,#d9f2ea 0,transparent 42%),var(--paper)}
+main{width:min(980px,100%);display:grid;grid-template-columns:1.08fr 1fr;gap:26px;align-items:center}
+.hero{position:relative}
+.org{display:inline-flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border-radius:999px;background:#172846;color:#fff;font-size:13px;font-weight:700;box-shadow:0 4px 0 #0e1a30}
+.org b{background:var(--coral);border-radius:999px;padding:3px 10px;font-family:'Do Hyeon',sans-serif;font-weight:400;font-size:15px;letter-spacing:1px}
+.title{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
+.title svg{flex:none;width:68px;height:68px;filter:drop-shadow(0 5px 0 #c9343f55);transform:rotate(-7deg)}
+h1{margin:0;font-family:'Jua',sans-serif;font-weight:400;font-size:46px;line-height:1;letter-spacing:-.5px}
+h1 small{display:block;margin-top:6px;font-size:17px;color:var(--muted);letter-spacing:0}
+.pitch{margin:16px 0 0;font-family:'Jua',sans-serif;font-size:27px;line-height:1.28}
+.pitch em{font-style:normal;color:var(--coral);background:linear-gradient(transparent 62%,#ffd65d 62%)}
+.lead{margin:12px 0 0;font-size:15px;line-height:1.75;color:#33405a}
+.lead b{color:var(--ink)}
+.seal{position:absolute;right:4px;top:62px;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;text-align:center;color:#d8323f;border:3px solid #d8323f;outline:2px solid #d8323f;outline-offset:3px;transform:rotate(-14deg);font-family:'Do Hyeon',sans-serif;font-size:15px;line-height:1.15;background:#fff8ecd0;box-shadow:0 0 0 7px #fff8ec}
+.seal b{display:block;font-weight:400;font-size:21px;letter-spacing:1px}
+@media(max-width:820px){.seal{top:56px;width:84px;height:84px;font-size:13px}.seal b{font-size:18px}}
+.points{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;padding:0;list-style:none}
+.points li{padding:8px 12px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:700;box-shadow:0 3px 0 #eadfcd}
+.points li span{margin-right:5px}
+.cards{display:grid;gap:14px}
+a.card{position:relative;display:block;padding:22px 24px 20px;border-radius:24px;background:#fff;color:inherit;text-decoration:none;border:2px solid var(--line);box-shadow:0 6px 0 #e7dccb;transition:transform .12s,box-shadow .12s}
+a.card:hover,a.card:focus-visible{transform:translateY(-2px);box-shadow:0 8px 0 #e7dccb;outline:3px solid var(--orange);outline-offset:2px}
+a.card.booth{background:linear-gradient(135deg,#ff6f7b,#ff9a5c);border-color:#ff6f7b;color:#fff;box-shadow:0 6px 0 #c9343f}
+a.card.booth:hover,a.card.booth:focus-visible{box-shadow:0 8px 0 #c9343f}
+.tag{display:inline-block;margin-bottom:10px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#172846;color:#fff}
+.booth .tag{background:#fff;color:#d33a47}
+a.card b{display:block;font-family:'Jua',sans-serif;font-weight:400;font-size:26px;line-height:1.15}
+a.card small{display:block;margin-top:6px;font-size:14px;line-height:1.55;opacity:.92}
+a.card i{position:absolute;right:22px;top:50%;transform:translateY(-50%);font-style:normal;font-size:28px;font-weight:800;opacity:.85}
+footer{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 18px;padding-top:14px;border-top:1.5px dashed var(--line);font-size:12px;color:var(--muted);line-height:1.6}
+footer a{color:var(--muted)}
+@media(max-width:820px){main{grid-template-columns:1fr}h1{font-size:38px}.pitch{font-size:23px}}
+</style></head>
+<body><main>
+<section class="hero" aria-label="소개">
+ <span class="org"><b>AIERA</b>안동발명교육연구회</span>
+ <span class="seal" aria-label="AIERA 자체 제작"><span><b>AIERA</b>자체 제작<br>교육용 앱</span></span>
+ <div class="title"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="6" width="56" height="52" rx="15" fill="#ff525f"/><rect x="4" y="6" width="56" height="52" rx="15" fill="none" stroke="#172846" stroke-width="3"/><ellipse cx="23" cy="29" rx="4.2" ry="6" fill="#172846"/><ellipse cx="41" cy="29" rx="4.2" ry="6" fill="#172846"/><path d="M24 42q8 7 16 0" fill="none" stroke="#172846" stroke-width="3.4" stroke-linecap="round"/><ellipse cx="14" cy="41" rx="4" ry="2.6" fill="#ffb0b6"/><ellipse cx="50" cy="41" rx="4" ry="2.6" fill="#ffb0b6"/></svg>
+  <h1>Click Studio<small>상상을 클릭하다 · 3D 프린팅 교육 앱</small></h1></div>
+ <p class="pitch">크롬북이 3D 프린터와<br><em>직접 이야기</em>해요</p>
+ <p class="lead"><b>안동발명교육연구회(AIERA)</b>가 학생 교육을 위해 <b>직접 만든 앱</b>이에요. 원래 3D 프린터는 출력 PC와 전용 프로그램이 있어야 했지만, Click Studio는 <b>크롬북에서 프린터와 바로 통신</b>하도록 새로 만들었어요. 학생들이 디자인부터 슬라이싱, 진짜 출력까지 한자리에서 해보며 3D 프린터를 <b>쉽고 재미있게</b> 처음 만나요.</p>
+ <ul class="points">
+  <li><span>🔌</span>크롬북 ↔ 프린터 직접 연결</li>
+  <li><span>🖥️</span>출력 PC 필요 없음</li>
+  <li><span>⏱️</span>5분 만에 내 작품</li>
+  <li><span>🏫</span>학교 크롬북 그대로</li>
+ </ul>
+</section>
+<nav class="cards" aria-label="시작하기">
+ <a class="card booth" href="/open.html?page=booth"><span class="tag">부스 체험 · 처음이라면 여기!</span><b>3D 키캡 클리커 만들기</b><small>이름·그림·캐릭터·픽셀·도장으로 나만의 조각을 만들고,<br>층층이 쌓이는 원리를 본 뒤 바로 출력해요.</small><i>→</i></a>
+ <a class="card" href="/open.html?page=studio#connect=1"><span class="tag">STL 스튜디오</span><b>내 모델 출력하기</b><small>STL·MakerWorld 모델을 불러와 배치하고,<br>레이어를 계산해 A1 mini로 보내요.</small><i>→</i></a>
+</nav>
+<footer><span>© AIERA 안동발명교육연구회 · 학생 3D 프린팅 교육용 자체 제작 앱 · v{{VERSION}}</span>
+ <span>항상 최신 버전으로 열려요(인터넷이 없으면 앱 안의 <a href="/booth.html">키캡 체험</a>·<a href="/studio.html#connect=1">스튜디오</a>). 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.</span></footer>
+</main></body></html>
