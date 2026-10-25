@@ -57,6 +57,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $env:NODE_BINARY --test tests/*.test.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: One-click booth update keeps runtime (Windows PowerShell)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $folder = Join-Path $env:RUNNER_TEMP 'update-test'
+          Expand-Archive -LiteralPath downloads/booth-setup.zip -DestinationPath $folder
+          $workshop = Join-Path $folder 'click-workshop'
+          New-Item -ItemType Directory -Path (Join-Path $workshop 'runtime/jobs') -Force | Out-Null
+          Set-Content -LiteralPath (Join-Path $workshop 'runtime/config.json') -Value '{"kept":true}'
+          Set-Content -LiteralPath (Join-Path $workshop 'runtime/statistics.json') -Value '{"version":1}'
+          Set-Content -LiteralPath (Join-Path $workshop 'bridge/server.cjs') -Value '// old'
+          powershell.exe -NoProfile -File (Join-Path $workshop 'scripts/update-booth.ps1') -Source (Resolve-Path downloads/booth-setup.zip)
+          if ($LASTEXITCODE -ne 0) { throw 'update-booth.ps1 failed' }
+          if ((Get-Content -LiteralPath (Join-Path $workshop 'runtime/config.json') -Raw).Trim() -ne '{"kept":true}') { throw 'runtime/config.json changed' }
+          if ((Get-Content -LiteralPath (Join-Path $workshop 'bridge/server.cjs') -Raw) -notmatch 'click-workshop') { throw 'bridge was not updated' }
+          $backup = @(Get-ChildItem -LiteralPath $workshop -Directory -Filter 'runtime-backup-*')
+          if ($backup.Count -ne 1 -or -not (Test-Path (Join-Path $backup[0].FullName 'config.json')) -or (Test-Path (Join-Path $backup[0].FullName 'jobs'))) { throw 'runtime backup missing or includes jobs' }
+          Write-Host 'update-booth.ps1: files updated, runtime kept and backed up'
       - name: Build native app and validate MSIX
         env:
           NODE_BINARY: ${{ steps.tools.outputs.node }}
