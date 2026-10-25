@@ -7,16 +7,17 @@ const bytesOf=v=>typeof v==='string'?enc.encode(v):v;
 
 // --- Printer rules shared with bridge/core.cjs and bridge/print-preparation.cjs ---
 // Booth plates: the 14 mm keycap insert or the 20 mm stamp plate, a rounded square with corner radius 0.2 x size.
-const PLATE_SIZES=[14,20];
+// A pair is two 14 mm plates for the 2-key keychain, centred PAIR_OFFSET either side (same value as src/toolpaths.js).
+const PLATE_SIZES=[14,20],PAIR_OFFSET=10;
 function insidePlate(x,y,size,slack=0){const half=size/2,c=size*.3;return Math.abs(x)<=half+slack&&Math.abs(y)<=half+slack&&Math.hypot(Math.max(0,Math.abs(x)-c),Math.max(0,Math.abs(y)-c))<=size*.2+slack;}
 function validateSTL(b){
  if(b.length<134||b.length>6*1024*1024)throw Error('STL 크기가 올바르지 않습니다.');const v=new DataView(b.buffer,b.byteOffset,b.byteLength),n=v.getUint32(80,true);if(!n||84+n*50!==b.length)throw Error('공방에서 만든 바이너리 STL이 필요합니다.');
  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity],point=(o,k)=>[0,1,2].map(i=>v.getFloat32(o+12+k*12+i*4,true));
  for(let o=84;o<b.length;o+=50){for(let k=0;k<3;k++){const p=point(o,k);if(!p.every(Number.isFinite))throw Error('STL에 유효하지 않은 좌표가 있습니다.');for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]);hi[i]=Math.max(hi[i],p[i]);}}}
- const size=PLATE_SIZES.find(s=>Math.abs(hi[0]-lo[0]-s)<=.005&&Math.abs(hi[1]-lo[1]-s)<=.005);
+ const pair=Math.abs(hi[0]-lo[0]-14-2*PAIR_OFFSET)<=.005&&Math.abs(hi[1]-lo[1]-14)<=.005,size=pair?14:PLATE_SIZES.find(s=>Math.abs(hi[0]-lo[0]-s)<=.005&&Math.abs(hi[1]-lo[1]-s)<=.005);
  if(!size||Math.abs(lo[2])>.005||hi[2]<2||hi[2]>4.505)throw Error('14×14mm 또는 20×20mm, 바닥 Z=0, 전체 높이 2.0~4.5mm(도장) 모델만 지원합니다.');
- for(let o=84;o<b.length;o+=50)for(let k=0;k<3;k++){const p=point(o,k);if(!insidePlate(p[0],p[1],size,.002))throw Error('고정된 '+size+'mm 둥근 사각 바깥으로 모델이 벗어납니다.');}
- return {triangles:n,width:hi[0]-lo[0],depth:hi[1]-lo[1],height:hi[2],size};
+ for(let o=84;o<b.length;o+=50)for(let k=0;k<3;k++){const p=point(o,k);if(pair?!insidePlate(p[0]+PAIR_OFFSET,p[1],size,.002)&&!insidePlate(p[0]-PAIR_OFFSET,p[1],size,.002):!insidePlate(p[0],p[1],size,.002))throw Error('고정된 '+size+'mm 둥근 사각 바깥으로 모델이 벗어납니다.');}
+ return {triangles:n,width:hi[0]-lo[0],depth:hi[1]-lo[1],height:hi[2],size,pair};
 }
 // After a print is stopped or fails, the A1 mini waits in FAILED until the next job (a stop also leaves print_error
 // 0x0300400C, "task cancelled"). Bambu Studio prints from there, so the booth does too.
@@ -109,16 +110,16 @@ function prepareFiles(body,{studio=false,machine}={}){
  const stl=base64Bytes(body.stl,8388608,'바이너리 STL이 필요합니다.'),png=thumbnail(body.thumbnail),small=png?thumbnail(body.thumbnailSmall,128):null;
  let dimensions;if(studio){const b=studioCore.validateBinary(stl);dimensions={triangles:b.triangles,width:b.size[0],depth:b.size[1],height:b.size[2],min:b.min,max:b.max,contactEdges:b.nonManifold};}else dimensions=validateSTL(stl);
  if(typeof body.gcode!=='string')throw Error('슬라이싱 경로가 없습니다. 다시 계산해주세요.');
- const size=studio?0:dimensions.size,analysis=analyzeToolpaths(body.gcode,{height:dimensions.height,strict:true,layerHeight:profile.height,studio,size});
+ const size=studio?0:dimensions.size,analysis=analyzeToolpaths(body.gcode,{height:dimensions.height,strict:true,layerHeight:profile.height,studio,size,pair:!!dimensions.pair});
  if(studio)for(const layer of analysis.paths)for(const segment of layer.segments)for(let point=0;point<2;point++){const x=segment[point*2]+90,y=segment[point*2+1]+90;if(x<dimensions.min[0]-3||x>dimensions.max[0]+3||y<dimensions.min[1]-3||y>dimensions.max[1]+3)throw Error('경로와 STL의 배치가 다릅니다. 다시 슬라이싱해주세요.');}
  if(analysis.height<dimensions.height-profile.height-.11)throw Error('모델의 위쪽 층이 누락됐습니다. 다시 슬라이싱해주세요.');
  // Re-emit parsed commands: never concatenate untrusted comments, tokens or macros into a machine file.
  const lines=body.gcode.split(/\r?\n/).map(s=>s.split(';')[0].trim().toUpperCase()).filter(Boolean);let layer=0,move=0;
  const clean=[];for(const line of lines){if(/^G[01](?:\s|$)/.test(line)){const m=analysis.moves[move++],target=analysis.paths[layer];if(target&&m.delta>0&&m.distance>.001&&Math.abs(m.z-target.z)<.001){clean.push('; CHANGE_LAYER',`M73 L${++layer}`,`M73 P${Math.floor((layer-1)/analysis.layers*100)}`,`M991 S0 P${layer}`);}}clean.push(line);}
  const seconds=Math.max(analysis.seconds,Math.min(studio?604800:3600,Number(body.seconds)||0)),weight=analysis.weightG;
- let start=machine.start,end=machine.end,lift=3.2;const edge=90-size/2;
- // Booth: bed mesh over the plate only (the profile's line is the 14 mm one).
- if(!studio)start=start.map(line=>/^G29 A1 /.test(line)?`G29 A1 X${edge} Y${edge} I${size} J${size}`:line);
+ let start=machine.start,end=machine.end,lift=3.2;const edge=90-size/2,spread=dimensions.pair?PAIR_OFFSET:0,box=[edge-spread,edge,180-edge+spread,180-edge];
+ // Booth: bed mesh over the plate(s) only (the profile's line is the 14 mm one).
+ if(!studio)start=start.map(line=>/^G29 A1 /.test(line)?`G29 A1 X${box[0]} Y${edge} I${size+2*spread} J${size}`:line);
  if(studio){const min=dimensions.min.slice(0,2).map(n=>Math.max(1,Math.floor(n-3))),max=dimensions.max.slice(0,2).map(n=>Math.min(179,Math.ceil(n+3)));lift=+(Math.max(dimensions.height,analysis.height)+2).toFixed(3);const park=Math.min(179,Math.max(dimensions.height,analysis.height)+100);
   start=start.map(line=>/^G29 A1 /.test(line)?`G29 A1 X${min[0]} Y${min[1]} I${max[0]-min[0]} J${max[1]-min[1]}`:line);
   end=end.map(line=>line.replace(/^G1 Z2\.8(?=\s|$)/,`G1 Z${lift}`).replace(/^G1 Z102\.4(?=\s|$)/,`G1 Z${park.toFixed(3)}`).replace(/^G1 Z100\.4(?=\s|$)/,`G1 Z${Math.max(lift,park-2).toFixed(3)}`));
@@ -133,7 +134,7 @@ function prepareFiles(body,{studio=false,machine}={}){
   'Metadata/_rels/model_settings.config.rels':'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/Metadata/plate_1.gcode" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/gcode"/></Relationships>',
   'Metadata/model_settings.config':'<?xml version="1.0"?><config><plate><metadata key="plater_id" value="1"/><metadata key="gcode_file" value="Metadata/plate_1.gcode"/>'+(png?'<metadata key="thumbnail_file" value="Metadata/plate_1.png"/>':'')+'</plate></config>',
   'Metadata/slice_info.config':`<?xml version="1.0"?><config><header><header_item key="X-BBL-Client-Type" value="slicer"/><header_item key="X-BBL-Client-Version" value="02.07.01.62"/></header><plate><metadata key="index" value="1"/><metadata key="printer_model_id" value="N1"/><metadata key="nozzle_diameters" value="0.4"/><metadata key="timelapse_type" value="0"/><metadata key="prediction" value="${prediction}"/><metadata key="weight" value="${weight.toFixed(3)}"/><metadata key="outside" value="false"/><metadata key="support_used" value="${analysis.paths.some(layer=>layer.features.includes("support"))}"/><metadata key="label_object_enabled" value="false"/><filament id="1" tray_info_idx="GFL99" type="PLA" color="#FFFFFF" used_m="${(analysis.filamentMM/1000).toFixed(4)}" used_g="${weight.toFixed(3)}"/></plate></config>`,
-  'Metadata/plate_1.json':JSON.stringify({bbox_all:studio?[...dimensions.min.slice(0,2),...dimensions.max.slice(0,2)]:[edge,edge,180-edge,180-edge],bbox_objects:[{area:studio?dimensions.width*dimensions.depth:+(size*size-(4-Math.PI)*(size*.2)**2).toFixed(1),bbox:studio?[...dimensions.min.slice(0,2),...dimensions.max.slice(0,2)]:[edge,edge,180-edge,180-edge],id:1,layer_height:profile.height,name:studio?'STL plate':'keycap'}],bed_type:'textured_plate',filament_colors:['#FFFFFF'],filament_ids:[0],first_extruder:0,is_seq_print:false,nozzle_diameter:.4,version:2}),
+  'Metadata/plate_1.json':JSON.stringify({bbox_all:studio?[...dimensions.min.slice(0,2),...dimensions.max.slice(0,2)]:box,bbox_objects:[{area:studio?dimensions.width*dimensions.depth:+((dimensions.pair?2:1)*(size*size-(4-Math.PI)*(size*.2)**2)).toFixed(1),bbox:studio?[...dimensions.min.slice(0,2),...dimensions.max.slice(0,2)]:box,id:1,layer_height:profile.height,name:studio?'STL plate':dimensions.pair?'keycap pair':'keycap'}],bed_type:'textured_plate',filament_colors:['#FFFFFF'],filament_ids:[0],first_extruder:0,is_seq_print:false,nozzle_diameter:.4,version:2}),
   'Metadata/project_settings.config':JSON.stringify({printer_model:'Bambu Lab A1 mini',printer_settings_id:'Bambu Lab A1 mini 0.4 nozzle',nozzle_diameter:['0.4'],curr_bed_type:'Textured PEI Plate',filament_type:['PLA'],filament_settings_id:[profile.materialLabel+' · Web'],layer_height:profile.height,initial_layer_print_height:.2}),
   'Metadata/plate_1.gcode':gcode,'Metadata/plate_1.gcode.md5':md5(gcode),
   ...(png?{'Metadata/plate_1.png':png}:{}),...(small?{'Metadata/plate_1_small.png':small}:{})
@@ -143,6 +144,6 @@ function prepareFiles(body,{studio=false,machine}={}){
 async function sha256(bytes){return Array.from(new Uint8Array(await root.crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
 // Browser path: same entries, zipped with CompressionStream.
 async function prepareJob(body,options){const r=prepareFiles(body,options),bytes=await zipAsync(r.files);return {...r,bytes,sha256:await sha256(bytes)};}
-const api={PLATE_SIZES,insidePlate,validateSTL,checkReady,checkStart,matchesJob,attention,printOptions,filament,checkFilament,md5,crc32,assembleZip,zipSync,zipAsync,thumbnail,prepareFiles,prepareJob,sha256};
+const api={PLATE_SIZES,PAIR_OFFSET,insidePlate,validateSTL,checkReady,checkStart,matchesJob,attention,printOptions,filament,checkFilament,md5,crc32,assembleZip,zipSync,zipAsync,thumbnail,prepareFiles,prepareJob,sha256};
 root.PrintJob=api;if(typeof module==='object'&&module.exports)module.exports=api;
 })(globalThis);

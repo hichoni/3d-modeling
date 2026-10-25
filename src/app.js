@@ -13,8 +13,8 @@ function characterThumb(id){const px=30,c=document.createElement('canvas');c.wid
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const contentOK=()=>!throughTextIssue()&&(S.content==='icon'&&(!S.tag||PICTURE_TAG.test(S.tag))||S.content!=='icon'&&(validText(S.text)&&Array.from(S.text.replace(/\s/g,'')).length<=4));
 const ready=()=>current&&built===revision&&contentOK();
-const modelName=()=>S.content==='icon'?symbolNames[S.icon]+(S.tag?' '+S.tag:''):S.text;
-const geometries=()=>current.parts.plate.concat(current.parts.relief);
+const designName=d=>d.content==='icon'?symbolNames[d.icon]+(d.tag?' '+d.tag:''):d.text,modelName=()=>printPair()?(pairSlot===0?[S,pairSaved[1].design]:[pairSaved[0].design,S]).map(designName).join(' · '):designName(S);
+const geometries=()=>printPair()?pairParts().plate:current.parts.plate.concat(current.parts.relief);
 // 클릭이, the workshop helper, speaks on the model stage like a game NPC, then tucks away so the model stays visible.
 // Bigger screens get the whole one-screen layout scaled up (designed at 1280×640), at most 120%.
 function fitZoom(){const z=innerWidth>1000?Math.max(1,Math.min(innerWidth/1280,innerHeight/640,1.2)):1;document.documentElement.style.setProperty('--z',z.toFixed(3));}
@@ -55,13 +55,13 @@ function init3D(){try{
  (function animate(){requestAnimationFrame(animate);if(document.hidden||step===2)return;controls.update();renderer.render(scene,camera);})();
 }catch{R=null;$('fallback').hidden=false;$('stageHint').textContent='평면 미리보기 · WebGL을 켜면 입체로 볼 수 있어요.';}}
 function resetCamera(top=false){if(!R)return;const detail=step===1,mode=fitMode(),lift=fitLayout(mode).drop,k=plateSize()/14*FIT_ZOOM[mode];R.camera.position.set((top?0:detail?10:13)*k,(top?-.01:detail?-15:-20)*k,(top?(detail?28:35):detail?23:28)*k);R.controls.target.set(0,0,1-lift/2);R.controls.update();}
-function showModel(){if(R){R.group.clear();R.plate.color.set(S.color).convertSRGBToLinear();R.relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();const layout=fitLayout(fitMode());layout.xs.forEach((x,i)=>{const own=layout.mode!=='case2'||i===pairSlot,saved=!own&&pairSaved[i];if(!own&&!saved)return;for(const type of ['plate','relief'])(own?current.parts:saved.parts)[type].forEach(g=>{const mesh=new THREE.Mesh(g,own?R[type]:saved.materials[type]);mesh.position.x=x;mesh.userData.slot=i;mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});});showFit(layout);updateLayer();}else{const cv=$('fallback'),ctx=cv.getContext('2d');ctx.clearRect(0,0,500,500);ctx.fillStyle=S.color;shapePath(ctx,250,250,350,350,'rounded',0,25);ctx.fill();const face=mkCanvas(500,500);drawFace(face.getContext('2d'),500,500,25,false,'#a54465',fontById(S.font));ctx.drawImage(face,0,0);}}
+function showModel(){if(R){R.group.clear();R.plate.color.set(S.color).convertSRGBToLinear();R.relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();const layout=fitLayout(fitMode());layout.xs.forEach((x,i)=>{const own=!['case2','pair'].includes(layout.mode)||i===pairSlot,saved=!own&&pairSaved[i];if(!own&&!saved)return;for(const type of ['plate','relief'])(own?current.parts:saved.parts)[type].forEach(g=>{const mesh=new THREE.Mesh(g,own?R[type]:saved.materials[type]);mesh.position.x=x;mesh.userData.slot=i;mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});});showFit(layout);updateLayer();}else{const cv=$('fallback'),ctx=cv.getContext('2d');ctx.clearRect(0,0,500,500);ctx.fillStyle=S.color;shapePath(ctx,250,250,350,350,'rounded',0,25);ctx.fill();const face=mkCanvas(500,500);drawFace(face.getContext('2d'),500,500,25,false,'#a54465',fontById(S.font));ctx.drawImage(face,0,0);}}
 // "끼워보기": the printed plate seated in the ready-made keycap it snaps into, and that keycap on its MX switch in the
 // 1- or 2-key keychain case (src/keycap-models.js), so the student sees how it all goes together. Only on the design
 // step and only as a preview: just the plate is printed. The keychain cases take the 14 mm keycap, not the stamp head.
-let fit='none';const fitGeometries={},FIT_ZOOM={none:1,keycap:1.3,case1:2.05,case2:2.75};
-function fitMode(){return step!==0?'none':S.kind==='stamp20'&&fit.startsWith('case')?'keycap':fit;}
-function fitLayout(mode){const cap=KEYCAP_MODELS[S.kind==='stamp20'?'stamp20':'keycap'];if(mode==='none')return {mode,cap,xs:[0],drop:0};if(mode==='keycap')return {mode,cap,xs:[0],drop:cap.floor};
+let fit='none';const fitGeometries={},FIT_ZOOM={none:1,keycap:1.3,case1:2.05,case2:2.75,pair:1.9};
+function fitMode(){return step!==0?(printPair()?'pair':'none'):S.kind==='stamp20'&&fit.startsWith('case')?'keycap':fit;}
+function fitLayout(mode){const cap=KEYCAP_MODELS[S.kind==='stamp20'?'stamp20':'keycap'];if(mode==='none')return {mode,cap,xs:[0],drop:0};if(mode==='pair')return {mode,cap,xs:[-BOOTH_PAIR_OFFSET,BOOTH_PAIR_OFFSET],drop:0};if(mode==='keycap')return {mode,cap,xs:[0],drop:cap.floor};
  const c=KEYCAP_MODELS[mode];return {mode,cap,c,xs:c.keys,drop:c.seat+cap.floor};}
 function fitGeometry(m){if(fitGeometries[m.source])return fitGeometries[m.source];const bytes=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0)),pos=new Int16Array(bytes.buffer,0,m.vertices*3),index=new Uint16Array(bytes.buffer,m.vertices*6),flat=new Float32Array(index.length*3);
  for(let i=0;i<index.length;i++)for(let k=0;k<3;k++)flat[i*3+k]=pos[index[i]*3+k]/1000;
@@ -70,26 +70,36 @@ function fitGeometry(m){if(fitGeometries[m.source])return fitGeometries[m.source
 function switchGeometries(){if(fitGeometries.switch)return fitGeometries.switch;const housing=new THREE.CylinderGeometry(11.5/Math.SQRT2,15.6/Math.SQRT2,5.5,4,1);housing.rotateX(Math.PI/2);housing.rotateZ(Math.PI/4);housing.translate(0,0,2.75);
  const a=new THREE.BoxGeometry(4.1,1.3,3),b=new THREE.BoxGeometry(1.3,4.1,3);a.translate(0,0,7);b.translate(0,0,7);return fitGeometries.switch={housing,stem:[a,b]};}
 function showFit({mode,cap,c,xs,drop}){if(!R)return;R.fitShown=mode;const add=(g,mat,x,z,slot)=>{const mesh=new THREE.Mesh(g,mat);mesh.position.set(x,0,z);mesh.userData.slot=slot;mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);};
- if(mode!=='none'){const M=R.fitMaterials||={keycap:new THREE.MeshStandardMaterial({roughness:.6}),otherKeycap:new THREE.MeshStandardMaterial({roughness:.6}),case:new THREE.MeshStandardMaterial({color:new THREE.Color('#9fb6cc').convertSRGBToLinear(),roughness:.7}),
+ if(mode!=='none'&&mode!=='pair'){const M=R.fitMaterials||={keycap:new THREE.MeshStandardMaterial({roughness:.6}),otherKeycap:new THREE.MeshStandardMaterial({roughness:.6}),case:new THREE.MeshStandardMaterial({color:new THREE.Color('#9fb6cc').convertSRGBToLinear(),roughness:.7}),
    housing:new THREE.MeshStandardMaterial({color:new THREE.Color('#2f343d').convertSRGBToLinear(),roughness:.45,flatShading:true}),stem:new THREE.MeshStandardMaterial({color:new THREE.Color('#e5404e').convertSRGBToLinear(),roughness:.5})};
   M.keycap.color.set(keycapColor(S.color)).convertSRGBToLinear();M.otherKeycap.color.set(keycapColor(pairSaved[1-pairSlot]?.design.color||S.color)).convertSRGBToLinear();
   xs.forEach((x,i)=>add(fitGeometry(cap),mode!=='case2'||i===pairSlot?M.keycap:M.otherKeycap,x,-cap.floor,i));
   if(c){add(fitGeometry(c),M.case,0,-drop);const sw=switchGeometries();for(const x of xs){add(sw.housing,M.housing,x,c.plate-drop);sw.stem.forEach(g=>add(g,M.stem,x,c.plate-drop));}}}
  R.ground.position.z=-drop-.1;R.grid.position.z=-drop-.16;
  document.querySelectorAll('[data-fit]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.fit===mode));if(b.dataset.fit.startsWith('case'))b.hidden=S.kind==='stamp20';});$('fitKeycapBtn').textContent=S.kind==='stamp20'?'🔖 도장 머리':'🔑 키캡';
- $('stageHint').textContent=mode==='none'?'↔ 드래그해서 돌려봐요 · 휠로 확대':(mode==='keycap'?(S.kind==='stamp20'?'큰 도장 머리(23mm)에 끼운 모습':'키캡 밑판(18mm)에 끼운 모습'):'키링 1구에 꽂은 모습')+' · 출력은 판만 해요';
+ $('stageHint').textContent=mode==='none'?'↔ 드래그해서 돌려봐요 · 휠로 확대':mode==='pair'?'키링 2구 판 2개를 한 번에 출력해요 · ↔ 드래그해서 돌려봐요':(mode==='keycap'?(S.kind==='stamp20'?'큰 도장 머리(23mm)에 끼운 모습':'키캡 밑판(18mm)에 끼운 모습'):'키링 1구에 꽂은 모습')+' · 출력은 판만 해요';
  $('stageHint').hidden=mode==='case2';$('pairSlots').hidden=mode!=='case2';document.querySelectorAll('[data-slot]').forEach(b=>{const i=+b.dataset.slot,on=i===pairSlot;b.setAttribute('aria-pressed',String(on));b.textContent=(on?'✏️ ':'')+['왼쪽','오른쪽'][i]+' 칸'+(on?' 만드는 중':pairSaved[i]?'':' 비어 있음');});}
 function keycapColor(color){const c=new THREE.Color(color);return .2126*c.r+.7152*c.g+.0722*c.b>.72?'#3c4456':'#f2eee6';}
-function chooseFit(mode){const first=mode==='case2'&&fit!=='case2'&&!pairSaved[1-pairSlot];fit=mode;showModel();resetCamera();if(first)toast('칸을 눌러 두 칸에 다른 판을 만들어요. 출력은 지금 만드는 칸의 판만 해요.');}
+function chooseFit(mode){const first=mode==='case2'&&fit!=='case2'&&!pairSaved[1-pairSlot],before=printPair();fit=mode;if(printPair()!==before)change(false);showModel();resetCamera();
+ if(first)toast('칸을 눌러 두 칸에 다른 판을 만들어요. 두 칸을 다 채우면 한 번에 출력해요.');else if(printPair()&&!before)toast('두 판을 한 번에 출력해요. 판만·키캡·1구를 고르면 지금 판만 출력해요.');}
 // 2구: each key holds its own plate. The plate being edited sits in pairSlot; the other key shows the plate left there
 // when the student switched away (its design and a copy of its geometry), or an empty keycap until then.
 let pairSlot=0;const pairSaved=[null,null];
 function dropPairSaved(i){const p=pairSaved[i];if(!p)return;p.parts.plate.concat(p.parts.relief).forEach(g=>g.dispose());p.materials.plate.dispose();p.materials.relief.dispose();pairSaved[i]=null;}
 function choosePairSlot(i){if(i===pairSlot||!current||built!==revision)return;if(printActive()){toast('출력이 끝난 뒤 다른 칸을 만들어요.');return;}
- const clone=list=>list.map(g=>g.clone()),plate=new THREE.MeshStandardMaterial({roughness:.52}),relief=new THREE.MeshStandardMaterial({roughness:.65});plate.color.set(S.color).convertSRGBToLinear();relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
- const leaving={design:{...S},parts:{plate:clone(current.parts.plate),relief:clone(current.parts.relief)},materials:{plate,relief}},target=pairSaved[i];
+ const clone=list=>list.map(g=>g.clone()),plate=new THREE.MeshStandardMaterial({roughness:.52,clippingPlanes:[R.clip]}),relief=new THREE.MeshStandardMaterial({roughness:.65,clippingPlanes:[R.clip]});plate.color.set(S.color).convertSRGBToLinear();relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
+ const leaving={design:{...S},totalH:current.totalH,parts:{plate:clone(current.parts.plate),relief:clone(current.parts.relief)},materials:{plate,relief}},target=pairSaved[i];
  dropPairSaved(pairSlot);pairSaved[pairSlot]=leaving;pairSlot=i;if(target){Object.assign(S,target.design);dropPairSaved(i);}
- change();showModel();toast((['왼쪽','오른쪽'][i])+' 칸 판을 '+(target?'다시 고쳐요.':'만들어요. 글자나 그림을 바꿔보세요.'));}
+ change();showModel();toast((['왼쪽','오른쪽'][i])+' 칸 판을 '+(target?'다시 고쳐요. 두 판은 한 번에 출력해요.':'만들어요. 다 만들면 두 판을 한 번에 출력해요.'));}
+// With both keys filled in the 2구 view, the print is the pair: both plates side by side, the left key's plate at
+// -BOOTH_PAIR_OFFSET (src/toolpaths.js, src/print-job.js check the same layout). Built once per design revision.
+function printPair(){const other=pairSaved[1-pairSlot];return fit==='case2'&&S.kind==='keycap'&&!!current&&other?.design.kind==='keycap';}
+function printHeight(){return printPair()?Math.max(current.totalH,pairSaved[1-pairSlot].totalH):current.totalH;}
+let pairCache=null;
+function pairParts(){if(pairCache?.revision===revision&&pairCache.current===current&&pairCache.slot===pairSlot)return pairCache.parts;pairCache?.parts.plate.forEach(g=>g.dispose());
+ const place=(parts,i)=>parts.plate.concat(parts.relief).map(g=>g.clone().translate((i===0?-1:1)*BOOTH_PAIR_OFFSET,0,0));
+ pairCache={revision,current,slot:pairSlot,parts:{plate:[...place(current.parts,pairSlot),...place(pairSaved[1-pairSlot].parts,1-pairSlot)],relief:[]}};return pairCache.parts;}
+
 
 function setStep(next){if(next<2&&printActive()){toast('현재 출력 상태를 이 화면에서 확인해주세요.');return;}if(next>0&&!ready()){toast('먼저 내 이름이나 그림을 완성해주세요.');return;}begin();step=next;beep([520,660,780][step]);clearInterval(layerTimer);$('playBtn').textContent='▶';
  const titles=[['MISSION 01 · 나만의 작은 작품','어떤 상상을 새겨볼까?','이름도, 좋아하는 모양도. 작은 네모 안에 나를 담아요.'],['MISSION 02 · 프린터의 비밀','한 층씩, 이렇게 만들어져요!','납작한 층이 차곡차곡. 슬라이더로 입체의 속을 살펴봐요.'],['MISSION 03 · 손으로 만나는 상상','내 상상이 진짜가 되는 순간!','바로 출력하고, A1 mini 안에서 무슨 일이 일어나는지 살펴봐요.']][step];['eyebrow','headline','subtitle'].forEach((id,i)=>$(id).textContent=titles[i]);if(step<2)coachSay(COACH[step]);
@@ -97,10 +107,10 @@ function setStep(next){if(next<2&&printActive()){toast('현재 출력 상태를 
  ['assemblyCard','sliceCard','printCard'].forEach((id,i)=>$(id).hidden=i!==step);['designControls','sliceLesson','resultPanel'].forEach((id,i)=>$(id).hidden=i!==step);
  $('layerTools').hidden=step!==1;$('layerInspect').hidden=step!==1;document.querySelector('.model-stage').classList.toggle('is-layer-view',step===1);$('backBtn').hidden=step===0;$('importBtn').hidden=step!==0;$('nextBtn').textContent=['다음! 층층이 쌓아보기 →','내 작품 출력 준비 →','새 작품 만들기 →'][step];$('stageBadge').textContent=['MY LITTLE KEYCAP',activeSlice()?'REAL TOOLPATH':'LAYER LAB · 원리 체험','YOU MADE IT!'][step];
  $('printPreparation').hidden=step!==2;document.querySelector('.model-stage').hidden=step===2;$('printerTour').hidden=step!==2;
- if(step===2){printerTutorial||=new PrinterTutorial();printerTutorial.setPart?.(current.parts,S.color,current.totalH);finishedAt=Date.now();$('resultName').textContent='「'+modelName()+'」, 내가 만든 작품!';renderTicket();}printerTutorial?.show(step===2);renderSlice();updateLayer();if(step===1)resetCamera();tick();if(innerWidth<700)window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});
+ if(step===2){printerTutorial||=new PrinterTutorial();printerTutorial.setPart?.(printPair()?pairParts():current.parts,S.color,printHeight());finishedAt=Date.now();$('resultName').textContent='「'+modelName()+'」, 내가 만든 작품!';renderTicket();}printerTutorial?.show(step===2);renderSlice();updateLayer();if(step===1)resetCamera();tick();if(innerWidth<700)window.scrollTo({top:0,behavior:reducedMotion?'instant':'smooth'});
 }
 function activeSlice(){return job?.slice||browserSlice?.slice;}
-function renderSlice(){if(job?.slice&&job.slice.source!=='browser'){$('sliceQuality').value='standard';$('sliceMaterial').value='generic';}if(job?.mode==='direct'&&job.slice?.quality){$('sliceQuality').value=job.slice.quality;$('sliceMaterial').value=job.slice.material;}const actual=activeSlice(),preset=WebPrintProfiles.get(sliceSelection().quality,sliceSelection().material);$('sliceQuality').disabled=$('sliceMaterial').disabled=printActive()||job?.mode==='direct'||!!job?.slice&&job.slice.source!=='browser';$('sliceHeightValue').textContent=(actual?.layerHeight||preset.height).toFixed(2);const layers=actual?.layers||Math.ceil((current?.totalH||2.3)/.2);$('layerRange').max=layers;$('layerRange').value=Math.min(layers,layerSelection??layers);
+function renderSlice(){if(job?.slice&&job.slice.source!=='browser'){$('sliceQuality').value='standard';$('sliceMaterial').value='generic';}if(job?.mode==='direct'&&job.slice?.quality){$('sliceQuality').value=job.slice.quality;$('sliceMaterial').value=job.slice.material;}const actual=activeSlice(),preset=WebPrintProfiles.get(sliceSelection().quality,sliceSelection().material);$('sliceQuality').disabled=$('sliceMaterial').disabled=printActive()||job?.mode==='direct'||!!job?.slice&&job.slice.source!=='browser';$('sliceHeightValue').textContent=(actual?.layerHeight||preset.height).toFixed(2);const layers=actual?.layers||Math.ceil((current?printHeight():2.3)/.2);$('layerRange').max=layers;$('layerRange').value=Math.min(layers,layerSelection??layers);
  $('sliceKind').textContent=actual?(actual.source==='browser'?'✓ 이 브라우저에서 실제 슬라이싱':'✓ Bambu Studio 슬라이싱'):'① 모양을 층으로 나눠볼까요?';$('sliceTime').textContent=actual?duration(actual.seconds):'계산하면 나타나요';$('sliceWeight').textContent=actual?actual.weightG.toFixed(2)+' g · PLA':'PLA · 단색';
  $('sliceBtn').hidden=false;$('sliceBtn').disabled=!ready()||browserSliceBusy||!!actual||['slice_wait','slicing'].includes(job?.state);$('sliceBtn').textContent=browserSliceBusy?'층과 경로를 계산하는 중…':actual?'노즐 경로 완성 ✓':'✦ 이 브라우저에서 슬라이싱!';
  $('pathsBtn').hidden=!browserSlice;$('studioFallback').hidden=!local?.studioAvailable;$('studioSliceBtn').hidden=!local||!local.studioAvailable;$('studioSliceBtn').disabled=!ready()||browserSliceBusy||!!job;
