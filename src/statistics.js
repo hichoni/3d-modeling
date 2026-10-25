@@ -16,7 +16,7 @@ class WorkshopStatistics{
  }
  next(){try{localStorage.removeItem(this.visitKey);}catch{}}
  connected(snapshot){this.remote=snapshot||null;this.pending.clear();this.render();void this.sync();}
- complete(job){this.data=this.read();this.data.prints[job.id]||={at:job.completedAt||new Date().toISOString()};this.save();this.render();void this.sync();}
+ complete(job){this.data=this.read();this.data.prints[job.id]||={at:job.completedAt||new Date().toISOString(),...(WorkshopCounts.pieces(job)>1?{pieces:2}:{})};this.save();this.render();void this.sync();}
  async sync(){
   if(!local||this.busy)return;this.busy=true;const source=local;
   try{
@@ -31,7 +31,7 @@ class WorkshopStatistics{
   $('workshopDate').dateTime=WorkshopCounts.day(date);$('workshopDate').textContent=new Intl.DateTimeFormat('ko-KR',{timeZone:WorkshopCounts.timeZone,year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(date);
   const format=new Intl.NumberFormat('ko-KR');for(const [id,key]of [['todayParticipants','todayParticipants'],['todayPrints','todayPrints'],['totalParticipants','totalParticipants'],['totalPrints','totalPrints']]){const value=format.format(s[key]);if($(id).textContent!==value)$(id).textContent=value;}
   $('statisticsScope').textContent=remote?'공방 전체':'이 기기';$('statisticsScope').title=remote?'같은 공방에 연결된 체험과 완료 출력의 합계':'이 브라우저의 체험 기록 · 공방에 연결하면 전체 집계와 합쳐져요';
-  $('statisticsInfo').textContent='체험 시작 1회당 1명 · 출력 완료 기준 · 한국 시간';
+  $('statisticsInfo').textContent='체험 시작 1회당 1명 · 출력 완료 기준(판 1장당 1개) · 한국 시간';
   $('statisticsInfo').title='같은 체험의 새로고침·수정은 중복 집계하지 않아요. 새 작품 만들기로 시작하면 다음 체험으로 셉니다. 인원 기록은 집계 기능 적용 시점부터 보관합니다.';
  }
 }
