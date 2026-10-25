@@ -22,7 +22,7 @@ class Statistics{
    if(job.state!=='complete'||!/^[a-f0-9]{24}$/.test(job.id||''))continue;
    const timestamp=job.completedAt||job.completionEvidence?.at||job.completedRecordAt,at=validTime(timestamp)?new Date(timestamp).toISOString():null,previous=next.prints[job.id];
    if(previous&&(!at||previous.at))continue;
-   next.prints[job.id]={at,source:job.completedAt?'printer_report':job.completionEvidence?.at?'completion_evidence':job.completedRecordAt?'legacy_completed_record':'undated'};changed=true;
+   next.prints[job.id]={at,...(counts.pieces(job)>1?{pieces:counts.pieces(job)}:{}),source:job.completedAt?'printer_report':job.completionEvidence?.at?'completion_evidence':job.completedRecordAt?'legacy_completed_record':'undated'};changed=true;
   }
   if(changed)this.save(next);return changed;
  }

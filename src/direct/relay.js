@@ -13,7 +13,7 @@ function persist(){try{localStorage.setItem(STORE,JSON.stringify(store));}catch{
 function loadStats(){try{const s=JSON.parse(localStorage.getItem(STATS));if(s?.version===1)return s;}catch{}return Counts()?.empty()||{version:1,experiences:{},prints:{}};}
 function saveStats(){try{localStorage.setItem(STATS,JSON.stringify(statistics));}catch{}}
 function saveJob(j){
- if(j.state==='complete'&&!statistics.prints[j.id]){statistics.prints[j.id]={at:j.completedAt||new Date().toISOString(),source:'printer_report'};saveStats();}
+ if(j.state==='complete'&&!statistics.prints[j.id]){statistics.prints[j.id]={at:j.completedAt||new Date().toISOString(),...(Counts().pieces(j)>1?{pieces:Counts().pieces(j)}:{}),source:'printer_report'};saveStats();}
  try{const list=[...jobs.values()].filter(x=>ACTIVE.includes(x.state)||x.state==='uncertain'||x===j).slice(-20).map(x=>({...x}));localStorage.setItem(JOBS,JSON.stringify(list));}catch{}
 }
 function restoreJobs(){try{for(const j of JSON.parse(localStorage.getItem(JOBS))||[]){if(!/^[a-f0-9]{24}$/.test(j.id))continue;if(['ready','queued'].includes(j.state)){j.state='cancelled';j.attention='앱을 다시 열어 준비한 파일이 사라졌습니다. 다시 준비해주세요.';}jobs.set(j.id,j);if(ACTIVE.includes(j.state)||j.state==='uncertain')link(j.printerId).active=j;}}catch{}}
@@ -47,7 +47,7 @@ function connectionSettings(){
  if(id&&store.printers.length<MAX_PRINTERS)list.push({id,name:'새 A1 mini 등록',ip:'',serial:'',hasAccessCode:false,online:false,fresh:false,blank:true});
  return {printers:list,direct:true};
 }
-function summary(j,withPaths=false){const {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention,bytes,printerId,clientId,pairingRevision,printOptions,upload}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention,bytes,printerId,clientId,pairingRevision,printOptions,upload,printerName:store.printers.find(p=>p.id===printerId)?.name||printerId,telemetry:store.printers.some(p=>p.id===printerId)?telemetry(printerId):null,slice};}
+function summary(j,withPaths=false){const {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention,bytes,printerId,clientId,pairingRevision,printOptions,upload}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention,bytes,printerId,clientId,pairingRevision,printOptions,upload,pieces:Counts().pieces(j),printerName:store.printers.find(p=>p.id===printerId)?.name||printerId,telemetry:store.printers.some(p=>p.id===printerId)?telemetry(printerId):null,slice};}
 
 // --- Printer connection (fleet.connect + waitForStatus) ---
 async function connect(id){

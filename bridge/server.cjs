@@ -4,7 +4,7 @@ const {prepareBrowserJob,prepareStudioJob}=require('./browser-job.cjs');
 const {connectionSettings,saveConnection}=require('./connection-settings.cjs');
 const {discoverMinis}=require('./discovery.cjs');let printerSearch=null;
 const {directPrint,stopOwnJob}=require('./direct-print.cjs');
-const {Statistics}=require('./statistics.cjs');
+const {Statistics}=require('./statistics.cjs');const counts=require('../src/statistics-core.js');
 const root=path.resolve(__dirname,'..'),runtime=process.env.CLICK_RUNTIME?path.resolve(process.env.CLICK_RUNTIME):path.join(root,'runtime');fs.mkdirSync(runtime,{recursive:true});
 const statistics=new Statistics(path.join(runtime,'statistics.json'));
 const cfgPath=path.join(runtime,'config.json'),config=fs.existsSync(cfgPath)?JSON.parse(fs.readFileSync(cfgPath,'utf8')):{};
@@ -25,7 +25,7 @@ function auth(req,job){const s=sessions.get(req.headers['x-operator-token']),loc
  if(!s||s.expiry<Date.now()||s.admin&&!local||!s.admin&&(!d||s.clientId!==d.id||s.printerId!==d.printerId||s.revision!==d.revision)||job&&!s.admin&&(job.clientId!==s.clientId||job.printerId!==s.printerId)){const e=Error('이 기기에 매칭된 미니의 운영자 PIN으로 잠금을 해제하세요.');e.status=401;throw e;}return s;
 }
 function admin(req){const scope=auth(req);if(!scope.admin){const e=Error('전체 매칭 관리는 부스 PC에서 할 수 있습니다.');e.status=403;throw e;}return scope;}
-function summary(j,withPaths=false){const {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printOptions}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printOptions,printerName:fleet.items.get(printerId)?.config.name||printerId,telemetry:fleet.items.has(printerId)?fleet.state(printerId):null,slice};}
+function summary(j,withPaths=false){const {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printOptions}=j;const slice=j.slice?{...j.slice}:undefined;if(slice&&!withPaths)delete slice.paths;return {id,name,state,mode,ticket,createdAt,completedAt,sha256,progress,layer,error,attention:note,bytes,printerId,clientId:owner,pairingRevision,printOptions,pieces:counts.pieces(j),printerName:fleet.items.get(printerId)?.config.name||printerId,telemetry:fleet.items.has(printerId)?fleet.state(printerId):null,slice};}
 function publicPrinters(id,all=false){return printers.map(p=>{const s=fleet.state(p.id),owner=pairings.owner(p.id);return {...s,paired:!!owner,mine:owner?.id===id,available:(!owner||owner.id===id)&&!s.busy,...(all?{pairedDevice:owner?{id:owner.id,name:owner.name}:null}:{})};});}
 function drainSlices(){if(slicing||!sliceQueue.length)return;const j=sliceQueue.shift();slicing=true;j.state='slicing';save(j);sliceSTL(path.join(jobRoot,j.id),config).then(result=>{Object.assign(j,result,{state:'ready'});save(j);}).catch(e=>{j.state='failed';j.error=e.message;save(j);}).finally(()=>{slicing=false;drainSlices();});}
 function reply(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY'});res.end(JSON.stringify(value));}

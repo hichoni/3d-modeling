@@ -30,3 +30,9 @@ test('browser counts meaningful starts once, restores after reload, counts next 
  context.local={csrf:'test'};await context.counter.sync();assert.equal(get('statisticsScope').textContent,'공방 전체');assert.equal(f.stats.summary().totalParticipants,2);await context.counter.sync();assert.equal(writes,1);
  context.counter.complete({id:'a'.repeat(24),completedAt:new Date().toISOString()});assert.equal(context.counter.data.prints['a'.repeat(24)].at.length,24);
 });
+test('a 2-key keychain pair counts as two prints in the hub, on a direct device and in the browser; old records stay one each',()=>{
+ const f=fixture();f.stats.complete({id:'a'.repeat(24),state:'complete',completedAt:'2026-10-20T14:59:00Z',dimensions:{size:14,pair:true}});f.stats.complete({id:'b'.repeat(24),state:'complete',completedAt:'2026-10-20T14:59:10Z',dimensions:{size:14,pair:false}});
+ const s=f.stats.summary();assert.equal(s.todayPrints,3);assert.equal(s.totalPrints,3);assert.equal(new Statistics(f.file).summary().totalPrints,3);
+ assert.equal(counts.pieces({dimensions:{pair:true}}),2);assert.equal(counts.pieces({pieces:2}),2);assert.equal(counts.pieces({}),1);assert.equal(counts.pieces({pieces:7}),1);
+ assert.equal(counts.summary({experiences:{},prints:{x:{at:null,pieces:2},y:{at:null,pieces:99}}}).undatedPrints,3);
+});
