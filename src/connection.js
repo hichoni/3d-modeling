@@ -15,13 +15,12 @@ function backendHeaders(extra={}){return {'X-Click-Token':local?.csrf||'',...(de
 function directMode(){return !!globalThis.DirectRelay?.enabled();}
 // In the installed Chromebook app the relay runs in-page and connects to the A1 mini itself.
 function backendFetch(route,options={}){if(directMode())return DirectRelay.fetch(route,options);return fetch((boothTarget?.base||'')+route,{...options,headers:backendHeaders(options.headers||{}),...(boothTarget?{targetAddressSpace:'local'}:{})});}
-// The booth PC program (bridge/server.cjs) this page expects; an older one still prints single plates.
-const HUB_VERSION=9;
-function hubNeedsUpdate(){return !!local&&!directMode()&&!(local.version>=HUB_VERSION);}
+// An older booth PC program still prints single plates; see src/hub-update.js.
+function hubNeedsUpdate(){return !directMode()&&HubUpdate.stale(local);}
 function syncConnection(){
  const connected=!!local;
  const direct=directMode();
- const stale=hubNeedsUpdate();$('hubUpdate').hidden=!stale;$('hubUpdateVersion').textContent=stale?' (지금 v'+local.version+' · 최신 v'+HUB_VERSION+')':'';$('operatorBtn').classList.toggle('needs-update',stale);$('operatorBtn').title=stale?'설정 · 공방 PC 프로그램 업데이트 필요':'설정';
+ const stale=hubNeedsUpdate();$('hubUpdate').hidden=!stale;$('hubUpdateVersion').textContent=stale?HubUpdate.note(local):'';$('operatorBtn').classList.toggle('needs-update',stale);$('operatorBtn').title=stale?'설정 · 공방 PC 프로그램 업데이트 필요':'설정';
  $('boothBtn').textContent=connected?'● '+(direct?(pairing?.printerId?pairedPrinterName():'프린터 연결'):local.operator?'출력 PC':'부스 연결됨'):direct?'프린터 연결':'부스 연결';
  $('connection').textContent=connected?(direct?'● 크롬북 직접 연결':'● 공방 연결됨'):'온라인 체험';
  $('boothStatus').textContent=direct?'이 크롬북 앱이 같은 Wi-Fi의 A1 mini와 직접 연결해요. 출력 PC는 필요 없어요.':local?.operator?'출력 PC에 연결됐어요. 아래에서 A1 mini의 액세스 코드를 입력하고 바로 연결하세요.':connected?'연결됐어요. 웹에서 슬라이싱하고 부스 PC를 통해 매칭한 미니로 전송해요.':'운영자가 공유한 부스 링크로 접속하면 크롬북에서도 바로 출력할 수 있어요.';

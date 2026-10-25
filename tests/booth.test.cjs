@@ -27,13 +27,14 @@ test('browser connection attaches the booth key and keeps loopback operator mode
  const dom=new Map(),get=id=>{if(!dom.has(id)){const classes=new Set();dom.set(id,{textContent:'',hidden:false,value:'',open:false,title:'',classList:{toggle:(c,on)=>on?classes.add(c):classes.delete(c),contains:c=>classes.has(c)}});}return dom.get(id);};
  const memory=new Map(),storage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)||null,removeItem:k=>memory.delete(k)};
  const calls=[];const c=vm.createContext({URL,URLSearchParams,crypto:require('node:crypto').webcrypto,$:get,local:null,job:null,jobTimer:null,workshopStats:{connected:()=>{}},operatorToken:'',S:{text:'하늘'},location:{href:'http://127.0.0.1:5188/',hostname:'127.0.0.1',origin:'http://127.0.0.1:5188',pathname:'/'},localStorage:storage,sessionStorage:storage,lock:()=>{},renderSlice:()=>{},renderTicket:()=>{},clearInterval:()=>{},fetch:async(url,options)=>{calls.push({url,options});return {json:async()=>({})};}});
- vm.runInContext(fs.readFileSync('src/connection.js','utf8'),c);
+ vm.runInContext(fs.readFileSync('src/hub-update.js','utf8')+fs.readFileSync('src/connection.js','utf8'),c);
  c.api=async()=>({app:'click-workshop',version:7,csrf:'request-token',operator:false});
  const link=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port).links().pages,target=c.parseBoothLink(link);
  c.api=async()=>({app:'click-workshop',version:6});assert.equal(await c.connectWorkshop(target,{save:true}),false);c.api=async()=>({app:'click-workshop'});assert.equal(await c.connectWorkshop(target,{save:true}),false);c.api=async()=>({app:'click-workshop',version:7,csrf:'request-token',operator:false});assert.equal(await c.connectWorkshop(target,{save:true}),true);assert.equal(get('operatorLocal').hidden,true);assert.match(get('boothBtn').textContent,/연결됨/);
  // An older booth PC program (v7) still connects; the settings show how to update it and the ⚙ button carries a dot.
  assert.equal(get('hubUpdate').hidden,false);assert.match(get('hubUpdateVersion').textContent,/v7 · 최신 v9/);assert.ok(get('operatorBtn').classList.contains('needs-update'));
  c.local={...c.local,version:9};c.syncConnection();assert.equal(get('hubUpdate').hidden,true);assert.ok(!get('operatorBtn').classList.contains('needs-update'));c.local={...c.local,version:7};
+ assert.ok(calls.some(x=>x.url===c.HubUpdate.LATEST_URL&&x.options.credentials==='omit'),'connected to a booth PC, the page checks the published version');calls.length=0;
  await c.backendFetch('/api/slice',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:'data'});assert.equal(calls[0].url,hub+'/api/slice');assert.equal(calls[0].options.headers['X-Booth-Key'],key);assert.equal(calls[0].options.headers['X-Click-Token'],'request-token');assert.equal(calls[0].options.targetAddressSpace,'local');
  c.api=async()=>({app:'click-workshop',version:7,csrf:'other',operator:true});await c.discoverLocal();assert.equal(get('operatorLocal').hidden,false);assert.equal(vm.runInContext('boothTarget',c),null);
 });
