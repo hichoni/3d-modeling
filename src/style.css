@@ -252,3 +252,4 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 /* AIERA credit in the booth's bottom bar (links to the launcher) */
 .footer-mid{display:flex;align-items:center;gap:12px;min-width:0}.made-by{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:#172846;color:#fff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;box-shadow:0 2px 0 #0e1a30}.made-by b{background:var(--coral);border-radius:999px;padding:2px 8px;font-size:10px;letter-spacing:1.5px}.made-by:hover{outline:2px solid var(--coral);outline-offset:2px}
 @media(max-width:1100px){.made-by{font-size:0;gap:0;padding:3px}.made-by b{font-size:10px}}
+.small-btn.fit-btn{font-weight:800;color:var(--ink)}.small-btn.fit-btn[aria-pressed="true"]{background:var(--ink);color:#fff}
