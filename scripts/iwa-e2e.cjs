@@ -50,11 +50,12 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
    if(!f)throw Error('shell did not show the website');await f.waitForFunction(()=>window.ClickShell?.version,null,{timeout:15000});console.log('shell frame:',f.url().split('?')[0],'shell',await f.evaluate(()=>ClickShell.version));return f;};
   let ui=await open(page,'studio');await ui.waitForSelector('#connectionDialog[open]');
   console.log('direct mode:',await ui.evaluate(()=>document.documentElement.dataset.direct==='1'&&DirectRelay.enabled()));
-  await ui.click('#searchPrinters');await ui.waitForFunction(()=>document.querySelectorAll('#discoveredPrinter option').length>1,null,{timeout:30000});
-  console.log('discovered:',await ui.$eval('#discoveredPrinter',s=>s.options[1].textContent));
-  await ui.selectOption('#discoveredPrinter','0');await ui.fill('#printerCode','12345678');
+  // The printer picker opens on its own search when nothing is registered: tap the printer, type the code, connect.
+  await ui.waitForSelector('#printerPicker .pp-found',{timeout:30000});
+  console.log('discovered:',(await ui.textContent('#printerPicker .pp-found')).trim());
+  await ui.click('#printerPicker .pp-found');await ui.fill('#ppCode','12345678');
   if(shots)await page.screenshot({path:path.join(shots,'iwa-2-connect.png')});
-  await ui.click('#savePrinterConnection');await ui.waitForFunction(()=>DirectRelay.store.pairing?.printerId&&DirectRelay.telemetry(DirectRelay.store.pairing.printerId).fresh,null,{timeout:20000});
+  await ui.click('#printerPicker .pp-code-form button[type=submit]');await ui.waitForFunction(()=>!document.getElementById('connectionDialog').open,null,{timeout:30000});await ui.waitForFunction(()=>DirectRelay.store.pairing?.printerId&&DirectRelay.telemetry(DirectRelay.store.pairing.printerId).fresh,null,{timeout:20000});
   console.log('paired and live:',await ui.evaluate(()=>{const t=DirectRelay.telemetry(DirectRelay.store.pairing.printerId);return t.name+' '+t.state+' '+t.filament.external?.type;}));
   if(shellMode){ui=await open(page,'studio');await ui.waitForFunction(()=>DirectRelay.store.pairing?.printerId&&DirectRelay.telemetry(DirectRelay.store.pairing.printerId).fresh,null,{timeout:30000});console.log('after relaunch: printer and code kept by the shell, live again');}
   await ui.evaluate(()=>{const d=document.getElementById('connectionDialog');if(d.open)d.close();});

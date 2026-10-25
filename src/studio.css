@@ -46,3 +46,5 @@
 .made-by{display:inline-flex;align-items:center;gap:7px;margin:10px auto 4px;padding:5px 12px 5px 5px;border-radius:999px;background:#172846;color:#fff;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.made-by b{background:#ff525f;border-radius:999px;padding:2px 9px;font-size:11px;letter-spacing:1.5px}.made-by:hover{outline:2px solid #2563eb;outline-offset:2px}
 .brand-org b{font-size:11px}.brand-org em{font-size:10px}
 .hub-update{margin:0 0 14px;padding:10px 12px;border-radius:12px;background:#fff4c7;color:#6f5a1f;font-size:13px;line-height:1.6}.hub-update a{color:inherit}#connectionButton.needs-update{position:relative}#connectionButton.needs-update::after{content:"";position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#ff525f;border:2px solid #fff}
+/* Direct mode: the printer picker (src/direct/printer-picker.js) replaces the select-and-register form. */
+[data-direct="1"] #printerPairSection,[data-direct="1"] #printerSetup,[data-direct="1"] .direct-intro,[data-direct="1"] #localConnectionInfo{display:none!important}
