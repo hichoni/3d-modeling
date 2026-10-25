@@ -47,7 +47,8 @@ self.onmessage=async event=>{
   let position=[0,0];if(studio){const absolute=new Float32Array(vertices);for(let i=0;i<absolute.length;i++)if(i%3!==2)absolute[i]+=90;const b=globalThis.StudioCore.validateVertices(absolute);position=b.center.slice(0,2).map(n=>n-90);}
   const widget=newWidget('source').setInWorker().loadVertices(vertices).center();
   const bounds=widget.getBoundingBox(),height=bounds.max.z-bounds.min.z;
-  if(!studio&&(![14,20].some(s=>Math.abs(bounds.max.x-bounds.min.x-s)<=.03&&Math.abs(bounds.max.y-bounds.min.y-s)<=.03)||height<2||height>4.51))throw Error('14mm 키캡이나 20mm 도장 조각만 계산할 수 있어요.');
+  // Booth: one 14 or 20 mm plate, or a 2-key pair of 14 mm plates 20 mm apart (34 x 14 mm overall, see src/toolpaths.js).
+  if(!studio&&(![[14,14],[20,20],[34,14]].some(([w,d])=>Math.abs(bounds.max.x-bounds.min.x-w)<=.03&&Math.abs(bounds.max.y-bounds.min.y-d)<=.03)||height<2||height>4.51))throw Error('14mm 키캡이나 20mm 도장 조각만 계산할 수 있어요.');
   widget.setTopZ(height);
   if(studio)widget.move(position[0],position[1],0,true);
   await invoke('sync',{id:'click-model',group:'click-model',meta:{file:'keycap.stl'},anno:{},track:widget.track,vertices:widget.getGeoVertices()});
