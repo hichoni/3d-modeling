@@ -25,8 +25,10 @@ https://hichoni.github.io/3d-modeling/setup.html
 
 5. 이후 실행은 start-workshop.cmd 또는 start-booth.cmd입니다.
    프린터 등록 정보는 runtime 폴더에 보관됩니다.
-   업데이트할 때 출력·전송이 끝난 뒤 프로그램을 종료하고,
-   runtime 전체를 비공개 백업·보존하세요.
+   업데이트: 출력·전송이 끝난 뒤 update-booth.cmd 더블클릭.
+   최신 파일을 받아 바꾸고 다시 실행합니다. runtime(프린터·코드·
+   집계)은 그대로 두고 설정은 runtime-backup-날짜 폴더에 백업합니다.
+   출력·전송 중이면 바꾸지 않고 멈춥니다.
 
 6. 크롬북 함께 쓰기를 설정했다면 출력 PC의 체험 화면에서
    ⚙ 운영자 화면 → 실행 시 표시된 PIN으로 잠금 해제
