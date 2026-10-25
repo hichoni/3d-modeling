@@ -144,7 +144,7 @@ async function api(url,body,operator=false){const headers={'X-Click-Token':local
 
 // API v9 hubs accept a 2-key pair (two plates in one job); an older booth PC program would reject its STL.
 const PAIR_UPDATE='두 판을 한 번에 출력하려면 공방 PC 프로그램을 업데이트해야 해요. 운영자에게 ⚙ 설정의 안내를 보여주세요. 한 판씩은 지금도 출력돼요.';
-function pairNeedsUpdate(){return printPair()&&hubNeedsUpdate();}
+function pairNeedsUpdate(){return printPair()&&!!local&&!directMode()&&!(local.version>=9);}
 async function slice(){if(!local||!ready())return;if(pairNeedsUpdate()){toast(PAIR_UPDATE);return;}if(!pairing?.printerId){await showPairing();return;}if(job?.slice)return;const mine=revision;$('sliceBtn').disabled=true;$('sliceBtn').textContent='슬라이싱 요청 중…';try{const res=await backendFetch('/api/slice',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Click-Token':local.csrf,'X-Model-Name':encodeURIComponent(modelName())},body:toSTL(geometries()),signal:AbortSignal.timeout(15000)});const data=await res.json();if(!res.ok)throw Error(data.error);if(mine!==revision)return;job=data;try{sessionStorage.setItem('click-current-job',JSON.stringify({id:job.id,design:JSON.stringify(S),backend:boothTarget?.base||location.origin}));}catch{}renderSlice();clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);toast('진짜 프린터 경로를 계산하고 있어요. 잠시만 기다려요.');}catch(e){toast(e.message);renderSlice();}}
 async function pollJob(){if(!job||pollBusy)return;pollBusy=true;const id=job.id;try{const data=await api('/api/jobs/'+id);if(job?.id!==id)return;const becameReady=!job.slice&&data.slice,completed=job.state!=='complete'&&data.state==='complete';job=data;if(completed)workshopStats.complete(job);if(becameReady){renderSlice();beep(850);toast('슬라이싱 완료! 실제 노즐 경로를 살펴봐요.');}if(data.state==='failed'&&data.mode!=='direct'){clearInterval(jobTimer);toast(data.error||'슬라이싱 실패. STL을 저장해 Studio에서 확인해주세요.');job=null;renderSlice();}renderTicket();}catch{if(job?.telemetry)job.telemetry={fresh:false};printerTutorial?.setJob(job,{fresh:false});renderPrintPreparation({fresh:false},true,$('directPrinterSelect').value,job?.printOptions);$('printState').textContent='프린터 연결을 확인하고 있어요.';$('printDetail').textContent='다시 전송하지 말고 프린터 본체를 확인해주세요.';$('ownStopBtn').hidden=true;}finally{pollBusy=false;}}
 async function printNow(){if(pairNeedsUpdate()){toast(PAIR_UPDATE);return;}
@@ -218,7 +218,7 @@ function bind(){
  setInterval(()=>{if($('operatorDialog').open&&operatorToken)operatorRefresh();},3000);
 }
 try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
-const workshopStats=new WorkshopStatistics();
+const workshopStats=new WorkshopStatistics();HubUpdate.watch(()=>syncConnection());
 bind();bindBoothConnection();bindPairing();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();
 coachSay(COACH[0]);$('coachToggle').onclick=()=>{if($('coachTip').classList.contains('is-collapsed'))coachSay($('coachText').dataset.full||COACH[step]||COACH[0],{replay:true});else coachHide();};
 new ResizeObserver(coachFit).observe($('coachTip'));
