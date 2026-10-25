@@ -3,7 +3,7 @@
 // Output: artifacts/iwa-app/ (signed into downloads/click-studio.swbn by tools/iwa/build.cjs).
 const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts','iwa-app');
-const VERSION='1.1.2',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
+const VERSION='1.1.3',REMOTE='https://hichoni.github.io/3d-modeling/',UPDATE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio-update.json';
 function manifest(){return {name:'Click Studio · A1 mini 직접 출력',short_name:'Click Studio',description:'크롬북에서 모델링·슬라이싱하고 같은 Wi-Fi의 Bambu Lab A1 mini로 바로 출력합니다.',id:'/',start_url:'/',scope:'/',display:'standalone',background_color:'#f6f1e8',theme_color:'#ff7a45',lang:'ko',version:VERSION,update_manifest_url:UPDATE_URL,
  icons:[{src:'/icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}],
  permissions_policy:{'cross-origin-isolated':['self'],'direct-sockets':['self'],'direct-sockets-private':['self'],'direct-sockets-multicast':['self'],'local-network':['self'],'loopback-network':['self']}};}

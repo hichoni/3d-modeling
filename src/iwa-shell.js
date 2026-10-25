@@ -16,24 +16,30 @@
   if(m.op==='hello'){ready=true;document.title=document.title.replace(/^…\s*/,'');return;}
   if(m.op==='storage'){if(m.action==='set'&&KEY.test(m.key)&&typeof m.value==='string'&&m.value.length<5e6)localStorage.setItem(m.key,m.value);else if(m.action==='remove'&&KEY.test(m.key))localStorage.removeItem(m.key);else if(m.action==='clear')for(const k of Object.keys(localStorage))if(KEY.test(k))localStorage.removeItem(k);return;}
   if(m.op==='tcp'){if(!allowTcp(m.host,m.port))return reply({ok:false,name:'NotAllowedError',error:'이 주소·포트는 프린터 연결에 쓰지 않습니다.'});
-   const s=new TCPSocket(m.host,m.port,{noDelay:!!m.options?.noDelay,...(m.options?.keepAliveDelay?{keepAliveDelay:m.options.keepAliveDelay}:{})}),o=await s.opened,sid=nextSid++;
-   sockets.set(sid,{s,host:m.host,port:m.port});if(m.port===990)ftpsHosts.set(m.host,(ftpsHosts.get(m.host)||0)+1);
+   const s=new TCPSocket(m.host,m.port,{noDelay:!!m.options?.noDelay,...(m.options?.keepAliveDelay?{keepAliveDelay:m.options.keepAliveDelay}:{})}),o=await s.opened,sid=nextSid++,r=relay(o);
+   sockets.set(sid,{s,host:m.host,port:m.port,...r.keep});if(m.port===990)ftpsHosts.set(m.host,(ftpsHosts.get(m.host)||0)+1);
    s.closed.then(()=>release(sid),()=>release(sid));
-   return reply({ok:true,sid,info:{localAddress:o.localAddress,localPort:o.localPort,remoteAddress:o.remoteAddress,remotePort:o.remotePort},readable:o.readable,writable:o.writable},[o.readable,o.writable]);}
+   return reply({ok:true,sid,info:{localAddress:o.localAddress,localPort:o.localPort,remoteAddress:o.remoteAddress,remotePort:o.remotePort},readable:r.readable,writable:r.writable},[r.readable,r.writable]);}
   if(m.op==='udp'){const o=m.options||{};if(!allowUdp(o))return reply({ok:false,name:'NotAllowedError',error:'이 UDP 사용은 프린터 검색에 쓰지 않습니다.'});
-   const s=new UDPSocket(o),info=await s.opened,sid=nextSid++;sockets.set(sid,{s,info});s.closed.then(()=>release(sid),()=>release(sid));
-   return reply({ok:true,sid,multicast:!!info.multicastController,info:{localAddress:info.localAddress,localPort:info.localPort,remoteAddress:info.remoteAddress,remotePort:info.remotePort},readable:info.readable,writable:info.writable},[info.readable,info.writable]);}
+   const s=new UDPSocket(o),info=await s.opened,sid=nextSid++,r=relay(info);sockets.set(sid,{s,info,...r.keep});s.closed.then(()=>release(sid),()=>release(sid));
+   return reply({ok:true,sid,multicast:!!info.multicastController,info:{localAddress:info.localAddress,localPort:info.localPort,remoteAddress:info.remoteAddress,remotePort:info.remotePort},readable:r.readable,writable:r.writable},[r.readable,r.writable]);}
   if(m.op==='udp-join'||m.op==='udp-leave'){const e=sockets.get(m.sid);if(!e?.info?.multicastController||m.group!=='239.255.255.250')return reply({ok:false,error:'멀티캐스트 그룹을 사용할 수 없습니다.'});await e.info.multicastController[m.op==='udp-join'?'joinGroup':'leaveGroup'](m.group);return reply({ok:true});}
-  if(m.op==='close'){const e=sockets.get(m.sid);if(e)try{await e.s.close();}catch{}release(m.sid);return reply({ok:true});}
+  if(m.op==='close'){await shut(m.sid);return reply({ok:true});}
   reply({ok:false,error:'지원하지 않는 요청입니다.'});
  }
+ // The page gets the socket's streams through pipes the shell keeps, so it can always cut them and close the socket:
+ // a socket whose own streams were handed over cannot be closed here (it stayed open on the printer).
+ function relay(o){const stop=new AbortController(),down=new TransformStream(),up=new TransformStream();
+  const pipes=[o.readable.pipeTo(down.writable,{signal:stop.signal}).catch(()=>{}),up.readable.pipeTo(o.writable,{signal:stop.signal}).catch(()=>{})];
+  return {readable:down.readable,writable:up.writable,keep:{stop,pipes}};}
+ async function shut(sid){const e=sockets.get(sid);if(!e)return;release(sid);e.stop?.abort();await Promise.all(e.pipes||[]);try{await e.s.close();}catch{}}
  function release(sid){const e=sockets.get(sid);if(!e)return;sockets.delete(sid);if(e.port===990)ftpsHosts.set(e.host,Math.max(0,(ftpsHosts.get(e.host)||1)-1));}
  const storage={};for(const k of Object.keys(localStorage))if(KEY.test(k))storage[k]=localStorage.getItem(k);
  const frame=document.createElement('iframe');frame.setAttribute('credentialless','');frame.title='Click Studio';
  frame.name=JSON.stringify({clickShell:PROTOCOL,storage});frame.src=REMOTE+PAGES[page][0]+'?click-shell=1'+hash;
  const timer=setTimeout(()=>{if(!ready)fallback('timeout');},15000);
  // Each page load inside the frame gets a fresh channel; connections from the previous page are closed.
- frame.addEventListener('load',()=>{for(const sid of [...sockets.keys()]){try{sockets.get(sid).s.close();}catch{}release(sid);}const channel=new MessageChannel();
+ frame.addEventListener('load',()=>{for(const sid of [...sockets.keys()])void shut(sid);const channel=new MessageChannel();
   channel.port1.onmessage=e=>{const m=e.data||{},reply=(r,t=[])=>{if(m.id)channel.port1.postMessage({...r,id:m.id},t);};handle(m,reply).catch(err=>reply({ok:false,name:err?.name||'NetworkError',error:err?.name==='NotAllowedError'||err?.name==='InvalidAccessError'?'크롬북이 로컬 네트워크 연결을 허용하지 않았습니다. 앱 권한을 확인하세요.':'이 주소의 프린터에 연결하지 못했습니다.'}));};
   try{frame.contentWindow.postMessage({type:'click-shell-port',protocol:PROTOCOL,shellVersion:VERSION},new URL(REMOTE).origin,[channel.port2]);}catch{}
   setTimeout(()=>{if(!ready){clearTimeout(timer);fallback('no-handshake');}},6000);

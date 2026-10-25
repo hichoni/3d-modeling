@@ -22,8 +22,9 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
  // The "website" for --shell: the built public pages over HTTPS, trusting the installed test app's origin.
  const website=https.createServer({key:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.key.pem')),cert:fs.readFileSync(path.join(root,'tests/fixtures/direct-tls/rsa-device.pem'))},(q,r)=>{const p=new URL(q.url,'https://x').pathname;if(p==='/favicon.ico'){r.writeHead(204);return r.end();}
   // the tablet app checks the published APK version (downloads/ is served by the real site)
-  if(p==='/downloads/click-studio-android.json'){r.writeHead(200,{'Content-Type':'application/json'});return r.end(fs.readFileSync(path.join(root,'downloads/click-studio-android.json')));}const name={'/':'index.html','/index.html':'index.html','/studio.html':'studio.html'}[p];if(!name){r.writeHead(404);return r.end();}
-  const html=fs.readFileSync(path.join(root,name),'utf8').replace(/globalThis\.CLICK_SHELL_ORIGINS=\[[^\]]*\]/,()=>'globalThis.CLICK_SHELL_ORIGINS='+JSON.stringify([appId])).replace('</body>',()=>pagePatch+'</body>');r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end(html);}).listen(8443,'127.0.0.1');
+  if(p==='/downloads/click-studio-android.json'){r.writeHead(200,{'Content-Type':'application/json'});return r.end(fs.readFileSync(path.join(root,'downloads/click-studio-android.json')));}if(p.startsWith('/fonts/')&&/^\/fonts\/[\w.-]+\.ttf$/.test(p)){r.writeHead(200,{'Content-Type':'font/ttf'});return r.end(fs.readFileSync(path.join(root,p)));}
+  const name={'/':'index.html','/index.html':'index.html','/studio.html':'studio.html','/home.html':'home.html'}[p];if(!name){r.writeHead(404);return r.end();}
+  const html=fs.readFileSync(path.join(root,name),'utf8').replace(/globalThis\.CLICK_SHELL_ORIGINS=\[[^\]]*\]/,()=>'globalThis.CLICK_SHELL_ORIGINS='+JSON.stringify([appId])).replace('</body>',()=>(name==='home.html'?'':pagePatch)+'</body>');r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end(html);}).listen(8443,'127.0.0.1');
  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'iwa-e2e-')),errors=[],consoleLog=[];
  const ctx=await playwright.chromium.launchPersistentContext(profile,{headless:false,ignoreHTTPSErrors:true,viewport:{width:1366,height:820},args:androidMode?['--ignore-certificate-errors']:['--enable-features=IsolatedWebApps,IsolatedWebAppDevMode','--install-isolated-web-app-from-url=http://127.0.0.1:8099','--ignore-certificate-errors']});
  // --android: a plain browser page plus the Android app's native socket bridge, emulated in Node.
@@ -72,6 +73,23 @@ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=
   if(shots){await ui.$eval('#printMonitor',e=>e.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(shots,'iwa-5-complete.png')});fs.writeFileSync(path.join(shots,'iwa-plate-thumbnail.png'),entries.get('Metadata/plate_1.png')());}
   const booth=await ctx.newPage();booth.on('pageerror',e=>errors.push('booth: '+e.message));const boothUi=await open(booth,'booth');await booth.waitForTimeout(1500);
   console.log('booth direct:',await boothUi.evaluate(()=>document.documentElement.dataset.direct==='1'&&document.getElementById('boothBtn').textContent));
+  // Links followed inside the app (AIERA badge → launcher → booth card) must keep the page in app mode with printer access.
+  if(shellMode&&!androidMode){
+   // Inside the app: AIERA badge → launcher → booth card, twice. No printer connection may be left behind, and the
+   // booth must still have printer access afterwards.
+   let before=0;
+   for(let round=0;round<2;round++){
+    const cur=booth.frames().find(x=>/index\.html/.test(x.url())&&!/open\.html/.test(x.url()));await cur.click('footer .made-by');
+    let h=null;for(let i=0;i<60&&!h;i++){await booth.waitForTimeout(250);h=booth.frames().find(x=>/home\.html/.test(x.url()));}if(!h)throw Error('AIERA badge did not open the launcher');
+    await h.click('a.card.booth');let b2=null;for(let i=0;i<80&&!b2;i++){await booth.waitForTimeout(250);b2=booth.frames().find(x=>/index\.html\?start/.test(x.url()));}
+    if(!b2)throw Error('launcher booth card did not open the booth');await b2.waitForFunction(()=>window.DirectRelay&&document.documentElement.dataset.direct==='1',null,{timeout:30000});
+    await booth.waitForTimeout(6000);const direct=await b2.evaluate(()=>({shell:!!window.ClickShell?.active,direct:DirectRelay.enabled()}));
+    console.log('round',round+1,'badge → launcher → booth:',JSON.stringify(direct),'mqtt clients:',printer.clients.size);if(round===0)before=printer.clients.size; // baseline once the booth is connected
+    if(!direct.shell||!direct.direct)throw Error('booth lost the app connection after following links');}
+   {const cur=booth.frames().find(x=>/index\.html\?start/.test(x.url()));await cur.evaluate(()=>location.reload());await booth.waitForTimeout(9000);console.log('after a reload in the app frame, mqtt clients:',printer.clients.size);}
+   // The shell alone (1.1.3+) must also close them: switch the page's own cleanup off, then navigate.
+   {const cur=booth.frames().find(x=>/index\.html\?start/.test(x.url()));await cur.evaluate(()=>{removeEventListener('pagehide',ClickShell.cutAll);location.href='index.html?start&raw';});await booth.waitForTimeout(9000);console.log('after a navigation the page did not clean up, mqtt clients:',printer.clients.size);}
+   if(printer.clients.size>before)throw Error('printer connections left open by page changes: '+before+' → '+printer.clients.size);}
   if(shots){await booth.setViewportSize({width:1366,height:690});await boothUi.evaluate(()=>setStep(2));await booth.waitForTimeout(2000);await booth.screenshot({path:path.join(shots,'iwa-6-booth-print.png')});await boothUi.click('#operatorBtn');await booth.waitForTimeout(400);await booth.screenshot({path:path.join(shots,'iwa-7-settings.png')});}
   // Android app: a 3MF caught from MakerWorld's "Bambu Studio로 열기" reaches Studio through the bridge.
   if(androidMode){const {bambuProject}=require('../tests/helpers/make-3mf.cjs');const mw=await ctx.newPage();await mw.goto('https://127.0.0.1:8443/studio.html');await mw.waitForFunction(()=>window.ClickAndroid?.version);
