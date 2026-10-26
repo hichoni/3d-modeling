@@ -2,8 +2,10 @@
 
 Same fit as holder-N.stl (tune_holder.py): a 17.65 mm slot (corner R 2.2, 17.5 mm key pitch) that wraps the 17 mm
 keycaps from the switch ledge at 10 mm up to an 18 mm rim, and an MX switch socket down to a 1.26 mm floor. The socket is
-a keyboard plate: its top PLATE_T mm is the 14.0 x 14.0 mm cutout, and below it the space widens to CAVITY mm, so the
-switch's two clips spring out under that lip and lock it in (friction alone in a straight 14 mm tube let it slip out).
+a keyboard plate: its top PLATE_T mm is the TUBE mm cutout, and below it the space widens to CAVITY mm, so the switch's
+two clips spring out under that lip and lock it in (friction alone in a straight 14 mm tube let it slip out). Crush ribs
+on the pocket walls, two per side clear of the clips in the middle, squeeze the switch's bottom housing (13.9 mm) to
+RIB_TO mm across, taking up print tolerance; their tops taper so the switch pushes past them.
 What changes:
   - walls an even WALL mm all round (the supplied body had 1.75 mm on two sides and 2.5-2.65 mm on the others, where
     a 3 mm keyring tunnel ran diagonally through the corner): 20.85 mm wide instead of 22, and 1.4 mm shorter per end;
@@ -28,8 +30,9 @@ from keychain_body import text_section  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PITCH, SLOT_W, SLOT_END, SLOT_R = 17.5, 17.65, 0.15, 2.2   # slot length = keys x pitch + SLOT_END
-TUBE, FLOOR, LEDGE, TOP = 14.0, 1.26, 10.0, 18.0
+TUBE, FLOOR, LEDGE, TOP = 13.9, 1.26, 10.0, 18.0
 PLATE_T, CAVITY = 1.5, 15.0                                   # MX plate thickness under the ledge; room for the clips
+RIB_TO, RIB_AT, RIB_W, RIB_Z = 13.7, 4.6, 1.2, 5.3          # crush ribs: across-tips; off the side's middle; base; bottom
 WALL, FOOT, LEAD = 1.6, 0.4, 0.3
 HOLE, TAB_RING, TAB_T, TAB_OUT = 5.0, 2.0, 3.0, 4.2         # keyring hole; ring of material round it; tab thickness; reach
 END_HOLE, END_RING, END_T = 4.5, 1.6, 2.4                    # 'tab': hole, ring, thickness
@@ -73,7 +76,18 @@ def holder(keys, loop='corner'):
         y = (i - (keys - 1) / 2) * PITCH
         out -= slab(m3.CrossSection.square((TUBE, TUBE), center=True), LEDGE - PLATE_T - 0.01, LEDGE + 0.5).translate((0, y, 0))
         out -= slab(m3.CrossSection.square((CAVITY, CAVITY), center=True), FLOOR, LEDGE - PLATE_T).translate((0, y, 0))
+        out += ribs(CAVITY).translate((0, y, 0))
     return out
+
+
+def ribs(width):
+    """Crush ribs on the four walls of a width-wide pocket, centred on the origin, tapering in at the top."""
+    w, tip, top = width / 2, RIB_TO / 2, LEDGE - PLATE_T
+    sec = m3.CrossSection([[(w + .01, -RIB_W / 2), (w + .01, RIB_W / 2), (tip, 0)]])
+    flat = m3.CrossSection([[(w + .01, -RIB_W / 2), (w + .01, RIB_W / 2), (w - .01, 0)]])
+    one = m3.Manifold.batch_hull([m3.Manifold.extrude(sec, top - 0.6 - RIB_Z).translate((0, 0, RIB_Z)), m3.Manifold.extrude(flat, 0.01).translate((0, 0, top - 0.01))])
+    side = one.translate((0, RIB_AT, 0)) + one.translate((0, -RIB_AT, 0))
+    return m3.Manifold.batch_boolean([side.rotate((0, 0, a)) for a in (0, 90, 180, 270)], m3.OpType.Add)
 
 
 def save(man, path):
