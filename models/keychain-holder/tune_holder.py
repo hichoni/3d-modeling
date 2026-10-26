@@ -3,8 +3,9 @@
 The holders: a 1.66 mm floor, a switch tube up to a 10.0 mm ledge where the switch's top housing rests, then a 7 mm rim
 whose slot (17.65 mm wide, 17.5 mm key pitch) wraps the keycap. With solid booleans (manifold3d):
   - rim RIM_UP mm higher: the rim is straight from 10 to 17 mm, so its 11-12 mm band is repeated;
-  - switch tube TUBE x TUBE mm, centred on each tube (was 13.89 x 13.80 / 13.80 x 13.88, under the MX 14.0 mm plate
-    cutout, so the switch's clips and housing were squeezed);
+  - switch tube TUBE x TUBE mm, centred on each tube (was 13.89 x 13.80 / 13.80 x 13.88, too tight; 14.0 let the switch
+    slip out, since this tube holds it by friction only: the keyring tunnel runs too close to the corner for a clip
+    pocket like the slim holders');
   - PIN_ROOM mm more depth under the switch (the tube was exactly 8.3 mm, the MX housing below the flange plus its
     3.3 mm pins and centre post), leaving a 1.26 mm floor.
 
@@ -16,7 +17,7 @@ import manifold3d as m3
 import trimesh
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RIM_UP, TUBE, PIN_ROOM = 1.0, 14.0, 0.4
+RIM_UP, TUBE, PIN_ROOM = 1.0, 13.9, 0.4   # 14.0 printed loose by friction alone; the slim holders lock the clips instead
 LEDGE, FLOOR, BAND = 10.0, 1.661, (11.0, 12.0)
 
 
