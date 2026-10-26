@@ -4,7 +4,7 @@
 // page's own HUB_VERSION is the floor. It is only asked once a booth PC is connected (then hourly); direct
 // Chromebook/tablet connections have no booth PC, are never flagged and never ask.
 (function(root){
- const HUB_VERSION=9,LATEST_URL='https://hichoni.github.io/3d-modeling/downloads/booth-version.json',listeners=[];
+ const HUB_VERSION=10,LATEST_URL='https://hichoni.github.io/3d-modeling/downloads/booth-version.json',listeners=[];
  let latest=HUB_VERSION,timer=null;
  async function check(){
   if(root.location?.hostname==='hichoni.github.io'||typeof root.fetch!=='function')return;

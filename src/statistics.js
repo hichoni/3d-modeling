@@ -16,7 +16,7 @@ class WorkshopStatistics{
  }
  next(){try{localStorage.removeItem(this.visitKey);}catch{}}
  connected(snapshot){this.remote=snapshot||null;this.pending.clear();this.render();void this.sync();}
- complete(job){this.data=this.read();this.data.prints[job.id]||={at:job.completedAt||new Date().toISOString(),...(WorkshopCounts.pieces(job)>1?{pieces:2}:{})};this.save();this.render();void this.sync();}
+ complete(job){this.data=this.read();this.data.prints[job.id]||={at:job.completedAt||new Date().toISOString(),...(WorkshopCounts.pieces(job)>1?{pieces:WorkshopCounts.pieces(job)}:{})};this.save();this.render();void this.sync();}
  async sync(){
   if(!local||this.busy)return;this.busy=true;const source=local;
   try{
