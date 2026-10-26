@@ -42,16 +42,31 @@
 
 ## 낮은 키캡 · 십자 기둥 2mm 줄임 (2026-10-26)
 
-윗면 테두리를 **1mm 낮춰**(높이 9.2 → 8.2mm, 판 홈 깊이 2.9 → 1.9mm) 부스에서 뽑은 판의 바닥(1.5mm)과 거의 같은 높이가 되게 했어요. 계산상 테두리가 판 바닥 윗면보다 0.5mm 높아요(원본은 1.5mm). 홈 벽의 곧은 구간(바닥에서 0.8~1.8mm 높이)에서 1mm를 빼고 그 위를 내렸기 때문에, 판을 잡는 돌기 끝 모양과 입구 경사·둥근 테두리는 그대로예요(돌기의 곧은 부분만 1mm 짧아짐). 십자 기둥은 **2mm 줄였어요**(`python3 shorten_socket.py 2.0`). 십자 구멍 깊이가 약 2.2mm라 스위치를 무는 길이가 짧아요.
+윗면 테두리를 **1mm 낮춰**(높이 9.2 → 8.2mm, 판 홈 깊이 2.9 → 1.9mm) 부스에서 뽑은 판의 바닥(1.5mm)과 거의 같은 높이가 되게 했어요. 계산상 테두리가 판 바닥 윗면보다 0.5mm 높아요(원본은 1.5mm). 홈 벽의 곧은 구간(바닥에서 0.8~1.8mm 높이)에서 1mm를 빼고 그 위를 내렸기 때문에, 판을 잡는 돌기 끝 모양과 입구 경사·둥근 테두리는 그대로예요(돌기의 곧은 부분만 1mm 짧아짐). 십자 기둥은 **1.5mm 줄인 것(추천)**과 **2mm 줄인 것**이 있어요(2mm는 `python3 shorten_socket.py 2.0`). 2mm는 십자 구멍 깊이가 약 2.2mm라 스위치를 무는 길이가 짧아요.
 
 ![원본(회색) · 낮은 17mm(분홍) · 낮은 16.5mm(파랑)](preview-round.png)
 ![단면: 판 바닥(초록)과 테두리 높이](preview-low.png)
 
 | 파일 | 바깥 | 높이 | 십자 기둥 |
 | --- | --- | --- | --- |
+| `keycap-base-socket-1.5-low.stl` | 원본 18mm | **8.2mm** | 1.5mm 줄임 |
+| `keycap-base-socket-1.5-low-outer17.stl` | 17mm 둥근 | **8.2mm** | 1.5mm 줄임 **(추천)** |
+| `keycap-base-socket-1.5-low-outer16.5.stl` | 16.5mm 둥근 | **8.2mm** | 1.5mm 줄임 |
 | `keycap-base-socket-2.0.stl` | 원본 18mm | 9.2mm | 2mm 줄임 |
 | `keycap-base-socket-2.0-low.stl` | 원본 18mm | **8.2mm** | 2mm 줄임 |
 | `keycap-base-socket-2.0-low-outer17.stl` | 17mm 둥근 | **8.2mm** | 2mm 줄임 |
 | `keycap-base-socket-2.0-low-outer16.5.stl` | 16.5mm 둥근 | **8.2mm** | 2mm 줄임 |
 
-`python3 models/keycap-base/low_top.py`로 다시 만들 수 있어요(맨 위 상수 CUT·LOWER·SOCKET).
+### 2mm 버전 · 스위치에 꽉 끼게 (`-low-tight`)
+
+키캡이 스위치에서 잘 빠져서, 2mm 줄인 버전은 **십자 구멍을 4.16×1.24mm → 4.08×1.16mm로 좁힌 것**도 있어요(MX 축은 약 4.0×1.17mm). 입구 경사(0.4mm)는 그대로라 끼우기는 쉽고, 들어가면 꽉 잡아요.
+
+| 파일 | 바깥 |
+| --- | --- |
+| `keycap-base-socket-2.0-low-tight-outer17.stl` | 17mm 둥근 **(추천)** |
+| `keycap-base-socket-2.0-low-tight-outer16.5.stl` | 16.5mm 둥근 |
+| `keycap-base-socket-2.0-low-tight.stl` | 원본 18mm |
+
+너무 빡빡해서 안 들어가면 원래 구멍(`-low-outer17`)을, 그래도 헐거우면 더 좁게(맨 위 TIGHT_L·TIGHT_W) 다시 만들면 돼요.
+
+`python3 models/keycap-base/low_top.py`로 다시 만들 수 있어요(맨 위 상수 CUT·LOWER·SOCKETS).
