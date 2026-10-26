@@ -14,3 +14,4 @@ desktop/ClickBooth/Resources/payload-manifest.json
 *.pfx
 *.p12
 *.key
+__pycache__/
