@@ -23,3 +23,16 @@ test('a pair slices in the browser engine and packs with one bed mesh over both 
  assert.match(gcode,/G29 A1 X73 Y83 I34 J14\n/);assert.deepEqual(plate.bbox_all,[73,83,107,97]);assert.equal(plate.bbox_objects[0].name,'keycap pair');assert.equal(job.dimensions.pair,true);
  assert.ok(parseGcode(gcode,14,PAIR_OFFSET).length>=21,'the relay reads paths on both plates');
 });
+
+// A 3-key keychain: three plates in a row, 20 mm apart (54 x 14 mm overall).
+function trio(){return Buffer.from(vm.runInContext(`(()=>{const list=[];for(const [x,h] of [[-20,2.3],[0,2.5],[20,4.5]]){const base=new THREE.ExtrudeGeometry(plateShape(14,14),{depth:1.5,bevelEnabled:false});base.translate(x,0,0);const top=new THREE.BoxGeometry(5,4,h-1.49);top.translate(x,0,1.49+(h-1.49)/2);list.push(base,top);}return toSTL(list);})()`,c));}
+test('a set of three slices and packs with one bed mesh over all three plates, and counts as three prints',async()=>{
+ const stl=trio(),d=PrintJob.validateSTL(stl);assert.equal(d.count,3);assert.equal(d.pair,true);assert.equal(+d.width.toFixed(3),54);
+ const r=await slice(stl),a=analyzeToolpaths(r.gcode,{height:4.5,strict:true,size:14,count:3});
+ const xs=a.paths.flatMap(l=>l.segments.flatMap(s=>[s[0],s[2]]));assert.ok(Math.min(...xs)<-25&&Math.max(...xs)>25&&xs.some(x=>Math.abs(x)<3),'paths on all three plates');
+ assert.throws(()=>analyzeToolpaths(r.gcode,{height:4.5,strict:true,size:14,count:2}),/벗어/);assert.throws(()=>analyzeToolpaths(r.gcode,{height:4.5,strict:true,size:14,count:4}),/크기/);
+ const job=prepareBrowserJob({profile:r.profile,stl:stl.toString('base64'),gcode:r.gcode,seconds:r.summary.time}),entries=zipEntries(job.bytes),gcode=entries.get('Metadata/plate_1.gcode')().toString(),plate=JSON.parse(entries.get('Metadata/plate_1.json')());
+ assert.match(gcode,/G29 A1 X63 Y83 I54 J14\n/);assert.deepEqual(plate.bbox_all,[63,83,117,97]);assert.equal(plate.bbox_objects[0].name,'keycap set of 3');
+ assert.ok(parseGcode(gcode,14,2*PAIR_OFFSET).length>=21);
+ const counts=require('../src/statistics-core.js');assert.equal(counts.pieces({dimensions:job.dimensions}),3);
+});
