@@ -6,7 +6,7 @@ moves down, so the bumps' tips, the lead-in and the top keep their shape; the po
 
     python3 models/keycap-base/low_top.py      # keycap-base-socket-{1.5,2.0}-low.stl and -low-outer17/16.5.stl (rounder)
 
-The 2.0 mm post also comes TIGHT (-low-tight*.stl): with only ~2.2 mm of the stem inside it, its cross hole is narrowed
+Both posts also come TIGHT (-low-tight*.stl) so the keycap stays on the switch: the cross hole is narrowed
 from 4.16 x 1.24 to TIGHT_L x TIGHT_W (the MX stem is about 4.0 x 1.17; the original hole lets keycaps pull off), keeping the same lead-in at the mouth.
 """
 import os
@@ -44,7 +44,8 @@ if __name__ == '__main__':
         save(low, os.path.join(HERE, 'keycap-base-socket-%s-low.stl' % socket))
         for size in (17.0, 16.5):
             save(slim_outer.slim(low, size), os.path.join(HERE, 'keycap-base-socket-%s-low-outer%g.stl' % (socket, size)))
-    low = tight(lowered(manifold_of(os.path.join(HERE, 'keycap-base-socket-2.0.stl'))), 2.0)
-    save(low, os.path.join(HERE, 'keycap-base-socket-2.0-low-tight.stl'))
-    for size in (17.0, 16.5):
-        save(slim_outer.slim(low, size), os.path.join(HERE, 'keycap-base-socket-2.0-low-tight-outer%g.stl' % size))
+    for socket in SOCKETS:
+        low = tight(lowered(manifold_of(os.path.join(HERE, 'keycap-base-socket-%s.stl' % socket))), float(socket))
+        save(low, os.path.join(HERE, 'keycap-base-socket-%s-low-tight.stl' % socket))
+        for size in (17.0, 16.5):
+            save(slim_outer.slim(low, size), os.path.join(HERE, 'keycap-base-socket-%s-low-tight-outer%g.stl' % (socket, size)))
