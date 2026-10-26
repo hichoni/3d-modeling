@@ -10,15 +10,19 @@ What changes:
       'tab':    a smaller flat tab straight off the middle of one short end, flush with the bed;
       'loop':   a slim D-shaped ear on the middle of one short end, standing on the bed, its hole running across
                 (parallel to the end and the bed) with a 45° pointed top so it prints without support;
-  - a 0.4 mm chamfer on the bottom edge (first-layer squish) and a 0.3 mm lead-in at the slot's top edge.
+  - a 0.4 mm chamfer on the bottom edge (first-layer squish) and a 0.3 mm lead-in at the slot's top edge;
+  - AIERA engraved 0.4 mm into the bottom, mirrored so it reads right from below (along the length on 2-3 keys).
 Prints as is, floor on the bed, no supports.
 
     python3 models/keychain-holder/slim_holder.py        # holder-N-slim.stl (corner), -tab.stl, -loop.stl for 1-3 keys
 """
-import math, os
+import math, os, sys
 import numpy as np
 import manifold3d as m3
 import trimesh
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'keychain'))
+from keychain_body import text_section  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PITCH, SLOT_W, SLOT_END, SLOT_R = 17.5, 17.65, 0.15, 2.2   # slot length = keys x pitch + SLOT_END
@@ -27,6 +31,7 @@ WALL, FOOT, LEAD = 1.6, 0.4, 0.3
 HOLE, TAB_RING, TAB_T, TAB_OUT = 5.0, 2.0, 3.0, 4.2         # keyring hole; ring of material round it; tab thickness; reach
 END_HOLE, END_RING, END_T = 4.5, 1.6, 2.4                    # 'tab': hole, ring, thickness
 LOOP_HOLE, LOOP_RING, LOOP_W = 4.0, 1.6, 4.0                 # 'loop': hole, ring, width along the end
+LOGO, LOGO_D = 'AIERA', 0.4                                  # under the floor (1.26 mm, 0.86 left under the letters)
 
 
 def rounded(w, h, r):
@@ -58,6 +63,9 @@ def holder(keys, loop='corner'):
     out = body + extra
     out -= slab(rounded(sw, sl, SLOT_R), LEDGE, TOP + 1)
     out -= m3.Manifold.batch_hull([slab(rounded(sw, sl, SLOT_R), TOP - LEAD, TOP - LEAD + 0.01), slab(rounded(sw + 2 * LEAD, sl + 2 * LEAD, SLOT_R + LEAD), TOP, TOP + 0.01)])
+    logo = text_section(LOGO, 3.6 if keys == 1 else 4.4)
+    if keys > 1: logo = logo.rotate(90)
+    out -= m3.Manifold.extrude(logo.scale((-1, 1)), LOGO_D + 0.01).translate((0, 0, -0.01))
     for i in range(keys):
         y = (i - (keys - 1) / 2) * PITCH
         out -= slab(m3.CrossSection.square((TUBE, TUBE), center=True), FLOOR, LEDGE + 0.5).translate((0, y, 0))
