@@ -57,4 +57,16 @@
 | `keycap-base-socket-2.0-low-outer17.stl` | 17mm 둥근 | **8.2mm** | 2mm 줄임 |
 | `keycap-base-socket-2.0-low-outer16.5.stl` | 16.5mm 둥근 | **8.2mm** | 2mm 줄임 |
 
+### 2mm 버전 · 스위치에 꽉 끼게 (`-low-tight`)
+
+키캡이 스위치에서 잘 빠져서, 2mm 줄인 버전은 **십자 구멍을 4.16×1.24mm → 4.08×1.16mm로 좁힌 것**도 있어요(MX 축은 약 4.0×1.17mm). 입구 경사(0.4mm)는 그대로라 끼우기는 쉽고, 들어가면 꽉 잡아요.
+
+| 파일 | 바깥 |
+| --- | --- |
+| `keycap-base-socket-2.0-low-tight-outer17.stl` | 17mm 둥근 **(추천)** |
+| `keycap-base-socket-2.0-low-tight-outer16.5.stl` | 16.5mm 둥근 |
+| `keycap-base-socket-2.0-low-tight.stl` | 원본 18mm |
+
+너무 빡빡해서 안 들어가면 원래 구멍(`-low-outer17`)을, 그래도 헐거우면 더 좁게(맨 위 TIGHT_L·TIGHT_W) 다시 만들면 돼요.
+
 `python3 models/keycap-base/low_top.py`로 다시 만들 수 있어요(맨 위 상수 CUT·LOWER·SOCKETS).
