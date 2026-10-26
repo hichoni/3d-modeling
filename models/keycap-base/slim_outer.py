@@ -2,7 +2,7 @@
 
 Made for each shortened-socket keycap (0.5, 1.0 and 1.5 mm shorter cross post, shorten_socket.py). The original's outside tapers from 18.0 mm at the skirt bottom to 16.9 mm at the top. This trims it to a new taper,
 SIZE at the bottom to TOP at the top, and makes it visibly rounder than the original so the two are easy to tell apart:
-big corners all the way down (R 3.5 -> 3.8 mm, the original goes 2.0 -> 4.2), the top outer edge rounded off (R 0.45 mm)
+rounder corners low down (R 2.8 -> 3.4 mm, the original goes 2.0 -> 4.2), the top outer edge rounded off (R 0.45 mm)
 and a 0.4 mm 45° chamfer on the bottom edge, which also keeps the first layer's squish inside SIZE. Nothing inside changes: the 14.3 mm pocket for the 14 mm printed plate
 with its bumps and the switch socket are kept from the original, so only the walls get thinner. The rim around the
 pocket keeps at least 0.85 mm (TOP = 16.0). The skirt keeps at least MIN_WALL: where the original's inner space flares
@@ -20,7 +20,7 @@ from shorten_socket import manifold_of, save
 HERE = os.path.dirname(os.path.abspath(__file__))
 SOCKETS = ('0.5', '1.0', '1.5')     # the shortened-socket keycaps from shorten_socket.py
 HEIGHT, TOP = 9.2, 16.0              # keycap height; outside size at the top (pocket 14.3 + 2 x 0.85)
-R_BOTTOM, R_TOP = 3.5, 3.8           # corner radius at the bottom and top (TOP's 3.8 keeps 0.85 mm at the pocket's corners)
+R_BOTTOM, R_TOP = 2.8, 3.4           # corner radius at the bottom and top (the top keeps > 0.85 mm at the pocket's corners)
 FOOT, EDGE = 0.4, 0.45               # bottom edge chamfer; top outer edge rounding
 MIN_WALL, SKIRT_TOP = 0.6, 4.9       # thinnest skirt wall; the skirt's inner space ends at 5.0 mm
 
