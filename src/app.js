@@ -73,6 +73,7 @@ function fitLayout(mode){const cap=capModel();if(mode==='none')return {mode,cap,
  const c=caseModel(mode);return {mode,cap,c,xs:c.keys,drop:c.seat+cap.floor};}
 // "눌러보기": press a keycap on its switch and it travels down like a real key, then springs back. On the design
 // step's keychain views, and on the print step, where the stage moves into the press pad so it can be clicked while printing.
+// The click always sounds, even with the 효과음 setting off: it is the point of pressing.
 const press=[0,1,2].map(()=>({at:-1e4,held:false,from:0}));let pressCount=0;
 function pressable(){return !!R&&S.kind!=='stamp20'&&step!==1&&/^case[123]$/.test(fitMode())&&!!current&&built===revision;}
 function pressTravel(){const c=fitLayout(fitMode()).c;return c?Math.max(1.5,Math.min(3.6,c.seat-c.plate-.6)):0;}
@@ -80,7 +81,7 @@ function pressOffset(i,now){const p=press[i],t=(now-p.at)/1000;if(p.held)return 
 function pressKey(i,held,e){const now=performance.now(),p=press[i];if(!held&&!p.held)return;p.from=pressOffset(i,now);p.at=now;p.held=held;clickSound(held);if(!held)return;pressCount++;$('pressCount').textContent='딸깍 '+pressCount+'번!';try{navigator.vibrate?.(12);}catch{}
  const host=R.renderer.domElement.parentElement,box=host.getBoundingClientRect(),pop=document.createElement('span');pop.className='click-pop';pop.textContent='딸깍!';pop.style.left=(e.clientX-box.left)+'px';pop.style.top=(e.clientY-box.top)+'px';host.append(pop);setTimeout(()=>pop.remove(),700);}
 function pressFrame(){const now=performance.now(),active=press.some(p=>p.held||now-p.at<400);if(!active&&!R.pressing)return false;R.pressing=active;R.group.children.forEach(m=>{const i=m.userData.slot;if(i!==undefined)m.position.z=(m.userData.z||0)-pressOffset(i,now);});return true;}
-function clickSound(down){if(!sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const rate=audioCtx.sampleRate,len=Math.floor(rate*.03),buf=audioCtx.createBuffer(1,len,rate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,6);
+function clickSound(down){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const rate=audioCtx.sampleRate,len=Math.floor(rate*.03),buf=audioCtx.createBuffer(1,len,rate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,6);
  const src=audioCtx.createBufferSource(),band=audioCtx.createBiquadFilter(),gain=audioCtx.createGain();src.buffer=buf;band.type='bandpass';band.frequency.value=down?3000:4300;band.Q.value=1.3;gain.gain.value=down?.6:.3;src.connect(band);band.connect(gain);gain.connect(audioCtx.destination);src.start();}catch{}}
 function placeStage(){if(!R)return;const pad=step===2&&S.kind!=='stamp20',host=$(pad?'pressStage':'stage');$('pressPad').hidden=!pad;if(R.renderer.domElement.parentElement!==host){press.forEach(p=>p.held=false);host.append(R.renderer.domElement);R.resize();resetCamera();}R.dirty=true;}
 function fitGeometry(m){if(fitGeometries[m.source])return fitGeometries[m.source];const bytes=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0)),pos=new Int16Array(bytes.buffer,0,m.vertices*3),index=new Uint16Array(bytes.buffer,m.vertices*6),flat=new Float32Array(index.length*3),unit=m.step||.001;
