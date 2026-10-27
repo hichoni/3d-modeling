@@ -272,6 +272,256 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 
 .press-pad{position:relative;flex:0 0 230px;align-self:stretch;min-height:170px;margin:-8px 0;border-radius:20px;background:radial-gradient(ellipse at 50% 42%,#fff 25%,#fff0bd 95%);border:1.5px solid #eed58a;overflow:hidden}#pressStage{position:absolute;inset:0 0 26px;touch-action:none}#pressStage canvas{display:block;width:100%;height:100%;cursor:pointer}.press-tip{position:absolute;left:6px;right:6px;bottom:7px;text-align:center;font:14px Jua,sans-serif;color:#8a6510;pointer-events:none;white-space:nowrap}.press-tip b{font-weight:400;color:#d4572f;margin-left:3px}.click-pop{position:absolute;z-index:3;pointer-events:none;white-space:nowrap;font:30px Jua,sans-serif;color:#f0862e;-webkit-text-stroke:5px #fff;paint-order:stroke fill;filter:drop-shadow(0 3px 0 #17284622);animation:clickPop .65s ease-out forwards}@keyframes clickPop{from{opacity:1;transform:translate(-50%,-60%) scale(.7) rotate(-8deg)}to{opacity:0;transform:translate(-50%,-190%) scale(1.15) rotate(6deg)}}@media(prefers-reduced-motion:reduce){.click-pop{animation:clickFade .5s forwards}@keyframes clickFade{from{opacity:1;transform:translate(-50%,-120%)}to{opacity:0;transform:translate(-50%,-120%)}}}@media(max-width:700px){.press-pad{flex-basis:auto;width:100%;min-height:200px;margin:0}}
 @media(max-width:700px){.control-columns>*,.control-main,.control-decor{min-width:0}#fontRow,#modeRow,#edgeRow{flex-wrap:wrap}#fontRow>.control-label,#modeRow>.control-label,#edgeRow>.control-label{width:100%;min-width:0;margin-bottom:-2px}#fontRow .options,#modeRow .options,#edgeRow .edge-options{flex:1 1 100%;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}#fontRow .options button,#modeRow .options button,#edgeRow .edge-options button{min-width:0;padding-left:2px;padding-right:2px}#modeRow .options button{white-space:normal;word-break:keep-all;line-height:1.25}.control-decor .symbols,.control-decor .swatches{flex-wrap:wrap}.print-card .platform-print{grid-column:1/-1}}
+
+/* AIERA booth visual refinement. Presentation only: keep all state and event hooks. */
+:root{--paper:#fff9ee;--ink:#172846;--muted:#5b677a;--coral:#f34e63;--blue:#228fd1;--yellow:#ffd55b;--mint:#a6e6d4;--line:#dcd8ce;--shadow:0 4px 0 #1728460d,0 12px 32px #17284607}
+body{background:radial-gradient(circle,#dcd3c2 1px,transparent 1.4px) 0 0/28px 28px,var(--paper)}
+.app-shell{max-width:1480px}
+.topbar{border-bottom:1px solid #17284618;margin-bottom:15px;padding-bottom:17px}
+.brand strong{letter-spacing:-.8px}.brand-org{margin-top:5px}
+.top-actions .booth-btn{background:#fffaf1;border-color:#c9cbd0;box-shadow:0 2px 0 #1728460a}
+.top-actions .makerworld-entry{background:var(--ink);border-color:var(--ink);color:#fff}
+.quest-nav{border:1px solid #1728461d;box-shadow:0 4px 0 #1728460a;background:#fffdf7;gap:10px}
+.quest-nav button{border:1px solid transparent;transition:background .15s,box-shadow .15s}
+.quest-nav button[aria-current]{border-color:#f34e6340;background:#fff0ef;box-shadow:inset 0 -3px 0 #f34e631b}
+.quest-nav button[aria-current]:after{display:none}
+.quest-nav button:nth-of-type(2)[aria-current]{border-color:#228fd140;background:#edf7ff}
+.quest-nav button:nth-of-type(3)[aria-current]{border-color:#cfac4540;background:#fff6d7}
+.quest-nav button span{border-radius:12px}
+.heading .eyebrow{clip-path:none;transform:none;padding:5px 10px;border:1px solid #dbb743;border-radius:6px;background:#ffdf79;color:#574311;letter-spacing:.7px}
+.heading h1{letter-spacing:-1px}.heading p{color:#5b677a}
+.timer{background:#e2f2e8;border:1px solid #b3cebc;color:var(--ink);box-shadow:0 3px 0 #b3cebc55;transform:none}
+.timer span,.timer small{color:#426455}.timer b{color:#215745;text-shadow:none}
+.model-stage{background:radial-gradient(ellipse at 50% 48%,#fff 0,#fffdf6 45%,#f2ecdf 100%);border:1.5px solid #c5c5bd;box-shadow:0 5px 0 #17284614,0 16px 40px #17284608}
+.model-stage:before{background-image:linear-gradient(#c7bc9e40 1px,transparent 1px),linear-gradient(90deg,#c7bc9e40 1px,transparent 1px);background-size:32px 32px;opacity:.32;mask-image:linear-gradient(transparent,#000)}
+.stage-top .pill{clip-path:none;transform:none;background:var(--ink);color:#fff;border-radius:7px;letter-spacing:1.5px}
+.size-lock{border:1px solid #ddd7c9;color:#546071}
+.model-stage .stage-top{left:88px}.metrics dd{word-break:keep-all;line-height:1.4}
+.stage-bottom{background:#fffdf6ed;border:1px solid #ded9cc;border-radius:14px;padding:9px 11px;gap:10px;backdrop-filter:blur(8px)}
+.stage-bottom>div{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px;min-width:0}
+.stage-bottom .small-btn{min-height:32px}
+.fit-modes{gap:4px;max-width:100%}.fit-modes .small-btn[aria-pressed="true"]{box-shadow:0 2px 0 #0e1a30}
+.control-tray{background:#fffef9;border:1.5px solid #c8c9c2;border-top:5px solid var(--coral);box-shadow:0 5px 0 #17284610;padding:24px}
+.input-head>label{font-family:Jua,sans-serif;font-weight:400;font-size:19px}
+.content-choices button{min-width:0;white-space:nowrap;padding:10px 5px;font-size:14px}
+.name-field{border-color:#c9c9c1;background:#fff;box-shadow:inset 0 2px 5px #17284606}
+.name-field:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px #f34e631a}
+.control-tray button{border-color:#d9d7ce;box-shadow:0 2px 0 #1728460c}
+.control-tray button[aria-pressed=true]{border-color:#f34e63;box-shadow:0 2px 0 #d73549;background:#fff0f1;color:#bb2a40}
+.control-tray .swatches button[aria-pressed=true]{background:var(--swatch);outline:3px solid var(--ink);outline-offset:2px;box-shadow:none}
+.control-label,.control-decor>label{color:#526174;font-weight:700}
+.control-row{border-bottom:1px solid #e8e2d7;padding-bottom:9px;margin-bottom:9px}
+.control-row:last-child{border-bottom:0}
+.control-decor{border-color:#e7e0d4}
+.primary,.primary.next{background:var(--coral);border-color:#cb3548;box-shadow:0 4px 0 #bd3042;color:#fff;letter-spacing:-.3px}
+.primary:hover:not(:disabled){box-shadow:0 6px 0 #bd3042}.primary:active:not(:disabled){box-shadow:0 1px 0 #bd3042}
+.game-dialog{border-width:2px;border-color:#22334e;border-radius:17px;background:#fffdf7;box-shadow:0 4px 0 #17284620;padding-top:24px}
+.game-dialog .dialog-name{border-width:2px;transform:none;box-shadow:0 2px 0 #17284620}
+.coach-face{box-shadow:0 0 0 2px var(--ink),0 4px 0 2px #17284618}
+.side-card{border:1.5px solid #d8d6cd;box-shadow:0 4px 0 #1728460c}
+.assembly{background:#fff4d7;border-radius:18px}
+.workshop-statistics{background:transparent;border-color:#ddd8cd;box-shadow:none}
+.statistics-info{color:#687387}
+.actionbar{border-top:1px solid #17284618;margin-top:12px;padding-top:14px}
+.printer-tour{border-color:#c4ccc9;box-shadow:0 5px 0 #17284614}
+.tour-heading{background:transparent;border-bottom:0}.tour-heading>span:first-child{background:#e7f2e9;border-color:#c8d6cc}
+.platform-actions>a,.platform-actions>button{word-break:keep-all;font-size:15px;line-height:1.4}
+.tour-speech.game-dialog{border-radius:17px}
+.slice-card{border-top:5px solid var(--blue)}.print-card{border-top:5px solid #e8ba42}
+.layer-inspect{background:#f1f8fc;border-color:#cadde8}
+.result-panel{border-color:#dfbd57;background:#fff2c6;box-shadow:0 4px 0 #c9aa4e30}
+@media(min-width:1001px){
+ .app-shell{max-width:none;padding:14px 20px 13px;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-rows:64px minmax(0,1fr);gap:12px 16px}
+ .brand strong{font-size:24px}.brand .mascot.tiny{transform:scale(.85) rotate(-7deg)}
+ .quest-nav{grid-column:2;max-width:575px;padding:6px;gap:4px}
+ .quest-nav button{flex:1;padding:7px 8px;grid-template-columns:31px 1fr;gap:8px}
+ .quest-nav button span{width:31px;height:33px;border-radius:9px;font-size:14px}.quest-nav b{font-size:15px}
+ .top-actions{grid-column:4;flex-wrap:wrap;justify-content:flex-end;max-width:220px;gap:5px}
+ .top-actions .booth-btn{font-size:11px;padding:7px 9px}
+ .workshop-statistics{grid-column:3;grid-row:1;align-self:center;justify-self:end;margin:0;padding:5px 9px;border:1px solid #ddd8cd;display:flex}.statistics-date{display:none}.statistics-totals{gap:9px}.statistics-totals>div{padding-left:9px}.statistics-totals>div:first-child{padding-left:0;border:0}
+ #workshop{grid-template-columns:minmax(0,1fr) clamp(350px,30vw,430px);grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:12px 20px}
+ .heading{padding:1px 0 4px}.heading>div:first-child{gap:13px}.heading h1{font-size:28px}
+ .heading .eyebrow{font-size:10px;padding:5px 9px}
+ .timer{padding:5px 11px}.timer b{font-size:23px}.timer span{font-size:10px}
+ .control-tray{padding:18px 18px 13px;border-radius:20px}
+ .input-head>label{font-size:18px}.kind-choices{margin:0}.kind-choices button{font-size:10px;padding:4px 7px}
+ .name-field input{font-size:29px}.input-help{font-size:10px;margin:6px 0 12px}
+ .control-row{padding-bottom:8px;margin:7px 0}.control-label{font-size:12px;min-width:64px}
+ #modeRow .control-label{flex:1 1 100%;margin-bottom:0}#modeRow .options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));flex:1 1 100%;width:100%;gap:5px}#modeRow .options button{font-size:12px;padding:7px 2px;white-space:nowrap}
+ .control-columns{gap:9px}.control-row .options button{min-height:35px;font-size:14px}
+ .control-decor{gap:7px}.control-decor>label{font-size:12px}.control-decor>label small{display:inline;font-size:10px}
+ .symbols button{width:39px;height:39px}.swatches button{width:32px;height:32px}
+ .stage-bottom{left:16px;right:16px;bottom:16px}.stage-bottom #stageHint{max-width:125px;font-size:10px}
+ .actionbar{margin:0;padding:9px 0 0}.actionbar .primary.next{min-height:44px;font-size:20px;padding:10px 25px}
+ .game-dialog p{font-size:16px}.coach-tip{left:20px;right:20px;top:15px}
+ .coach-tip .game-dialog{padding:20px 32px 13px 17px}
+ .side-card h2{font-size:21px}
+}
+@media(min-width:1500px){.app-shell{grid-template-columns:auto minmax(0,1fr) auto auto}.workshop-statistics{grid-column:3;display:flex;position:static;align-self:center;margin:0;padding:5px 10px;border:1px solid #ddd8cd}.top-actions{grid-column:4}.statistics-date{display:none}.statistics-totals{gap:10px}.statistics-totals>div{padding-left:8px}.statistics-totals>div:first-child{padding-left:0;border:0}}
+@media(min-width:1001px) and (max-width:1199px){.app-shell{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:42px 48px minmax(0,1fr);gap:8px 15px}.brand{grid-column:1;grid-row:1}.top-actions{grid-column:2;grid-row:1;max-width:none;flex-wrap:nowrap}.quest-nav{grid-column:1;grid-row:2;max-width:none;justify-self:stretch}.quest-nav b{font-size:14px}.workshop-statistics{grid-column:2;grid-row:2;min-width:0;justify-self:stretch;justify-content:center}#workshop{grid-row:3}}
+@media(min-width:1001px) and (max-height:780px){.app-shell{grid-template-rows:54px minmax(0,1fr);padding:10px 16px;gap:8px 16px}#workshop{gap:8px 16px}.heading h1{font-size:24px}.control-tray{padding:13px 15px 10px}.control-row{margin:4px 0;padding-bottom:5px}.input-help{margin:4px 0 6px}.control-decor{gap:4px}.control-row .options button{min-height:31px}.symbols button{width:36px;height:36px}.actionbar .primary.next{font-size:18px;padding:8px 20px}}
+@media(max-width:1000px){.app-shell{padding:20px}.topbar{gap:14px;flex-wrap:wrap}.top-actions{flex-wrap:wrap;gap:7px}.model-stage{height:440px}.heading{padding:24px 0 20px}.workshop-statistics{padding:12px 16px}.statistics-totals b{font-size:25px}.control-tray{margin-top:21px}.stage-bottom #stageHint{max-width:120px}.workspace{grid-template-columns:minmax(0,1fr) 210px}.side-card{padding:20px 16px}}
+@media(max-width:700px){.app-shell{padding:14px}.brand strong{font-size:27px}.top-actions{justify-content:flex-start;max-width:100%}.topbar{padding-bottom:14px;margin-bottom:12px}.quest-nav{gap:2px;padding:6px}.quest-nav button{padding:7px 3px;column-gap:5px;grid-template-columns:28px 1fr}.quest-nav button span{width:28px;height:32px;border-radius:9px;font-size:13px}.quest-nav b{font-size:13px}.quest-nav small{font-size:9px}.quest-nav i{font-size:10px}.heading{align-items:flex-start;gap:8px}.heading h1{font-size:29px}.heading p{font-size:12px;max-width:225px;line-height:1.6}.heading .eyebrow{font-size:9px;padding:4px 6px}.timer{min-width:91px;padding:10px 7px}.timer b{font-size:25px}.timer small{font-size:8px}.workspace{grid-template-columns:1fr}.model-stage{height:420px}.stage-bottom{left:10px;right:10px;bottom:10px;padding:8px;gap:5px}.stage-bottom #stageHint{max-width:none;font-size:10px}.stage-bottom>div{justify-content:flex-start;flex-wrap:wrap}.fit-modes{flex-wrap:wrap;max-width:100%;border:0}.stage-bottom .small-btn{min-height:35px;padding:7px 9px;font-size:11px}.control-tray{padding:20px 16px}.side-card{margin-top:5px}.control-row{padding-bottom:12px}.control-label{font-size:13px}.symbols button{width:43px;height:43px}.swatches button{width:36px;height:36px}.actionbar{flex-wrap:wrap;gap:12px}.actionbar .primary.next{width:100%;font-size:21px;min-height:52px}.footer-mid{flex-wrap:wrap}.game-dialog p{font-size:14px}.coach-tip{max-width:calc(100% - 20px)}.control-decor>label small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.quest-nav button,.primary,.model-stage,.control-tray button{transition:none}}
+@media(min-width:1001px) and (max-width:1199px){.app-shell{grid-template-rows:42px 48px minmax(0,1fr)}}
+@media(max-width:700px){.model-stage .stage-top{left:71px;right:12px;gap:7px}.stage-top .pill{font-size:8px;letter-spacing:.6px;padding:8px}.size-lock{font-size:9px;padding:7px}.metrics dd{font-size:15px}}
+
+/* AIERA v2: render previews and three visual editing groups. */
+#designControls{padding:12px 15px;background:#fffefa;scrollbar-width:thin;scrollbar-color:#d3cec3 transparent}
+.design-group{min-width:0;padding:0 0 10px;margin:0 0 10px;border-bottom:1px solid #e7e2d7}
+.design-group:last-of-type{padding-bottom:0;margin-bottom:0;border:0}
+.design-group-heading{display:flex;align-items:center;gap:7px;margin:0 0 8px}
+.design-group-heading h2{font-size:17px;letter-spacing:-.3px;line-height:1}
+.design-group-heading>span{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;background:#172846;color:white;font:700 10px system-ui}
+.design-group-heading:after{content:'';height:1px;background:#e8e2d7;flex:1;margin-left:2px}
+.design-group:nth-of-type(2) .design-group-heading>span{background:#237eae}
+.design-group:nth-of-type(3) .design-group-heading>span{background:#557c67}
+#designControls .input-row{display:flex;flex-wrap:wrap;gap:6px}
+#designControls .input-head{margin:0;gap:5px}
+#designControls .input-head>label{font:700 12px 'Malgun Gothic',sans-serif;letter-spacing:-.3px}
+#designControls .kind-choices button{padding:3px 6px;font-size:10px}
+#designControls .kind-choices button small{font-size:9px}
+#designControls .name-field{flex:1 1 100%;min-width:0}
+#designControls .name-field input{height:43px;font-size:27px;border:1.5px solid #cecfc9;background:#fff;border-radius:10px;padding-left:13px}
+#designControls .name-field span{top:15px;font-size:10px}
+#designControls .content-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1 1 100%;gap:6px;margin:0}
+#designControls .content-choices button{min-height:32px;padding:5px;font-size:12px;border-radius:9px;box-shadow:none}
+#designControls .content-choices button[aria-pressed=true]{background:#fff0f1;box-shadow:inset 0 -2px #f34e63}
+#designControls .input-help{font-size:10px;line-height:1.4;margin:5px 0}
+#designControls .control-row{border:0;padding:0;margin:6px 0 0;gap:7px;min-width:0}
+#designControls .control-label{width:65px;min-width:65px;font-size:11px;color:#5b6777}
+#designControls #fontRow{flex-wrap:nowrap}
+#designControls #fontRow .control-label{flex:0 0 65px;margin:0}
+#designControls #fontTiles{min-width:0;gap:5px;display:flex}
+#designControls #fontTiles button{min-height:30px;min-width:0;padding:4px;border-radius:9px;font-size:15px!important;box-shadow:none}
+#designControls #fontTiles button[aria-pressed=true]{box-shadow:inset 0 -2px #f34e63}
+#designControls #modeRow{display:block;margin:0}
+#designControls #modeRow>.control-label{display:none}
+#designControls #modeRow .options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-flow:row;gap:5px;width:100%}
+#designControls #modeRow button{position:relative;display:flex;flex-direction:column;align-items:center;gap:0;min-width:0;padding:3px 1px 6px;border:1px solid #deddd5;border-radius:11px;background:#fbfaf6;font-size:12px;line-height:1.3;box-shadow:none;white-space:normal}
+#designControls #modeRow button[aria-pressed=true]{border-color:#ef6377;background:#fff0f3;box-shadow:inset 0 0 0 1px #ef6377,0 3px 7px #a54e6410;color:#a72d46}
+#designControls #modeRow button[aria-pressed=true]:after{content:'✓';position:absolute;right:4px;top:3px;display:grid;place-items:center;border-radius:50%;width:12px;height:12px;background:#e8506a;color:#fff;font:700 9px system-ui}
+.mode-preview{display:block;width:100%;max-width:64px;height:39px;overflow:visible;pointer-events:none}
+#designControls #modeRow .mode-caption{font-size:11px;font-weight:800}
+#designControls #modeRow small{display:block;font-size:8px;font-weight:400;opacity:1;color:#687281;margin-top:2px;white-space:nowrap}
+#designControls .height-row{flex-wrap:nowrap;margin-top:9px}
+#designControls .height-row input{flex:1;min-width:40px;width:auto;accent-color:#2385b8}
+#designControls .height-row output{font-size:10px;white-space:nowrap;text-align:right;min-width:45px}
+#designControls .height-row .subtle{display:none}
+#designControls #edgeRow{flex-wrap:nowrap;margin-top:0}
+#designControls #edgeRow>.control-label{width:65px;flex:0 0 65px;margin:0}
+#designControls #edgeTiles{display:flex;flex:1;min-width:0;gap:5px}
+#designControls #edgeTiles button{min-width:0;flex:1;width:31px;height:31px;padding:3px;border-radius:8px;box-shadow:none}
+#designControls #edgeTiles .edge-thumb{width:24px;height:24px;max-width:100%;object-fit:contain}
+#designControls .control-decor{border:0;padding:0;display:grid;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:9px 7px;margin-top:9px}
+#designControls .control-decor>label{font-size:11px;margin:0;line-height:1.4}
+#designControls .control-decor>label small{display:block;font-size:8px;font-weight:400;line-height:1.45;margin:3px 0 0;color:#74808b}
+#designControls .symbols{gap:5px;flex-wrap:wrap;min-width:0}
+#designControls .symbols button{height:31px;width:33px;padding:3px;border-radius:8px;font-size:22px;box-shadow:none}
+#designControls .symbols button:first-child{font-size:10px;word-break:keep-all}
+#designControls .symbols.pictures{max-height:78px;overflow:auto;padding:2px}
+#designControls .symbols.pictures button{width:33px;height:33px}
+#designControls .symbols.pictures .char-thumb{width:25px;height:25px}
+#designControls .swatches{gap:11px;margin:0;padding:4px 1px;flex-wrap:wrap}
+#designControls .swatches button{width:26px;height:26px;flex-shrink:0}
+#designControls button:focus-visible{outline:3px solid #228fd1;outline-offset:3px}
+@media(min-width:1001px) and (max-height:849px){#designControls{padding-top:10px;padding-bottom:8px}.design-group{padding-bottom:6px;margin-bottom:7px}.design-group-heading{margin-bottom:6px}.design-group-heading>span{width:20px;height:20px;font-size:9px}.design-group-heading h2{font-size:16px}#designControls .name-field input{height:40px}#designControls .input-help{line-height:1.3;margin:4px 0}#designControls #fontRow{margin-top:4px}#designControls .height-row{margin-top:7px}}
+@media(min-width:1001px) and (min-height:850px){#designControls{padding:18px}.design-group{padding-bottom:15px;margin-bottom:15px}.design-group-heading{margin-bottom:11px}#designControls #modeRow button{padding:7px 2px 9px}.mode-preview{height:46px}#designControls .control-decor{gap:12px 7px}}
+@media(max-width:1000px){#designControls{padding:20px}.design-group{padding-bottom:18px;margin-bottom:18px}.design-group-heading{margin-bottom:12px}.design-group-heading h2{font-size:19px}#designControls .input-head>label{font-size:14px}#designControls .kind-choices button{font-size:11px;padding:5px 8px}#designControls .content-choices button{min-height:42px;font-size:13px}#designControls #modeRow button{min-height:88px;padding-top:7px}.mode-preview{height:46px;max-width:72px}#designControls #modeRow .mode-caption{font-size:13px}#designControls #modeRow small{font-size:9px}#designControls .control-row{margin-top:10px}#designControls #fontTiles button,#designControls #edgeTiles button{min-height:40px}#designControls .symbols button{width:40px;height:40px}#designControls .swatches button{width:30px;height:30px}#designControls .control-decor{gap:14px 7px}#designControls .height-row{min-height:35px}}
+@media(max-width:400px){#designControls{padding:16px 12px}#designControls .kind-choices button{padding:4px}#designControls #modeRow small{font-size:8px}#designControls .swatches{gap:9px}#designControls .swatches button{width:27px;height:27px}#designControls .symbols button{width:35px;height:35px}}
+
+/* AIERA v3 / priorities 4–7. CSS only; all controls and scripts remain intact. */
+:root{--paper:#f7f5ee;--cap-edge:#d4d6cf;--cap-side:#d4d7cf;--cap-selected:#dc8393}
+body{background:var(--paper)}
+.model-stage{background:radial-gradient(ellipse at 49% 42%,#fff 0%,#fcfdf8 43%,#f0f2e9 100%);border:1px solid #d4d9ce;box-shadow:0 3px 0 #e0e3d9,0 12px 28px #17284605}
+.model-stage:before{display:none}
+.stage-top .pill{background:#e7ede8;color:#45615d;border:1px solid #d2ded5;border-radius:7px;font-size:9px;letter-spacing:1.2px;padding:7px 10px}
+.size-lock{background:#ffffffb5;border-color:#dee3da;color:#69756f;font-weight:500}
+.stage-bottom{background:#ffffffd9;border-color:#e1e5dc;border-radius:13px;box-shadow:0 2px 8px #182f3410;backdrop-filter:blur(9px);padding:9px 10px}
+.stage-bottom #stageHint{color:#6d7a75;line-height:1.55}
+.fit-kit{background:transparent;border:0;border-radius:0;box-shadow:none;gap:4px;padding:0}
+.fit-kit button{border:1px solid #d9dfd4;border-radius:7px;background:#fcfdf8;color:#718071;padding:5px 7px;font-size:10px;box-shadow:0 2px 0 #d5ddce}
+.fit-kit button[aria-pressed=true]{background:#fcecef;border-color:#dea4af;color:#a4485d;box-shadow:0 1px 0 #dba3b0;transform:translateY(1px)}
+
+/* Shallow keycap sides; pressed states keep their existing aria state. */
+#designControls :is(.content-choices,#fontTiles,#modeRow .options,#edgeTiles,.symbols) button,
+.stage-bottom .small-btn,.layer-view-modes button,.layer-jumps button,.tour-controls nav button{
+ border:1px solid var(--cap-edge);border-radius:9px;background:linear-gradient(160deg,#fff 45%,#f0f1eb);color:#33424e;
+ box-shadow:inset 0 1px 0 #fff,0 3px 0 var(--cap-side),0 4px 5px #1728460a;transform:translateY(-1px);
+ transition:transform .12s,box-shadow .12s,background .12s,border-color .12s;
+}
+#designControls :is(.content-choices,#fontTiles,#modeRow .options,#edgeTiles,.symbols) button[aria-pressed=true],
+.stage-bottom .small-btn[aria-pressed=true],.layer-view-modes button[aria-pressed=true],.tour-controls nav button[aria-pressed=true]{
+ border-color:var(--cap-selected);background:linear-gradient(#fff0f2,#ffe9ed);color:#a4354c;transform:translateY(1px);
+ box-shadow:inset 0 1px 3px #aa4a5d0b,0 1px 0 #d993a0;
+}
+#designControls :is(.content-choices,#fontTiles,#modeRow .options,#edgeTiles,.symbols) button:hover:not(:disabled):not([aria-pressed=true]),
+.stage-bottom .small-btn:hover:not(:disabled):not([aria-pressed=true]),.layer-view-modes button:hover:not(:disabled):not([aria-pressed=true]),.layer-jumps button:hover:not(:disabled){transform:translateY(-2px);border-color:#a9b5af;box-shadow:inset 0 1px 0 #fff,0 4px 0 #ccd3cb,0 5px 8px #17284610}
+#designControls :is(.content-choices,#fontTiles,#modeRow .options,#edgeTiles,.symbols) button:active:not(:disabled),
+.stage-bottom .small-btn:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 1px 2px #1728460b}
+#designControls :is(.content-choices,#fontTiles,#modeRow .options,#edgeTiles,.symbols) button:disabled{transform:none;box-shadow:none;background:#f1f2ed;opacity:.4}
+#designControls .content-choices button{position:relative;padding-right:12px}
+#designControls .content-choices button[aria-pressed=true]:after{content:'';position:absolute;right:7px;top:6px;width:4px;height:7px;border:solid #bd485e;border-width:0 1.5px 1.5px 0;transform:rotate(42deg)}
+#designControls #modeRow button{border-radius:11px;background:linear-gradient(150deg,#fff,#f4f3ed);box-shadow:inset 0 1px 0 #fff,0 3px 0 var(--cap-side),0 4px 6px #17284609}
+#designControls #modeRow button[aria-pressed=true]{background:linear-gradient(#fff2f4,#ffe9ee);box-shadow:inset 0 0 0 1px #f5c6d0,0 1px 0 #d993a0;border-color:#dc8393}
+#designControls #modeRow button[aria-pressed=true]:after{background:#d95873}
+#designControls .kind-choices{border:1px solid #d9ddd4;border-radius:9px;background:#eef0e9;padding:2px;gap:3px}
+#designControls .kind-choices button{border-radius:6px;box-shadow:none}
+#designControls .kind-choices button[aria-pressed=true]{background:#fff;color:#ac3c52;box-shadow:0 1px 0 #ccd4c9}
+#designControls .swatches button{box-shadow:inset 0 1px 1px #ffffff88,0 2px 0 #bdc6bd;outline-color:#cfd5cb}
+#designControls .swatches button[aria-pressed=true]{outline:2px solid #263f48;outline-offset:3px;box-shadow:inset 0 1px 2px #263f4830;transform:translateY(1px)}
+#designControls{border:1px solid #d8ddd3;border-top:3px solid #ef7184;box-shadow:0 3px 0 #e1e4db,0 10px 24px #17284604}
+.primary,.primary.next{border:1px solid #d24760;border-radius:13px;background:linear-gradient(160deg,#fc6a7c,#ed4f69);box-shadow:inset 0 1px 0 #ffa7b3,0 4px 0 #bd3e55,0 7px 12px #9f354516}
+.primary:hover:not(:disabled){box-shadow:inset 0 1px 0 #ffc1c9,0 5px 0 #bd3e55,0 8px 14px #9f35451a;transform:translateY(-1px)}
+.primary:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 1px 0 #ffa7b3,0 1px 0 #bd3e55}
+.secondary{border:1px solid #d2d8d0;border-radius:10px;background:linear-gradient(#fff,#f3f4ee);box-shadow:0 3px 0 #d7ddd3}
+.actionbar{border-top-color:#dedfd5}.footer-left .text-btn{color:#6c777c}.footer-mid .made-by{background:transparent;border:0;box-shadow:none;color:#77827f;font-weight:500}.footer-mid .made-by b{background:#e7ece5;color:#66796e;box-shadow:none;font-size:9px;border-radius:5px}
+
+/* A small workshop helper anchored beside the work, with the same auto-collapse. */
+.coach-tip{left:18px;right:auto;top:17px;width:365px;max-width:calc(100% - 36px);gap:10px}
+.coach-face{width:44px;height:47px;border:1px solid #d9ddd3;border-radius:13px;background:linear-gradient(#fff,#f5f5ee);box-shadow:0 3px 0 #cdd5ca,0 5px 8px #1728460b}
+.coach-face:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 0 #cdd5ca,0 6px 10px #17284610}
+.coach-face .mascot.tiny{transform:scale(.74) rotate(-7deg);margin-top:-6px}
+.coach-tip .game-dialog{margin-top:0;padding:9px 23px 11px 13px;border:1px solid #c7d3c6;border-radius:13px;background:#fffffc;box-shadow:0 3px 0 #dce3d7,0 8px 18px #233a3210}
+.coach-tip .game-dialog:before{content:'';position:absolute;left:-6px;top:19px;width:10px;height:10px;background:#fffffc;border:1px solid #c7d3c6;border-width:0 0 1px 1px;transform:rotate(45deg)}
+.coach-tip .game-dialog .dialog-name{position:static;display:flex;width:fit-content;padding:0;margin:0 0 5px;border:0;border-radius:0;background:none;color:#415e52;box-shadow:none;transform:none;font:400 12px Jua,sans-serif;letter-spacing:0}
+.coach-tip .game-dialog .dialog-name small{padding:0;background:none;color:#7d897e;font:500 9px 'Malgun Gothic',sans-serif}
+.coach-tip .game-dialog p{font-size:14px;line-height:1.5;color:#405344;word-break:keep-all;min-height:0}
+.coach-tip .game-dialog .dialog-next{right:10px;bottom:10px;border-left-width:4px;border-right-width:4px;border-top:5px solid #80a18c}
+.coach-tip.is-collapsed .coach-face:after{width:17px;height:17px;right:-4px;top:-5px;border:1px solid #c7af5b;background:#ffe29a;color:#70571c;font-size:11px;line-height:16px;box-shadow:0 1px 0 #cfbb7a}
+.model-stage .stage-top{left:82px}
+
+/* Logo and progress lead; utility links and statistics remain available. */
+.quest-nav{background:#eeefe7;border:1px solid #dfe3d8;border-radius:15px;box-shadow:none;padding:5px;gap:4px}
+.quest-nav button{border:1px solid transparent;border-radius:11px;background:transparent;color:#65716c;box-shadow:none}
+.quest-nav button:hover{transform:none;background:#f9faf5;box-shadow:none}
+.quest-nav button[aria-current],.quest-nav button:nth-of-type(2)[aria-current],.quest-nav button:nth-of-type(3)[aria-current]{background:#fffefa;border:1px solid #d9ded2;box-shadow:0 2px 0 #d7ddcf;color:#172846}
+.quest-nav button span{background:linear-gradient(#fafbf7,#e8ece2);border:1px solid #d3dbcf;border-radius:8px;box-shadow:0 3px 0 #cbd4c6;color:#657366}
+.quest-nav button[aria-current] span,.quest-nav button:nth-of-type(2)[aria-current] span,.quest-nav button:nth-of-type(3)[aria-current] span{background:linear-gradient(#f98b9b,#ed6078);color:#fff;border-color:#e7697e;box-shadow:inset 0 1px #ffaebe,0 2px 0 #bd4a63}
+.quest-nav i{color:#b3beb2;font-size:12px}
+.heading .eyebrow{background:none;border:0;box-shadow:none;color:#8c8067;padding:0;letter-spacing:1px;font-size:9px}
+.timer{background:#edf2e8;border:1px solid #dce5d4;box-shadow:none;color:#607561}.timer b{color:#4b7059}.timer span{color:#72826b}
+.top-actions .booth-btn,.top-actions .studio-entry,.top-actions .makerworld-entry{background:transparent;border:1px solid transparent;box-shadow:none;color:#6d797b;font-size:10px;padding:5px 6px;border-radius:6px}
+.top-actions .booth-btn:hover,.top-actions .studio-entry:hover{background:#ecefe6;border-color:#d5ddcf;box-shadow:none;transform:none;color:#334e47}
+.top-actions .icon-btn{background:transparent;border:1px solid #dce1d5;box-shadow:none;color:#78877b;border-radius:9px;width:28px;height:28px;font-size:17px}
+.workshop-statistics{background:transparent;border-color:#e0e3d8;box-shadow:none;color:#768278}
+.statistics-totals b,.statistics-totals>div:nth-child(2) b,.statistics-totals>div:nth-child(n+3) b{color:#5d7363}
+.brand-org b{color:#b46070}.brand-org em{color:#818b83}
+@media(min-width:1200px){
+ .app-shell{grid-template-columns:auto minmax(0,1fr) 244px}
+ .brand{grid-column:1;grid-row:1}.brand strong{font-size:24px}
+ .quest-nav{grid-column:2;grid-row:1;max-width:660px;justify-self:stretch;align-self:center;padding:5px;gap:3px}
+ .quest-nav button{padding:6px 8px;gap:8px;grid-template-columns:29px 1fr}.quest-nav b{font-size:14px}.quest-nav button span{width:29px;height:30px;font-size:12px}
+ .top-actions{grid-column:3;grid-row:1;align-self:start;justify-content:flex-end;flex-wrap:nowrap;max-width:none;gap:2px;padding:0;margin:0}
+ .workshop-statistics{grid-column:3;grid-row:1;align-self:end;justify-self:end;justify-content:flex-end;display:flex;padding:0 3px 1px;margin:0;border:0;gap:0;min-width:0}
+ .statistics-totals{display:flex;gap:12px}.statistics-totals>div{display:flex;align-items:baseline;gap:5px;padding:0;border:0}.statistics-totals dt{font-size:9px;font-weight:500;color:#7d877e}.statistics-totals dd{margin:0;gap:3px}.statistics-totals b{font-size:13px}.statistics-totals dd>span{font-size:9px;color:#879185}
+}
+@media(min-width:1500px){.app-shell{grid-template-columns:auto minmax(0,1fr) 320px}.quest-nav{justify-self:center;max-width:730px}.quest-nav b{font-size:16px}.top-actions{grid-column:3}.workshop-statistics{grid-column:3}.statistics-totals{gap:11px}.statistics-totals>div:nth-child(n+3){display:flex}}
+@media(min-width:1001px) and (max-width:1199px){.top-actions{max-width:none;gap:2px}.top-actions .booth-btn{font-size:10px;padding:5px}.workshop-statistics{border:0;padding:0;justify-content:flex-end;align-self:center}.statistics-totals>div{border:0;padding:0;display:flex;gap:5px;align-items:baseline}.statistics-totals dd{margin:0;gap:3px}.statistics-totals b{font-size:14px}.quest-nav{padding:4px}.quest-nav button{padding:5px 7px}.quest-nav b{font-size:13px}}
+@media(max-width:1000px){.topbar{border-color:#dfe3d7}.top-actions{gap:6px}.workshop-statistics{padding:10px 15px;border-radius:12px}.statistics-totals b{font-size:24px}.statistics-date time{font-size:17px}.brand strong{font-size:27px}.coach-tip{width:355px}}
+@media(max-width:700px){.app-shell{padding:14px}.topbar{gap:12px;padding-bottom:11px}.top-actions{gap:4px}.top-actions .booth-btn{font-size:11px;padding:6px 7px;border:1px solid #e0e3d8;background:#ffffff60}.brand strong{font-size:27px}.quest-nav{border-radius:13px}.quest-nav button{grid-template-columns:25px 1fr;gap:5px;padding:7px 4px}.quest-nav button span{width:25px;height:28px;font-size:11px;border-radius:7px}.quest-nav b{font-size:12px}.workshop-statistics{padding:9px 10px}.statistics-totals b{font-size:22px}.statistics-info{font-size:8px}.heading .eyebrow{font-size:8px}.coach-tip{top:13px;left:12px;max-width:calc(100% - 24px);gap:8px;width:330px}.coach-face{width:39px;height:42px;border-radius:11px}.coach-face .mascot.tiny{transform:scale(.67) rotate(-7deg)}.coach-tip .game-dialog{padding:8px 20px 10px 11px}.coach-tip .game-dialog p{font-size:13px;line-height:1.5}.coach-tip .game-dialog .dialog-name{font-size:11px;margin-bottom:4px}.model-stage .stage-top{left:65px}.stage-top .pill{font-size:8px;letter-spacing:.6px;padding:6px}.size-lock{font-size:8px;padding:6px}.stage-bottom{padding:8px;gap:5px}.stage-bottom .small-btn{min-height:35px;border-radius:8px}.actionbar{background:#f7f5eef2}.actionbar .primary.next{border-radius:13px}}
+@media(prefers-reduced-motion:reduce){#designControls button,.stage-bottom .small-btn,.quest-nav button,.primary{transition:none}}
+@media(max-width:700px){.quest-nav b{word-break:keep-all;white-space:normal;line-height:1.3}}
 </style></head>
 <body>
 <a class="skip" href="#workshop">체험으로 바로 가기</a>
@@ -307,10 +557,7 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
  <div class="layer-explanation"><span class="card-kicker">밑판부터 차곡차곡</span><h3 id="layerDetailTitle">채움 구조를 계산하고 있어요</h3><p id="layerDetailCopy" aria-live="polite">잠시 뒤 외벽과 채움 경로가 나타나요.</p><div class="path-legend" aria-label="경로 색상 안내"><span><i class="wall-dot"></i>쌓인 작품</span><span><i class="infill-dot"></i>현재 층의 속 채움</span></div></div>
  <div class="layer-options"><div class="layer-view-modes" role="group" aria-label="레이어 보기 방식"><button id="stackLayerBtn" aria-pressed="true">층층이 쌓기</button><button id="singleLayerBtn" aria-pressed="false">한 층 분리</button></div><div class="layer-jumps" role="group" aria-label="주요 층으로 이동"><button id="bottomLayerBtn">바닥 보기</button><button id="infillLayerBtn" disabled>속 채움 보기</button><button id="topLayerBtn">맨 위 보기</button></div><small id="layerProfile" hidden>기본 설정 · 외벽 2줄 · 격자 15% · 윗면 5겹 · 바닥 3겹</small></div>
 </section>
-<section id="designControls" class="control-tray" aria-label="모델 꾸미기">
-<div class="input-row"><div class="input-head"><label for="textIn">무엇을 새길까?</label><div class="kind-choices" id="kindRow" role="group" aria-label="만들 작품"><button type="button" data-kind="keycap" title="14mm 이름판 · 키캡에 끼워 딸깍 키링으로">🔑 키캡 <small>14mm</small></button><button type="button" data-kind="stamp20" title="20mm 이름판 · 큰 도장 머리에 끼워 진짜 도장으로">🔖 큰 도장 <small>20mm</small></button></div></div><div class="name-field"><input id="textIn" value="수민" maxlength="4" autocomplete="off" spellcheck="false" aria-describedby="textHelp"><span id="charCount">2 / 4</span></div><div class="segmented content-choices"><button data-content="text" aria-pressed="true">Aa 이름</button><button data-content="initials">AB 이니셜</button><button data-content="icon">☺ 그림</button></div></div><p class="input-help" id="textHelp">한글·영문·숫자 1~4자. 짧을수록 또렷해요.</p>
-<div class="control-columns"><div class="control-main"><div class="control-row" id="fontRow"><span class="control-label">글씨 느낌</span><div class="options" id="fontTiles"></div></div><div class="control-row" id="modeRow"><span class="control-label">입체 방향</span><div class="options"><button data-mode="relief">↑ 볼록<span class="label-tail">하게</span> <small>튀어나와요</small></button><button data-mode="puffy" title="가장자리가 둥글게 부풀어 올라 말랑해 보여요. 포스카로 색칠하기 좋아요">◉ 말랑 <small>둥글게 부풀어요</small></button><button data-mode="engrave">↓ 오목<span class="label-tail">하게</span> <small>파여 있어요</small></button><button data-mode="through" title="그림 모양으로 판을 뚫어 키캡 밑판 색이 보여요. 떨어지는 조각이 없게 바깥 모양만 뚫어요">◌ 뚫림 <small>밑판이 보여요</small></button><button data-mode="stamp" title="글자를 거꾸로 새기고 키캡 테두리보다 1.5mm 높게 만들어 실제 도장으로 찍어요">🔖 도장 <small>찍을 수 있어요</small></button></div></div><div class="control-row"><label class="control-label" for="heightIn">새김 높이</label><input id="heightIn" type="range" min="0.6" max="1" step="0.2" value="0.8"><output id="heightOut" for="heightIn">0.8 mm</output><span class="subtle">낮을수록 가벼워요</span></div><div class="control-row" id="edgeRow"><span class="control-label">테두리</span><div class="edge-options" id="edgeTiles"></div></div></div><div class="control-decor"><label id="symbolLabel">작은 포인트</label><div id="symbols" class="symbols"></div><label>미리보기 색 <small>실제 색은 필라멘트로 결정돼요</small></label><div id="colors" class="swatches"></div></div></div><div id="warnings" class="warning" role="status" hidden></div>
-</section>
+<section id="designControls" class="control-tray" aria-label="모델 꾸미기"><section class="design-group" aria-labelledby="designGroup1"><header class="design-group-heading"><span aria-hidden="true">01</span><h2 id="designGroup1">내용</h2></header><div class="input-row"><div class="input-head"><label for="textIn">무엇을 새길까?</label><div class="kind-choices" id="kindRow" role="group" aria-label="만들 작품"><button type="button" data-kind="keycap" title="14mm 이름판 · 키캡에 끼워 딸깍 키링으로">🔑 키캡 <small>14mm</small></button><button type="button" data-kind="stamp20" title="20mm 이름판 · 큰 도장 머리에 끼워 진짜 도장으로">🔖 큰 도장 <small>20mm</small></button></div></div><div class="name-field"><input id="textIn" value="수민" maxlength="4" autocomplete="off" spellcheck="false" aria-describedby="textHelp"><span id="charCount">2 / 4</span></div><div class="segmented content-choices"><button data-content="text" aria-pressed="true">Aa 이름</button><button data-content="initials">AB 이니셜</button><button data-content="icon">☺ 그림</button></div></div><p class="input-help" id="textHelp">한글·영문·숫자 1~4자. 짧을수록 또렷해요.</p><div class="control-row" id="fontRow"><span class="control-label">글씨 느낌</span><div class="options" id="fontTiles"></div></div></section><section class="design-group" aria-labelledby="designGroup2"><header class="design-group-heading"><span aria-hidden="true">02</span><h2 id="designGroup2">입체</h2></header><div class="control-row" id="modeRow"><span class="control-label">입체 방향</span><div class="options"><button data-mode="relief" aria-label="볼록 · 위로 또렷하게"><svg class="mode-preview" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><ellipse cx="33" cy="37" rx="24" ry="4" fill="#243c59" opacity=".09"/><path d="M7 18 34 10 58 22 58 28Q58 31 54 32L32 39Q29 40 26 38L8 29Q6 28 7 25Z" fill="#d38e9f"/><path d="M9 17 31 10Q34 9 37 11L56 20Q60 23 55 25L32 32Q29 33 26 31L9 23Q4 20 9 17Z" fill="#f4c1ce" stroke="#e1a4b4" stroke-width=".6"/><g transform="matrix(.95 .26 -.7 .55 18 0)"><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#bd6d86" transform="translate(0 3)"/><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#ffe4eb" stroke="#de9db1" stroke-width=".7"/></g></svg><span class="mode-caption">볼록</span><small>위로 또렷하게</small></button><button data-mode="puffy" title="가장자리가 둥글게 부풀어 올라 말랑해 보여요. 포스카로 색칠하기 좋아요" aria-label="말랑 · 둥글게 봉긋"><svg class="mode-preview" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><ellipse cx="33" cy="37" rx="24" ry="4" fill="#243c59" opacity=".09"/><path d="M7 18 34 10 58 22 58 28Q58 31 54 32L32 39Q29 40 26 38L8 29Q6 28 7 25Z" fill="#d38e9f"/><path d="M9 17 31 10Q34 9 37 11L56 20Q60 23 55 25L32 32Q29 33 26 31L9 23Q4 20 9 17Z" fill="#f4c1ce" stroke="#e1a4b4" stroke-width=".6"/><g transform="matrix(.95 .26 -.7 .55 18 0)"><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#bf748d" stroke="#bf748d" stroke-width="3.5" stroke-linejoin="round" transform="translate(0 2)"/><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#ffe5ed" stroke="#ffe5ed" stroke-width="3.5" stroke-linejoin="round"/><path d="M26 19h10" stroke="#fff8fb" stroke-width="1.2" stroke-linecap="round"/></g></svg><span class="mode-caption">말랑</span><small>둥글게 봉긋</small></button><button data-mode="engrave" aria-label="오목 · 안쪽으로 쏙"><svg class="mode-preview" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><ellipse cx="33" cy="37" rx="24" ry="4" fill="#243c59" opacity=".09"/><path d="M7 18 34 10 58 22 58 28Q58 31 54 32L32 39Q29 40 26 38L8 29Q6 28 7 25Z" fill="#d38e9f"/><path d="M9 17 31 10Q34 9 37 11L56 20Q60 23 55 25L32 32Q29 33 26 31L9 23Q4 20 9 17Z" fill="#f4c1ce" stroke="#e1a4b4" stroke-width=".6"/><g transform="matrix(.95 .26 -.7 .55 18 0)"><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#a35a73"/><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#dfa0b4" transform="translate(1.1 1.7) scale(.94 .94)"/></g></svg><span class="mode-caption">오목</span><small>안쪽으로 쏙</small></button><button data-mode="through" title="그림 모양으로 판을 뚫어 키캡 밑판 색이 보여요. 떨어지는 조각이 없게 바깥 모양만 뚫어요" aria-label="뚫림 · 판을 뚫어요"><svg class="mode-preview" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><ellipse cx="33" cy="37" rx="24" ry="4" fill="#243c59" opacity=".09"/><path d="M7 18 34 10 58 22 58 28Q58 31 54 32L32 39Q29 40 26 38L8 29Q6 28 7 25Z" fill="#d38e9f"/><path d="M9 17 31 10Q34 9 37 11L56 20Q60 23 55 25L32 32Q29 33 26 31L9 23Q4 20 9 17Z" fill="#f4c1ce" stroke="#e1a4b4" stroke-width=".6"/><g transform="matrix(.95 .26 -.7 .55 18 0)"><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#665568"/><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#fff5df" transform="translate(0 3) scale(.92 .88)"/></g></svg><span class="mode-caption">뚫림</span><small>판을 뚫어요</small></button><button data-mode="stamp" title="글자를 거꾸로 새기고 키캡 테두리보다 1.5mm 높게 만들어 실제 도장으로 찍어요" aria-label="도장 · 거꾸로 새겨요"><svg class="mode-preview" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><ellipse cx="33" cy="37" rx="24" ry="4" fill="#243c59" opacity=".09"/><path d="M7 18 34 10 58 22 58 28Q58 31 54 32L32 39Q29 40 26 38L8 29Q6 28 7 25Z" fill="#d38e9f"/><path d="M9 17 31 10Q34 9 37 11L56 20Q60 23 55 25L32 32Q29 33 26 31L9 23Q4 20 9 17Z" fill="#f4c1ce" stroke="#e1a4b4" stroke-width=".6"/><g transform="matrix(.95 .26 -.7 .55 18 0)"><g transform="translate(62 -4) scale(-1 1)"><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#b86581" transform="translate(0 5)"/><path d="M25 17h13v4h-8v3h6v4h-6v6h-5Z" fill="#ffe4ec" stroke="#d790a5" stroke-width=".8"/></g></g><path d="M43 9h11m-3-3 3 3-3 3" fill="none" stroke="#bd637d" stroke-width="1.2" stroke-linecap="round"/></svg><span class="mode-caption">도장</span><small>거꾸로 새겨요</small></button></div></div><div class="control-row height-row"><label class="control-label" for="heightIn">새김 높이</label><input id="heightIn" type="range" min="0.6" max="1" step="0.2" value="0.8"><output id="heightOut" for="heightIn">0.8 mm</output><span class="subtle">낮을수록 가벼워요</span></div></section><section class="design-group" aria-labelledby="designGroup3"><header class="design-group-heading"><span aria-hidden="true">03</span><h2 id="designGroup3">꾸미기</h2></header><div class="control-row" id="edgeRow"><span class="control-label">테두리</span><div class="edge-options" id="edgeTiles"></div></div><div class="control-decor"><label id="symbolLabel">작은 포인트</label><div id="symbols" class="symbols"></div><label>미리보기 색 <small>실제 색은 필라멘트로 결정돼요</small></label><div id="colors" class="swatches"></div></div></section><div id="warnings" class="warning" role="status" hidden></div></section>
 <section id="sliceLesson" class="lesson" hidden><span class="mascot" aria-hidden="true"><i></i></span><div><h2>프린터는 작은 길을 따라 움직여요!</h2><p id="lessonCopy">슬라이더를 움직여 바닥부터 글자까지 쌓이는 모습을 살펴봐요. 실제 노즐 경로는 현장 PC에서 슬라이싱하면 볼 수 있어요.</p></div><span class="lesson-tag">생각 → 입체 → 한 층</span></section>
 <section id="resultPanel" class="result-panel" hidden><div id="pressPad" class="press-pad" hidden><div id="pressStage" aria-label="내 키캡 눌러보기 · 누르면 딸깍 들어가요"></div><span class="press-tip">기다리는 동안 꾹 눌러봐! <b id="pressCount"></b></span></div><div><span class="eyebrow">YOU MADE IT!</span><h2 id="resultName">나만의 작품, 완성!</h2><p id="resultCopy">베드를 비우고 텍스처 PEI·0.4mm 노즐·외부 PLA를 준비한 뒤 눌러요.</p><small class="print-readiness">‘바로 출력’을 누르면 선택한 프린터에서 실제 출력을 시작해요. 첫 층은 곁에서 살펴봐요.</small></div><div class="result-actions"><button id="retryPrintBtn" class="secondary" hidden>같은 작품 다시 준비</button><details class="save-options"><summary>작품 파일 저장</summary><button id="stlBtn" class="text-btn">↓ STL 저장</button><button id="packageBtn" class="text-btn">↓ 작품 묶음 저장</button></details></div></section>
 <footer class="actionbar"><div class="footer-left"><button id="backBtn" class="secondary" hidden>← 이전</button><button id="restartBtn" class="text-btn">처음부터</button><button id="importBtn" class="text-btn">작품 불러오기</button><input type="file" id="importFile" accept=".json,application/json" hidden></div><span class="footer-mid"><span id="footerHint">상상을 담는 시간, 약 5분</span><a class="made-by" href="home.html" title="대문으로"><b>AIERA</b>안동발명교육연구회가 만든 교육용 앱</a></span><button id="nextBtn" class="primary next">다음! 층층이 쌓아보기 <span>→</span></button></footer>
@@ -3742,16 +3989,16 @@ function change(interact=true){if(interact&&printActive()){toast('출력이 끝�
  if(mine===revision){$('busy').hidden=true;$('nextBtn').disabled=!ready();renderSlice();if(printActive()&&ready()&&step!==2)setStep(2);if(step===1&&ready())void sliceInBrowser();}
  },100);}
 function init3D(){try{
- const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;renderer.domElement.setAttribute('aria-label','드래그해서 회전하는 14mm 키캡 모델');$('stage').append(renderer.domElement);
- const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(31,1,.1,300);camera.up.set(0,0,1);scene.add(new THREE.HemisphereLight(0xffffff,0xa6a4b9,1.1));const light=new THREE.DirectionalLight(0xfff2df,1.15);light.position.set(-25,-30,55);light.castShadow=true;light.shadow.mapSize.set(2048,2048);Object.assign(light.shadow.camera,{left:-25,right:25,top:25,bottom:-25,near:1,far:150});light.shadow.bias=-.001;scene.add(light);const fill=new THREE.DirectionalLight(0xffffff,.45);fill.position.set(30,15,30);scene.add(fill);
- const grid=new THREE.GridHelper(60,30,0xb9c7c5,0xd9ded6);grid.rotation.x=Math.PI/2;grid.position.z=-.16;grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.ShadowMaterial({opacity:.13}));ground.position.z=-.1;ground.receiveShadow=true;scene.add(ground);
- const group=new THREE.Group(),paths=new THREE.Group();scene.add(group,paths);const clip=new THREE.Plane(new THREE.Vector3(0,0,-1),5);const plate=new THREE.MeshStandardMaterial({color:S.color,roughness:.52,clippingPlanes:[clip]}),relief=new THREE.MeshStandardMaterial({color:S.color,roughness:.65,clippingPlanes:[clip]});const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=21;controls.maxDistance=140;controls.maxPolarAngle=Math.PI*.49;
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;renderer.domElement.setAttribute('aria-label','드래그해서 회전하는 14mm 키캡 모델');$('stage').append(renderer.domElement);
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(31,1,.1,300);camera.up.set(0,0,1);scene.add(new THREE.HemisphereLight(0xfff9f2,0x77859b,.65));const light=new THREE.DirectionalLight(0xfff3e5,1.5);light.position.set(-24,-32,42);light.castShadow=true;light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-25,right:25,top:25,bottom:-25,near:1,far:150});light.shadow.bias=-.001;light.shadow.normalBias=.025;light.shadow.radius=3;scene.add(light);const fill=new THREE.DirectionalLight(0xe5efff,.35);fill.position.set(30,8,22);scene.add(fill);const rim=new THREE.DirectionalLight(0xffffff,.4);rim.position.set(8,26,38);scene.add(rim);
+ const grid=new THREE.GridHelper(60,30,0xb9c7c5,0xd9ded6);grid.rotation.x=Math.PI/2;grid.position.z=-.16;grid.material.transparent=true;grid.material.opacity=.14;scene.add(grid);const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.ShadowMaterial({opacity:.16}));ground.position.z=-.1;ground.receiveShadow=true;scene.add(ground);
+ const group=new THREE.Group(),paths=new THREE.Group();scene.add(group,paths);const clip=new THREE.Plane(new THREE.Vector3(0,0,-1),5);const plate=new THREE.MeshStandardMaterial({color:S.color,roughness:.42,clippingPlanes:[clip]}),relief=new THREE.MeshStandardMaterial({color:S.color,roughness:.48,clippingPlanes:[clip]});const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=21;controls.maxDistance=140;controls.maxPolarAngle=Math.PI*.49;
  R={renderer,scene,camera,group,paths,clip,plate,relief,grid,ground,controls,fitShown:'none'};let down=null;const cast=e=>{const box=renderer.domElement.getBoundingClientRect(),ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-box.left)/box.width*2-1,-(e.clientY-box.top)/box.height*2+1),camera);return ray.intersectObjects(group.children,false).find(h=>h.object.userData.slot!==undefined)?.object.userData.slot;},moved=e=>Math.hypot(e.clientX-down[0],e.clientY-down[1])>6;
  renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];down.key=pressable()?cast(e):undefined;if(down.key!==undefined)pressKey(down.key,true,e);});renderer.domElement.addEventListener('pointermove',e=>{if(down?.key!==undefined&&moved(e)){pressKey(down.key,false);down.key=undefined;$('pressCount').textContent=--pressCount?'딸깍 '+pressCount+'번!':'';}});renderer.domElement.addEventListener('pointercancel',()=>{if(down?.key!==undefined)pressKey(down.key,false);down=null;});
  renderer.domElement.addEventListener('pointerup',e=>{if(!down)return;const key=down.key,tap=!moved(e);down=null;if(key!==undefined)pressKey(key,false,e);if(!tap||step!==0||!['case2','case3'].includes(fitMode()))return;const i=key??cast(e);if(i!==undefined)choosePairSlot(i);});resetCamera();const resize=R.resize=()=>{const box=renderer.domElement.parentElement.getBoundingClientRect();if(!box.width||!box.height)return;renderer.setSize(box.width,box.height,false);camera.aspect=box.width/box.height;camera.updateProjectionMatrix();R.dirty=true;};const sizes=new ResizeObserver(resize);sizes.observe($('stage'));sizes.observe($('pressStage'));resize();controls.addEventListener('change',()=>R.dirty=true);
  (function animate(){requestAnimationFrame(animate);const pad=renderer.domElement.parentElement.id==='pressStage';if(document.hidden||step===2&&!pad)return;const moving=pressFrame();controls.update();if(pad&&!moving&&!R.dirty)return;R.dirty=false;renderer.render(scene,camera);})();
 }catch{R=null;$('fallback').hidden=false;$('stageHint').textContent='평면 미리보기 · WebGL을 켜면 입체로 볼 수 있어요.';}}
-function resetCamera(top=false){if(!R)return;const detail=step===1,mode=fitMode(),lift=fitLayout(mode).drop,k=plateSize()/14*(mode==='set'&&printCount()>2?2.8:FIT_ZOOM[mode])*(R.renderer.domElement.parentElement.id==='pressStage'?.8:1);R.camera.position.set((top?0:detail?10:13)*k,(top?-.01:detail?-15:-20)*k,(top?(detail?28:35):detail?23:28)*k);R.controls.target.set(0,0,1-lift/2);R.controls.update();}
+function resetCamera(top=false){if(!R)return;const detail=step===1,mode=fitMode(),lift=fitLayout(mode).drop,k=plateSize()/14*(mode==='set'&&printCount()>2?2.8:FIT_ZOOM[mode])*(R.renderer.domElement.parentElement.id==='pressStage'?.8:1);R.camera.position.set((top?0:detail?10:16)*k,(top?-.01:detail?-15:-24)*k,(top?(detail?28:35):detail?23:24)*k);R.controls.target.set(0,0,1-lift/2);R.controls.update();}
 function showModel(){if(R){R.group.clear();R.plate.color.set(S.color).convertSRGBToLinear();R.relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();const layout=fitLayout(fitMode());layout.xs.forEach((x,i)=>{const own=!slotted(layout.mode)||i===pairSlot,saved=!own&&pairSaved[i];if(!own&&!saved)return;for(const type of ['plate','relief'])(own?current.parts:saved.parts)[type].forEach(g=>{const mesh=new THREE.Mesh(g,own?R[type]:saved.materials[type]);mesh.position.x=x;mesh.userData.slot=i;mesh.castShadow=true;mesh.receiveShadow=true;R.group.add(mesh);});});showFit(layout);updateLayer();}else{const cv=$('fallback'),ctx=cv.getContext('2d');ctx.clearRect(0,0,500,500);ctx.fillStyle=S.color;shapePath(ctx,250,250,350,350,'rounded',0,25);ctx.fill();const face=mkCanvas(500,500);drawFace(face.getContext('2d'),500,500,25,false,'#a54465',fontById(S.font));ctx.drawImage(face,0,0);}}
 // "끼워보기": the printed plate seated in the keycap it snaps into, on its MX switch in a 1-, 2- or 3-key keychain
 // (src/keycap-models.js), so the student sees how it all goes together. Two kits: the current one (kit 'new': the low,
@@ -3808,7 +4055,7 @@ function chooseKit(next){if(kit===next)return;const before=printCount();kit=next
 let pairSlot=0;const pairSaved=[null,null,null];
 function dropPairSaved(i){const p=pairSaved[i];if(!p)return;p.parts.plate.concat(p.parts.relief).forEach(g=>g.dispose());p.materials.plate.dispose();p.materials.relief.dispose();pairSaved[i]=null;}
 function choosePairSlot(i){if(i===pairSlot||!current||built!==revision)return;if(printActive()){toast('출력이 끝난 뒤 다른 칸을 만들어요.');return;}
- const clone=list=>list.map(g=>g.clone()),plate=new THREE.MeshStandardMaterial({roughness:.52,clippingPlanes:[R.clip]}),relief=new THREE.MeshStandardMaterial({roughness:.65,clippingPlanes:[R.clip]});plate.color.set(S.color).convertSRGBToLinear();relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
+ const clone=list=>list.map(g=>g.clone()),plate=new THREE.MeshStandardMaterial({roughness:.42,clippingPlanes:[R.clip]}),relief=new THREE.MeshStandardMaterial({roughness:.48,clippingPlanes:[R.clip]});plate.color.set(S.color).convertSRGBToLinear();relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
  const leaving={design:{...S},totalH:current.totalH,parts:{plate:clone(current.parts.plate),relief:clone(current.parts.relief)},materials:{plate,relief}},target=pairSaved[i],n=caseKeys(fit);
  dropPairSaved(pairSlot);pairSaved[pairSlot]=leaving;pairSlot=i;if(target){Object.assign(S,target.design);dropPairSaved(i);}
  change();showModel();toast((SLOT_NAMES[n]?.[i]||'')+' 칸 판을 '+(target?'다시 고쳐요. '+n+'판은 한 번에 출력해요.':'만들어요. 다 만들면 '+n+'판을 한 번에 출력해요.'));}
