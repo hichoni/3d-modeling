@@ -1,4 +1,4 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),dgram=require('node:dgram');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),dgram=require('node:dgram'),vm=require('node:vm');
 require('./helpers/direct-sockets.cjs').install();
 const memory=new Map();globalThis.localStorage={getItem:k=>memory.has(k)?memory.get(k):null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
 globalThis.BAMBU_CA_PEM=fs.readFileSync(path.join(__dirname,'fixtures/direct-tls/rsa-ca.pem'),'utf8');
@@ -17,11 +17,40 @@ test('SSDP NOTIFY parsing keeps only private, well-formed Bambu announcements',(
  assert.equal(DirectDiscovery.parseNotify(NOTIFY.replace('DevConnect.bambu.com: lan','DevConnect.bambu.com: cloud'),'192.168.0.37').lanOnly,false);
 });
 
-test('SSDP listener hears the printer announcement on UDP 2021',async t=>{
+for(const port of [2021,1990])test('SSDP listener receives and deduplicates announcements for UDP '+port+' over isolated loopback',async t=>{
+ // Bambu Studio also binds 1990/2021. Sending a unicast beacon to those real ports can
+ // reach Studio instead, while unrelated LAN printers pollute the result. Exercise the
+ // real listener and UDP receive path on OS-assigned loopback ports, recording (rather
+ // than joining/sending to) multicast so this test never discovers physical printers.
+ const sockets=[],binds=[],groups=[],queries=[];
+ const {UDPSocket}=require('./helpers/direct-sockets.cjs');
+ class IsolatedUDPSocket extends UDPSocket{
+  constructor(options){
+   super({localAddress:'127.0.0.1',localPort:0});
+   binds.push({...options});this.requestedPort=options.localPort;sockets.push(this);
+   this.opened=this.opened.then(info=>({...info,
+    multicastController:{async joinGroup(group){groups.push({port:options.localPort,group});}},
+    writable:new WritableStream({write(message){queries.push({port:options.localPort,...message});}})
+   }));
+  }
+ }
+ // Keep the test transport out of the relay's global Direct Sockets implementation.
+ const discovery=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../src/direct/discovery.js'),'utf8')+'\nDirectDiscovery;',
+  {UDPSocket:IsolatedUDPSocket,TextDecoder,TextEncoder,setTimeout,clearTimeout});
+ t.after(async()=>{await Promise.all(sockets.map(s=>s.close()));await Promise.all(sockets.map(s=>s.closed));});
+ const pending=discovery.listen({timeoutMs:500});
+ await Promise.all(sockets.map(s=>s.opened));
+ assert.deepEqual(binds,[2021,1990].map(localPort=>({localAddress:'0.0.0.0',localPort,multicastAllowAddressSharing:true})));
+ const endpoint=await sockets.find(s=>s.requestedPort===port).opened;
  const sender=dgram.createSocket('udp4');t.after(()=>sender.close());
- const beacon=setInterval(()=>sender.send(Buffer.from(NOTIFY),2021,'127.0.0.1',()=>{}),200);t.after(()=>clearInterval(beacon));
- const found=await DirectDiscovery.listen({timeoutMs:1200});
- assert.deepEqual(found.map(p=>[p.serial,p.ip,p.supported]),[['0309DA000000001','192.168.0.37',true]]);
+ await new Promise((resolve,reject)=>{sender.once('error',reject);sender.bind(0,'127.0.0.1',resolve);});
+ for(let n=0;n<2;n++)await new Promise((resolve,reject)=>sender.send(Buffer.from(NOTIFY),endpoint.localPort,'127.0.0.1',e=>e?reject(e):resolve()));
+ const found=await pending;
+ assert.deepEqual(Array.from(found,p=>[p.serial,p.ip,p.supported]),[['0309DA000000001','192.168.0.37',true]]);
+ assert.deepEqual(groups.sort((a,b)=>b.port-a.port),[2021,1990].map(port=>({port,group:'239.255.255.250'})));
+ assert.deepEqual(queries.map(q=>[q.port,q.remoteAddress,q.remotePort]),[[2021,'239.255.255.250',1990],[2021,'239.255.255.250',2021]]);
+ assert.ok(queries.every(q=>new TextDecoder().decode(q.data).startsWith('M-SEARCH * HTTP/1.1\r\n')));
+ await Promise.all(sockets.map(s=>s.closed));
 });
 
 test('in-app relay bootstraps as a direct, single-device workshop and validates registration',async()=>{
