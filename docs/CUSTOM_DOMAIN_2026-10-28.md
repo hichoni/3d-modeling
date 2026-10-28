@@ -17,7 +17,9 @@
 
 GitHub에서 도메인 소유 확인 성공 후 미러 Pages에 도메인을 저장했다. 예스닉 CNAME 신규 한 건만 신청해 등록완료를 확인했다. 권한 DNS와 1.1.1.1에서 CNAME 일치를 확인했다. 루트·www·메일·기존 Firebase 인증 레코드·네임서버는 변경하지 않았다.
 
-첫 미러 [배포 40642339772](https://github.com/hichoni/3d-aiera-pages/actions/runs/40642339772)는 성공했다. **문서 작성 시점 HTTPS 인증서 준비는 미완료**다. Pages 설정은 DNS Check in Progress이고 Enforce HTTPS는 비활성이다. 인증서 검증을 우회하지 않았다. 최종 상태는 HANDOFF 최신 항목에 추가한다.
+첫 미러 [배포 40642339772](https://github.com/hichoni/3d-aiera-pages/actions/runs/40642339772)와 최신 소스 `68270f4`의 [배포 40643474210](https://github.com/hichoni/3d-aiera-pages/actions/runs/40643474210)가 성공했다. **HTTPS 인증서 발급 및 실제 접속 확인 완료.** Settings의 Enforce HTTPS도 체크한 뒤 새로고침해 저장을 확인했다. 공개 `/`, `/home.html`, `/studio.html`, `/chromebook.html`, 업데이트 JSON이 모두 HTTPS 200이며 `deployment.json`의 소스 SHA가 일치한다. Chrome에서도 경고 없이 실제 앱을 열었다. 인증서 검증을 우회하지 않았다.
+
+기존 GitHub 주소와 연구회 홈페이지는 HTTP 200이고 원래 URL을 유지한다. 두 주소의 배너 PDF가 최종 로컬 PDF와 SHA-256까지 일치한다. 검증 결과는 비공개 로컬 `artifacts/domain-20261028/public-verification.json`에 있다. 이 PC의 Node 기본 CA는 기존 GitHub에도 체인 오류를 내므로 Windows 신뢰 저장소를 사용하는 PowerShell과 Chrome으로 확인했다. Node TLS 검증을 끄지 않았다.
 
 ## 업데이트 방법
 
@@ -36,8 +38,8 @@ GitHub에서 도메인 소유 확인 성공 후 미러 Pages에 도메인을 저
 - 일반 웹사이트에 접속한다고 원시 LAN 소켓 권한이 생기지 않는다. 크롬북 직접 연결은 IWA, Android는 APK, 일반 PC 웹은 연결 프로그램을 사용한다.
 - 배너 QR은 계속 동작하는 기존 GitHub 주소를 유지한다.
 
-## HTTPS 후속
+## 후속 확인
 
-인증서 발급 후 미러 Settings → Pages에서 Enforce HTTPS를 켜고 인증서 검증을 켠 상태로 접속한다. 원본 GitHub가 새 주소로 리디렉션되지 않는지와 연구회 홈페이지가 그대로인지 확인한다. DNS 전파·인증서 준비에는 최대 24시간이 걸릴 수 있다.
+Enforce HTTPS는 저장됐지만 설정 직후 HTTP 루트 응답은 아직 200이었다. HTTPS 주소 자체는 정상이며, HTTP 리디렉션은 캐시/전파 이후 별도로 재확인한다. GitHub UI의 DNS Check in Progress 문구가 한동안 남아 있어도 실제 DNS·인증서·HTTPS 파일 응답을 구분해서 기록한다. 기존 설치 앱의 주소와 서명은 유지했다. 실제 크롬북의 프린터 연결 성공은 사용자가 확인했고 출력 완료는 아직 확인 전이다.
 
 근거: [GitHub 도메인 연결](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site), [도메인 소유 확인](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages), [예스닉 DNS](https://www.yesnic.com/?_task=ns&_action=index).
