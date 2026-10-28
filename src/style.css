@@ -215,7 +215,7 @@ body{background:radial-gradient(circle,#e6d6b8 1.4px,transparent 2.1px) 0 0/24px
 .platform-actions .primary,.platform-actions .secondary{flex:1 1 140px;text-align:center;text-decoration:none;padding:11px 12px;font-size:16px;border-radius:14px}
 .platform-booth{justify-self:start;font-size:11px}
 #boothDialog .platform-print{margin:0 0 14px}
-.print-card.is-guide>:not(#platformPrint):not(.card-kicker){display:none!important}
+
 .makerworld-entry{background:#1f2937;color:#fff;border-color:#1f2937}
 .app-get{background:var(--coral);color:#fff;border-color:#d13c48;font-weight:800}
 /* Maker credit under the logo: AIERA (안동발명교육연구회) */
@@ -573,3 +573,111 @@ body{background:var(--paper)}
 @media(max-width:1000px){#designControls.workbench{min-height:445px}.tool-body{overflow:visible}.workbench-fixed{padding:18px 20px 0}.tool-body{padding:18px 20px}.tool-tabs button{min-height:44px}.history-actions button{min-height:44px}#designControls #fontTiles{grid-template-columns:repeat(4,minmax(0,1fr))}#designControls #modeRow .options{grid-template-columns:repeat(5,minmax(0,1fr))}#designControls .symbols.pictures{grid-template-columns:repeat(8,minmax(0,1fr))}}
 @media(max-width:600px){#designControls.workbench{min-height:450px}.workbench-fixed{padding:14px 16px 0}.tool-body{padding:16px}#designControls #fontTiles{grid-template-columns:repeat(2,minmax(0,1fr))}#designControls #modeRow .options{grid-template-columns:repeat(3,minmax(0,1fr))}#designControls .symbols.pictures{grid-template-columns:repeat(5,minmax(0,1fr))}.stage-bottom .pair-slots button{min-width:82px;padding:4px 5px;grid-template-columns:36px auto}.slot-thumb{width:36px;height:36px}}
 @media(prefers-reduced-motion:reduce){.history-actions button{transition:none}}
+
+/* The same workbench continues through slicing and printing. */
+.production-summary{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:20px;padding:16px 20px;margin-bottom:18px;border:1px solid #d8dfd3;border-radius:18px;background:#fffefa;box-shadow:0 3px 0 #e1e5db}
+.production-summary>div{min-width:0;display:flex;flex-direction:column;justify-content:center}
+.production-summary>div+div{border-left:1px solid #e3e7dd;padding-left:20px}
+.production-summary .summary-label{font-size:10px;font-weight:700;color:#7d8b81;margin-bottom:5px}
+.production-summary strong{display:block;font:21px/1.35 Jua,sans-serif;color:#243d34;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.production-summary small{display:block;font:10px/1.6 'Malgun Gothic',sans-serif;color:#78857d;margin-top:4px;word-break:keep-all}
+.production-summary .production-art{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px}
+.production-art>div:last-child{min-width:0}
+.production-thumbs{display:flex;align-items:center;flex-shrink:0;max-width:45%}
+.production-thumbs canvas{width:62px;height:54px;max-width:100%;object-fit:contain;flex:1;min-width:0}
+.production-device>div{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.production-device .text-btn{font:700 10px 'Malgun Gothic',sans-serif;padding:6px 0;white-space:nowrap;color:#477c6a}
+#productionConnection[data-tone=ok]{color:#3b8067}#productionConnection[data-tone=warning]{color:#ac652c}
+.production-estimate strong{color:#ae4e62}
+.production-card.side-card{padding:0;border:1px solid #d8ddd3;border-radius:20px;background:#fffefa;box-shadow:0 3px 0 #e1e4db;display:flex;flex-direction:column;gap:0;overflow:hidden}
+.flow-card-head{padding:17px 18px 13px;flex:none;border-bottom:1px solid #e5e8df}
+.flow-card-head .card-kicker{display:block;font:700 9px 'Malgun Gothic',sans-serif;letter-spacing:1.4px;color:#819384;margin:0 0 5px}
+.flow-card-head h2,.print-card #printTitle{display:block;font:23px/1.25 Jua,sans-serif;margin:0;color:#253f35}
+.flow-card-head p{font:11px/1.5 'Malgun Gothic',sans-serif;margin:5px 0 0;color:#7c877e}
+.flow-card-body{padding:15px 18px;min-height:0;overflow:auto;flex:1;scrollbar-width:thin;scrollbar-color:#c6d2c4 transparent}
+.flow-status{padding:10px 12px;border-radius:10px;background:#f0f3eb;color:#5c7467;font-size:12px;font-weight:700;line-height:1.6;word-break:keep-all}
+.flow-status[data-complete=true]{background:#eaf4e9;color:#35745e}
+.production-card .slice-presets{display:grid;grid-template-columns:1fr;gap:12px;margin:16px 0}
+.production-card .slice-presets label,.production-card .print-target{font-size:12px;font-weight:700;color:#52695e;line-height:1.6;display:grid;gap:6px}
+.production-card .slice-presets select,.production-card .print-target select{font:12px 'Malgun Gothic',sans-serif;padding:10px 12px;background:#fff;border:1px solid #d4ddd2;border-radius:10px;min-height:40px;width:100%;min-width:0;color:#233d33}
+.slice-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0;padding:14px 0;border-top:1px solid #e5e8df;border-bottom:1px solid #e5e8df}
+.slice-facts dt{font:10px 'Malgun Gothic',sans-serif;color:#849083}.slice-facts dd{font:19px Jua,sans-serif;margin:7px 0 0;color:#3e6052}.slice-facts dd small{font:10px 'Malgun Gothic',sans-serif}
+.production-card .flow-note,.production-card #sliceCopy{display:block;font:11px/1.7 'Malgun Gothic',sans-serif;color:#7a857c;margin:10px 0;word-break:keep-all}
+.flow-details{padding:12px 0 0;margin-top:13px;border-top:1px solid #e3e8dc;font:11px/1.6 'Malgun Gothic',sans-serif;color:#667c6e}
+.flow-details>summary{cursor:pointer;font-weight:700;padding:4px 0;color:#4d6758}.flow-details>summary:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.flow-details p{font:11px/1.7 'Malgun Gothic',sans-serif;color:#78857a;margin:8px 0}.flow-details button{font-size:11px}
+.flow-card-footer{flex:none;padding:13px 18px 16px;border-top:1px solid #e3e8dc;background:#f9faf4;border-radius:0 0 20px 20px;display:grid;gap:9px}
+.flow-card-footer .primary,.print-card .flow-card-footer .primary{width:100%;min-height:46px;padding:12px 8px;font:20px Jua,sans-serif;border-radius:12px}
+.flow-card-footer>small,.print-card .flow-card-footer>p{font:10px/1.6 'Malgun Gothic',sans-serif;color:#718073;margin:0;word-break:keep-all}
+.print-card .flow-card-footer.direct-action{grid-template-columns:1fr;margin:0;gap:10px}
+.production-card .print-status-box{margin:13px 0}.production-card #printProgress{width:100%;height:7px;margin:12px 0 7px;accent-color:#559d82}
+.production-card #printPercent{display:block;font:12px 'Malgun Gothic',sans-serif;color:#678071;margin:8px 0}
+.production-card #printDetail{font:11px/1.6 'Malgun Gothic',sans-serif;color:#7d827a;margin:8px 0;word-break:keep-all}
+.production-card[data-state=uncertain] #printState,.production-card[data-state=failed] #printState,.production-card[data-state=paused] #printState{background:#fcf1df;color:#9b622b}
+.production-card[data-state=complete] #printState{background:#e5f2e7;color:#387358}
+.production-card .tour-temperatures{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 6px}
+.production-card .tour-temperatures>div{display:grid;grid-template-columns:1fr auto;padding:9px 11px;background:#f2f5ed;border-radius:10px;gap:4px}
+.production-card .tour-temperatures span{font-size:10px}.production-card .tour-temperatures strong{font:23px Jua,sans-serif;margin:0}.production-card .tour-temperatures small{display:block;grid-column:1/-1;font-size:9px;color:#849082}
+.production-card #tourTelemetrySource{display:block;font-size:9px;color:#829181}
+.production-card #printPreparation{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 0 0;margin:0;border:0;background:none;border-radius:0}
+.production-card .print-preparation fieldset{display:block}.production-card .print-preparation legend{font:700 12px 'Malgun Gothic',sans-serif;margin-bottom:6px}
+.production-card .print-preparation fieldset>label{display:flex;align-items:flex-start;gap:8px;margin:8px 0}
+.production-card .print-preparation label b{font-size:11px}.production-card .print-preparation label small{display:block;font-size:10px;line-height:1.5}
+.production-card .print-preparation input{width:18px;height:18px;min-height:18px}.production-card #calibrationSummary{display:block;font-size:10px;line-height:1.6}
+.production-card .printer-filament{padding:12px 0 0!important;border-left:0;border-top:1px solid #e5e8df}.production-card .printer-filament h2{display:block;font:700 12px 'Malgun Gothic',sans-serif;margin-bottom:10px}
+.production-card #filamentProfile{display:block;font-size:10px;line-height:1.5}.production-card .filament-reading{flex-wrap:wrap}
+.production-card #platformPrint{padding:4px 0;background:none;border:0}.production-card .platform-title{font-size:12px}.production-card .platform-actions{display:grid;gap:8px}.production-card .platform-actions .primary,.production-card .platform-actions .secondary{font-size:13px;padding:9px;min-height:38px}
+.print-view-nav{display:flex;align-items:center;gap:5px;margin-bottom:10px}.print-view-nav button{font:700 12px 'Malgun Gothic',sans-serif;padding:9px 15px;min-height:36px;background:transparent;border:1px solid transparent;border-radius:10px;color:#829080;box-shadow:none}
+.print-view-nav button[aria-selected=true]{color:#345544;background:#fffefa;border-color:#d6dfd1;box-shadow:0 2px 0 #dce3d5}.print-view-nav>span{margin-left:auto;font-size:10px;color:#849082}
+.result-panel.production-work{display:flex;flex-direction:column;align-items:stretch;padding:18px 20px;gap:10px;background:radial-gradient(ellipse at 50% 45%,#fff,#f1f5eb);border:1px solid #d5dfd0;border-radius:22px;overflow:hidden}
+.creation-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none}.creation-heading .eyebrow{font-size:9px;color:#809582;letter-spacing:1px}
+.result-panel.production-work h2{font:24px/1.25 Jua,sans-serif;margin:6px 0 0;word-break:keep-all}
+.creation-chip{font:10px 'Malgun Gothic',sans-serif;white-space:nowrap;color:#629278;background:#e8f2e5;border-radius:7px;padding:7px 10px}
+.production-work .press-pad{flex:1;min-height:180px;width:100%;margin:0;border:0;box-shadow:none;background:transparent;border-radius:0;align-self:stretch}
+.production-work #pressStage{inset:0 0 28px}.production-work .press-tip{font:12px 'Malgun Gothic',sans-serif;color:#7b907e;bottom:6px;white-space:normal}
+.creation-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid #e0e6d9;padding-top:10px;flex:none}
+.result-panel .creation-footer p{font:11px/1.6 'Malgun Gothic',sans-serif;margin:0;color:#7b877b;word-break:keep-all}
+.production-work .result-actions{min-width:100px;width:auto;flex:none;gap:8px}.production-work .save-options{font:11px 'Malgun Gothic',sans-serif;white-space:nowrap}
+@media(min-width:1001px){
+ #workshop[data-phase=slice],#workshop[data-phase=print]{grid-template-rows:auto auto minmax(0,1fr) auto auto}
+ #productionSummary{grid-column:1/-1;grid-row:2;margin:0;padding:12px 17px;gap:17px}
+ #workshop[data-phase=slice] .model-stage{grid-column:1;grid-row:3;height:auto}
+ #workshop[data-phase=slice] #layerInspect{grid-column:1;grid-row:4}
+ #workshop[data-phase=slice] #sliceCard,#workshop[data-phase=print] #printCard{grid-column:2;grid-row:3/5;overflow:hidden;min-height:0}
+ #workshop[data-phase=print]{grid-template-rows:auto auto auto minmax(0,1fr) auto}
+ #printViewNav{grid-column:1;grid-row:3;margin:0}
+ #workshop[data-phase=print] #resultPanel,#workshop[data-phase=print] #printerTour{grid-column:1;grid-row:4;height:auto;min-height:0;margin:0}
+ .production-work .press-pad{min-height:0}
+ #workshop[data-phase=slice] .actionbar,#workshop[data-phase=print] .actionbar{grid-row:5}
+}
+@media(min-width:1001px) and (max-height:740px){
+ #productionSummary{padding:9px 14px}.production-summary strong{font-size:18px}.production-summary small{font-size:9px;line-height:1.4}.production-thumbs canvas{width:48px;height:42px}
+ .flow-card-head{padding:11px 14px}.flow-card-head h2,.print-card #printTitle{font-size:20px}.flow-card-head p{display:none}
+ .flow-card-body{padding:11px 14px}.production-card .slice-presets{grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.production-card .slice-presets select{padding:8px;font-size:11px}
+ .slice-facts{margin:13px 0;padding:11px 0}.flow-card-footer{padding:10px 14px 13px}.flow-card-footer .primary,.print-card .flow-card-footer .primary{min-height:42px;font-size:18px;padding:9px}
+ .result-panel.production-work{padding:12px 16px;gap:6px}.result-panel.production-work h2{font-size:20px}.creation-footer{padding-top:7px}.creation-footer p{font-size:10px}
+ #workshop[data-phase=print] .printer-viewport{bottom:155px}.tour-speech.game-dialog{padding:10px 14px}.tour-speech.game-dialog h2{font-size:16px}.tour-speech.game-dialog p{font-size:11px}
+}
+@media(max-width:1000px){
+ .production-summary{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;padding:15px}
+ .production-summary .production-art{grid-column:1/-1}.production-summary .production-device{border-left:0;padding-left:0}.production-summary strong{font-size:20px}
+ .production-card .flow-card-body{overflow:visible}.production-card{margin-top:16px}.production-card .slice-presets{grid-template-columns:1fr 1fr}
+ #workshop[data-phase=print]{display:flex;flex-direction:column;align-items:stretch}#workshop[data-phase=print]>.heading{order:0}#workshop[data-phase=print]>#productionSummary{order:1}#workshop[data-phase=print]>#printViewNav{order:2}
+ #workshop[data-phase=print]>.workspace{display:contents}#workshop[data-phase=print] #resultPanel,#workshop[data-phase=print] #printerTour{order:3}#workshop[data-phase=print] #printCard{order:4}#workshop[data-phase=print]>.actionbar{order:5}
+ .print-view-nav>span{display:none}.result-panel.production-work{margin:0}.production-work .press-pad{min-height:270px}.creation-footer{flex-wrap:wrap}
+}
+@media(max-width:600px){.production-summary{gap:12px;padding:13px;margin-bottom:14px}.production-summary>div+div{padding-left:12px}.production-summary .production-device{padding-left:0}.production-summary strong{font-size:17px}.production-summary small{font-size:10px}.production-device>div{flex-wrap:wrap;gap:0}.production-thumbs canvas{width:46px}.production-card .slice-presets{grid-template-columns:1fr 1fr;gap:10px}.production-card .flow-card-body{padding:15px}.production-work .press-pad{min-height:220px}.creation-heading{align-items:flex-start}.creation-chip{font-size:9px;padding:6px}.print-view-nav button{min-height:44px;padding:9px 12px}.production-summary .production-estimate small{word-break:normal}}
+
+/* Keep the sliced work visible even on a short classroom laptop screen. */
+.model-stage.is-layer-view #coachTip,.model-stage.is-layer-view .stage-bottom{display:none}
+.model-stage.is-layer-view #stage{inset:18px 0!important}
+.model-stage.is-layer-view.has-toolpaths #stage{bottom:76px!important}
+.model-stage.is-layer-view .layer-tools{bottom:12px}
+/* Production already has a selected-printer summary; avoid repeating it on phones. */
+#workshop[data-phase=slice] #pairingBadge,#workshop[data-phase=print] #pairingBadge{display:none}
+@media(max-width:1000px){
+ .app-shell:has(#workshop[data-phase=slice]) .workshop-statistics,.app-shell:has(#workshop[data-phase=print]) .workshop-statistics{display:none}
+ #workshop[data-phase=slice] .actionbar,#workshop[data-phase=print] .actionbar{position:static;inset:auto;box-shadow:none;border-top:1px solid #e2e3d9;padding:18px 0;background:none}
+ #workshop[data-phase=slice] .heading,#workshop[data-phase=print] .heading{padding:20px 0 16px}
+ #workshop[data-phase=slice] .heading h1,#workshop[data-phase=print] .heading h1{font-size:28px}
+}

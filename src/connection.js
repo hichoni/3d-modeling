@@ -43,10 +43,10 @@ function pairedPrinterName(){return local?.printers?.find(p=>p.id===pairing?.pri
 async function connectWorkshop(target,{save=false,showError=false}={}){
  prepareDevice();clearInterval(jobTimer);job=null;pairing=null;boothTarget=target;local=null;lock();syncConnection();
  try{
-  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(!Number.isInteger(data.version)||data.version<7)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;pairing=data.pairing||null;workshopStats.connected(data.statistics);
+  const data=await api('/api/bootstrap');if(data.app!=='click-workshop')throw Error('부스 공방을 찾지 못했어요.');if(!Number.isInteger(data.version)||data.version<7)throw Error('공방 PC의 설정 ZIP을 최신 버전으로 업데이트하고 서버를 다시 시작해주세요.');local=data;if(typeof noteProductionFeed==='function')noteProductionFeed('list');pairing=data.pairing||null;workshopStats.connected(data.statistics);
   if(save&&target)try{localStorage.setItem('click-booth-v1',JSON.stringify(target));}catch{}
   syncConnection();renderSlice();renderTicket();
-  try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);renderSlice();renderTicket();if(printActive()&&ready())setStep(2);clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
+  try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);if(typeof noteProductionFeed==='function')noteProductionFeed('job');renderSlice();renderTicket();if(printActive()&&ready())setStep(2);clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
   $('boothError').textContent='';$('boothFallback').hidden=true;return true;
  }catch(e){
   local=null;syncConnection();renderSlice();renderTicket();
@@ -112,7 +112,7 @@ async function showBoothLinks(){
  try{const data=await api('/api/booth-links',undefined,true);$('boothShare').hidden=!data.enabled;if(data.links){$('boothShareLink').value=data.links.pages;$('boothLanLink').value=data.links.lan;}$('boothSetupHint').hidden=data.enabled;}catch{}
 }
 async function refreshPairing(){
- if(!local)return;const source=local,data=await api('/api/printers');if(local!==source)return;const before=pairing;pairing=data.pairing;local.printers=data.printers;
+ if(!local)return;const source=local,data=await api('/api/printers');if(local!==source)return;const before=pairing;pairing=data.pairing;local.printers=data.printers;if(typeof noteProductionFeed==='function')noteProductionFeed('list');
  if(before&&(before.printerId!==pairing?.printerId||before.revision!==pairing?.revision)){lock();clearInterval(jobTimer);job=null;try{sessionStorage.removeItem('click-current-job');}catch{}renderSlice();renderTicket();}
  syncConnection();renderTicket();return data;
 }
@@ -121,5 +121,5 @@ async function setPairing(printerId){try{const data=await api(printerId?'/api/pa
 function bindPairing(){
  $('pairBtn').onclick=showPairing;$('changePairBtn').onclick=()=>{$('boothDialog').close();showPairing();};$('refreshPairBtn').onclick=showPairing;$('unpairBtn').onclick=()=>setPairing(null);
  $('operatorPrinterSelect').onchange=()=>{selectedJob=null;operatorRefresh();};
- setInterval(()=>{if(local)refreshPairing().catch(()=>{});},5000);
+ setInterval(()=>{if(local)refreshPairing().catch(()=>typeof productionConnectionFailed==='function'&&productionConnectionFailed('list'));},5000);
 }

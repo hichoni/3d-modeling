@@ -37,11 +37,8 @@ class PrinterTutorial{
   $('tourLiveBtn').hidden=!this.demo;$('tourPreviewBtn').hidden=!!this.job&&!['ready','queued','cancelled','complete','failed'].includes(this.job.state);
   $('tourReplayBtn').hidden=this.cursor<0&&this.phase==='idle';
   for(const b of document.querySelectorAll('[data-tour-part]')){const on=PrintLesson.steps[Number(b.dataset.tourPart)]===selected;b.setAttribute('aria-pressed',String(on));if(on)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');}
-  const fresh=this.telemetry?.fresh&&!this.demo,t=this.telemetry,hasTemperature=fresh&&(typeof t.nozzleTemperature==='number'||typeof t.bedTemperature==='number');
-  const example=this.demo?[{b:45,bt:65,n:24,nt:0},{b:65,bt:65,n:165,nt:220},{b:65,bt:65,n:220,nt:220},{b:65,bt:65,n:220,nt:220},{b:39,bt:0,n:48,nt:0}][Math.max(0,this.cursor)]:null;
-  $('tourBedValue').textContent=PrintLesson.temperature(example?.b??(fresh?t.bedTemperature:null));$('tourBedTarget').textContent=PrintLesson.temperature(example?.bt??(fresh?t.bedTarget:null));
-  $('nozzleHeatLabel').textContent=(example?.n??(fresh?t.nozzleTemperature:null))>50?'뜨거워요!':'가열 시 주의';$('tourNozzleValue').textContent=PrintLesson.temperature(example?.n??(fresh?t.nozzleTemperature:null));$('tourNozzleTarget').textContent=PrintLesson.temperature(example?.nt??(fresh?t.nozzleTarget:null));
-  $('tourTelemetrySource').textContent=this.demo?'예시 온도 · 실제 기기와 무관':hasTemperature?'● 실제 프린터에서 받은 온도':'○ 실제 온도 확인 중';
+  const fresh=this.telemetry?.fresh,t=this.telemetry;
+  renderProductionTemperatures(t);
   const live=PrintLesson.lessons[this.phase]||PrintLesson.lessons.idle;
   let status=live.title;
   if(fresh&&this.phase==='bed')status='베드 가열 중 · '+PrintLesson.temperature(t.bedTemperature)+' → '+PrintLesson.temperature(t.bedTarget);
