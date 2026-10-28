@@ -1,0 +1,37 @@
+{
+  "click-booth-x-banner-v4-600x1800.pdf": {
+    "sizeMM": [
+      600.0,
+      1800.0
+    ],
+    "pages": 1,
+    "koreanText": "verified"
+  },
+  "click-booth-x-banner-v4-600x1800-bleed3mm.pdf": {
+    "sizeMM": [
+      606.0,
+      1806.0
+    ],
+    "pages": 1,
+    "koreanText": "verified"
+  },
+  "hero": {
+    "size": [
+      3600,
+      2500
+    ],
+    "mode": "RGBA",
+    "sha256": "9d495838e7dc01056437674fcb7f14b47fa81e0d3ebcad2cf3fbc838ce018d2d"
+  },
+  "jpg": {
+    "size": [
+      3544,
+      10630
+    ]
+  },
+  "sources": {
+    "models/keychain-holder/holder-3-slim-loop.stl": "155f0361e1eb8d02f7283a8ff2e2a06db9679610f366948b96d065f16c5bd481",
+    "models/keychain-holder/holder-1-slim-loop.stl": "5f709007e82b73a4c42d9ad562ba6aa899bf2cc8182b2df0365a009c2dcaa1a0",
+    "models/keycap-base/keycap-base-socket-1.5-low-tight-outer17.stl": "a7697e1a7a104b7b5bf26faf86c810fe00ea1514a8f08719cbfdfdb227a3523b"
+  }
+}

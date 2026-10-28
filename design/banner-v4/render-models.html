@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><title>X배너 실제 모델 렌더링</title>
+<style>
+@font-face{font-family:Jua;src:url('../../fonts/Jua-Regular.ttf')}
+@font-face{font-family:'Do Hyeon';src:url('../../fonts/DoHyeon-Regular.ttf')}
+body{margin:0;background:#fff3d5;color:#182943;font:16px Jua,sans-serif}header{padding:20px;display:flex;gap:20px;align-items:center}button{padding:12px;border:0;border-radius:10px;background:#182943;color:white;font:inherit}canvas{display:block;width:min(1100px,100%);height:auto;margin:auto}pre{white-space:pre-wrap;padding:20px;font:13px monospace}
+</style>
+<header><b>실제 STL + 앱의 키캡 생성 엔진</b><button id="save" disabled>인쇄용 PNG 저장</button><span id="status">모델 불러오는 중</span></header><div id="stage"></div><pre id="facts"></pre>
+<script src="../../vendor/three.min.js"></script><script src="../../src/state.js"></script><script src="../../vendor/galmuri/galmuri11-hangul.js"></script><script src="../../src/engine.js"></script>
+<script>
+// No invented product geometry: original STL coordinates, and the production insert generator.
+// Switches sit inside the holder and are omitted from this exterior product render.
+const facts={sources:[],designs:[],dimensions:'mm',insertWidth:14,insertHeight:14,seat:17.4,pocketFloor:6.2,keyPitch:17.5};
+const materials={};
+function material(hex){return materials[hex]||=new THREE.MeshStandardMaterial({color:new THREE.Color(hex).convertSRGBToLinear(),roughness:.68,metalness:0});}
+async function stl(path,turn=false){
+ const res=await fetch('../../'+path);if(!res.ok)throw Error(path+' '+res.status);const buffer=await res.arrayBuffer(),dv=new DataView(buffer),count=dv.getUint32(80,true);
+ if(84+count*50!==buffer.byteLength)throw Error('Invalid binary STL: '+path);
+ const v=new Float32Array(count*9);for(let i=0;i<count;i++)for(let k=0;k<3;k++){
+  const at=84+i*50+12+k*12,x=dv.getFloat32(at,true),y=dv.getFloat32(at+4,true),z=dv.getFloat32(at+8,true);
+  v.set(turn?[-y,x,z]:[x,y,z],i*9+k*3);
+ }
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(v,3));g.computeVertexNormals();g.computeBoundingBox();
+ facts.sources.push({path,triangles:count,sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))).map(x=>x.toString(16).padStart(2,'0')).join(''),size:g.boundingBox.getSize(new THREE.Vector3()).toArray()});return g;
+}
+function add(parent,g,hex,x=0,y=0,z=0){const m=new THREE.Mesh(g,material(hex));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
+function design(parent,options,x=0,y=0,z=23.6){
+ Object.assign(S,DEFAULTS,options);const built=buildGeometries();
+ facts.designs.push({state:{...S},totalHeight:built.totalH,plateTriangles:built.parts.plate.reduce((n,g)=>n+g.attributes.position.count/3,0)});
+ for(const part of ['plate','relief'])for(const g of built.parts[part])add(parent,g,S.color,x,y,z);
+}
+async function main(){
+ await ensureFont(fontById('jua'),'상상');
+ const [holder,cap,single]=await Promise.all([
+  stl('models/keychain-holder/holder-3-slim-loop.stl',true),
+  stl('models/keycap-base/keycap-base-socket-1.5-low-tight-outer17.stl'),
+  stl('models/keychain-holder/holder-1-slim-loop.stl',true)
+ ]);
+ const scene=new THREE.Scene(),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(1);renderer.setSize(3600,2500,false);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0,0);$('stage').append(renderer.domElement);
+ const group=new THREE.Group();scene.add(group);group.rotation.z=-.16;group.position.set(5,5,0);
+ add(group,holder,'#77cbb6');
+ [-17.5,0,17.5].forEach(x=>add(group,cap,'#f5f0e5',x,0,17.4));
+ design(group,{content:'icon',icon:'cat',mode:'puffy',color:'#ff7b92'},-17.5);
+ design(group,{text:'상상',font:'jua',mode:'relief',color:'#65baff'},0);
+ design(group,{content:'icon',icon:'star',mode:'puffy',color:'#ffd45f'},17.5);
+ const one=new THREE.Group();scene.add(one);one.rotation.z=.15;one.position.set(-29,-23,0);
+ add(one,single,'#ffd45f');add(one,cap,'#f5f0e5',0,0,17.4);
+ design(one,{content:'icon',icon:'heart',mode:'puffy',color:'#b7a0e9'});
+ // A loose insert demonstrates the actual 14 mm part visitors print.
+ const loose=new THREE.Group();scene.add(loose);loose.position.set(27,-20,0);loose.rotation.z=.12;
+ design(loose,{content:'icon',icon:'rabbit',mode:'puffy',color:'#ff7b92'},0,0,0);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.ShadowMaterial({color:0x4d412f,opacity:.13}));ground.position.z=-.12;ground.receiveShadow=true;scene.add(ground);
+ scene.add(new THREE.HemisphereLight(0xffffff,0xe7dbca,.5));
+ const key=new THREE.DirectionalLight(0xffffff,1.6);key.position.set(-45,-70,110);key.castShadow=true;key.shadow.mapSize.set(4096,4096);key.shadow.camera.left=-85;key.shadow.camera.right=85;key.shadow.camera.top=85;key.shadow.camera.bottom=-85;key.shadow.camera.near=1;key.shadow.camera.far=250;key.shadow.bias=-.00012;key.shadow.normalBias=.06;key.shadow.radius=3;scene.add(key);
+ const fill=new THREE.DirectionalLight(0xcfe8ff,.35);fill.position.set(65,15,55);scene.add(fill);
+ const back=new THREE.DirectionalLight(0xffffff,.5);back.position.set(0,80,80);scene.add(back);
+ const camera=new THREE.OrthographicCamera(-61,61,61*2500/3600,-61*2500/3600,.1,500);camera.up.set(0,0,1);camera.position.set(38,-76,87);camera.lookAt(0,-3,12);
+ renderer.render(scene,camera);$('facts').textContent=JSON.stringify(facts,null,2);$('status').textContent='완료 · 3600 × 2500 · 실제 모델 형상';$('save').disabled=false;
+ $('save').onclick=()=>{renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='keycap-actual-models.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');};
+}
+main().catch(e=>{$('status').textContent=e.message;console.error(e);});
+</script></html>
