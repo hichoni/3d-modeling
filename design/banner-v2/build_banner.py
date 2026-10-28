@@ -1,0 +1,142 @@
+"""Rebuild the 600 x 1800 mm X-banner. Typography and QR remain vector in PDF."""
+from pathlib import Path
+import math
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.colors import HexColor, Color, white
+from reportlab.lib.utils import ImageReader
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import RectangleObject
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / 'output' / 'pdf'
+OUT.mkdir(parents=True, exist_ok=True)
+MM = 72 / 25.4
+W, H = 600, 1800
+NAVY, CORAL, BLUE, MINT, YELLOW = map(HexColor, ['#182943','#FF5266','#299FE7','#58BBA9','#FFD45E'])
+CREAM, MUTED, LINE = map(HexColor, ['#FFF9EE','#5B6675','#E5DCCB'])
+URL = 'https://hichoni.github.io/3d-modeling/index.html?start'
+pdfmetrics.registerFont(TTFont('Jua', str(ROOT / 'fonts/Jua-Regular.ttf')))
+pdfmetrics.registerFont(TTFont('DoHyeon', str(ROOT / 'fonts/DoHyeon-Regular.ttf')))
+
+def build(bleed=0):
+    suffix = '-bleed3mm' if bleed else ''
+    file = OUT / f'click-booth-x-banner-v2-600x1800{suffix}.pdf'
+    c = canvas.Canvas(str(file), pagesize=((W+2*bleed)*MM,(H+2*bleed)*MM), pageCompression=1)
+    c.setTitle('상상을 클릭하다! 3D 키캡 클리커 만들기 | X배너 v2')
+    c.setAuthor('AIERA 안동발명교육연구회')
+    c.scale(MM,MM); c.translate(bleed,bleed)
+    def box(x,y,w,h,r,fill,stroke=None,lw=1):
+        c.setFillColor(fill); c.setStrokeColor(stroke or fill); c.setLineWidth(lw)
+        c.roundRect(x,H-y-h,w,h,r,fill=1,stroke=bool(stroke))
+    def text(x,y,s,size=20,color=NAVY,font='Jua',align='left'):
+        c.setFillColor(color); c.setFont(font,size)
+        method={'left':c.drawString,'center':c.drawCentredString,'right':c.drawRightString}[align]
+        method(x,H-y-size*.82,s)
+    def line(x1,y1,x2,y2,color=LINE,lw=1):
+        c.setStrokeColor(color);c.setLineWidth(lw);c.line(x1,H-y1,x2,H-y2)
+    def star(x,y,r,color):
+        p=c.beginPath()
+        for i in range(8):
+            a=math.pi*i/4; radius=r if i%2==0 else r*.24
+            px=x+math.cos(a)*radius;py=H-y+math.sin(a)*radius
+            (p.moveTo if i==0 else p.lineTo)(px,py)
+        p.close();c.setFillColor(color);c.drawPath(p,fill=1,stroke=0)
+    def circle(x,y,r,color):
+        c.setFillColor(color);c.circle(x,H-y,r,stroke=0,fill=1)
+
+    box(-bleed,-bleed,W+2*bleed,H+2*bleed,0,CREAM)
+    # A sparse dot grid gives the workbench a tactile paper feel without competing with text.
+    for x in range(18,600,18):
+        for y in range(92,1585,18):
+            circle(x,y,.52,HexColor('#F0E9DB'))
+
+    box(34,35,251,30,15,white,LINE,.85)
+    box(38,39,65,22,11,CORAL)
+    text(70.5,41,'AIERA',16,white,'DoHyeon','center')
+    text(115,42,'안동발명교육연구회',16,NAVY,'DoHyeon')
+    box(405,35,161,30,15,YELLOW)
+    text(485.5,42,'현장에서 직접 출력!',16,NAVY,'DoHyeon','center')
+    text(300,103,'3D 모델링 × 3D 프린팅 체험',22,MUTED,'DoHyeon','center')
+
+    text(300,153,'상상을',102,NAVY,align='center')
+    text(300,259,'클릭하다!',111,HexColor('#E64158'),align='center')
+    text(300,256,'클릭하다!',111,CORAL,align='center')
+    star(58,198,15,YELLOW);star(547,146,13,BLUE);star(541,350,12,MINT)
+    text(300,395,'3D 키캡 클리커 만들기',34,NAVY,align='center')
+
+    box(55,452,490,57,22,NAVY)
+    text(81,468,'디자인 5분',24,YELLOW)
+    circle(242,480,3,white)
+    text(261,468,'내 손으로 만드는 작은 딸깍!',21,white)
+
+    # Product illustration is conceptual; exact attachment geometry varies by booth kit.
+    box(25,548,550,388,42,HexColor('#F4EFE4'))
+    circle(298,729,168,HexColor('#FFFDF7'))
+    c.drawImage(ImageReader(str(ROOT/'design/banner-v2/keycap-hero.png')),24,H-925,552,445,mask='auto',preserveAspectRatio=True,anchor='c')
+    box(45,569,176,41,20,white)
+    text(133,580,'내 이름도, 내 취향도!',19,NAVY,align='center')
+    text(511,880,'딸깍!',31,CORAL,align='center')
+    text(300,951,'화면 속 상상이, 손안의 작품으로',26,NAVY,align='center')
+
+    text(36,1013,'직접 만드는 세 단계',28,NAVY)
+    text(565,1022,'태블릿 / 크롬북으로 직접!',14,MUTED,'DoHyeon','right')
+    steps=[
+        (1072,CORAL,'01','내 맘대로 디자인','이름, 이니셜, 그림으로 나만의 키캡 만들기'),
+        (1179,BLUE,'02','한 층씩 살펴보기','슬라이싱 화면에서 쌓이는 모양 미리 보기'),
+        (1286,MINT,'03','출력하고, 딸깍! 완성','3D 프린터로 출력한 작품을 스위치에 끼우기'),
+    ]
+    for y,color,num,title,body in steps:
+        box(35,y+3,530,92,19,HexColor('#E9E2D6'))
+        box(35,y,530,92,19,white,LINE,.7)
+        box(50,y+17,57,57,18,color)
+        text(78.5,y+30,num,30,white,'DoHyeon','center')
+        text(124,y+17,title,27,NAVY)
+        text(124,y+56,body,16,MUTED,'DoHyeon')
+
+    # Event is retained from the existing booth banner.
+    box(35,1412,530,194,32,NAVY)
+    box(60,1434,132,25,12,YELLOW)
+    text(126,1439,'BONUS EVENT',14,NAVY,'DoHyeon','center')
+    text(60,1477,'체험을 마치면',24,white)
+    text(60,1510,'행운의 룰렛!',37,YELLOW)
+    text(60,1564,'간식, 키링 파츠 등 깜짝 선물이 기다려요.',14,white,'DoHyeon')
+    # Original vector roulette illustration, with no invented guarantee about prize odds.
+    cx,cy,rad=466,1502,65
+    circle(cx,cy,rad+4,white)
+    colors=[CORAL,YELLOW,BLUE,MINT,CORAL,YELLOW,BLUE,MINT]
+    for i,color in enumerate(colors):
+        a=math.pi*2*i/8;b=math.pi*2*(i+1)/8;p=c.beginPath();p.moveTo(cx,H-cy)
+        for k in range(13):
+            t=a+(b-a)*k/12;p.lineTo(cx+rad*math.cos(t),H-cy+rad*math.sin(t))
+        p.close();c.setFillColor(color);c.setStrokeColor(white);c.setLineWidth(1.5);c.drawPath(p,fill=1,stroke=1)
+    circle(cx,cy,18,white);text(cx,cy-10,'GO',21,NAVY,'DoHyeon','center')
+    p=c.beginPath();p.moveTo(cx-9,H-cy+rad+10);p.lineTo(cx+9,H-cy+rad+10);p.lineTo(cx,H-cy+rad-8);p.close();c.setFillColor(YELLOW);c.setStrokeColor(NAVY);c.setLineWidth(2);c.drawPath(p,fill=1,stroke=1)
+    text(35,1618,'작품은 예시 이미지예요. 색상과 선물은 현장 준비 상황에 따라 달라져요.',11,MUTED,'DoHyeon')
+
+    line(35,1652,565,1652)
+    text(35,1673,'참여 안내',23,NAVY)
+    for y,label,body in [(1710,'대상','초등 3학년 ~ 중학교 3학년 권장'),(1738,'시간','출력 포함 약 20~30분'),(1766,'참여','현장 접수 / 대기 순서대로 안내')]:
+        box(35,y-1,38,18,9,CORAL);text(54,y+2,label,12,white,'DoHyeon','center');text(84,y+1,body,15,NAVY,'DoHyeon')
+    # QR is generated from the real destination, never generated as part of the illustration.
+    box(442,1668,123,111,13,white,LINE,.8)
+    qr=QrCodeWidget(URL,barLevel='M',barBorder=4);bounds=qr.getBounds();width=bounds[2]-bounds[0]
+    d=Drawing(90,90,transform=[90/width,0,0,90/width,0,0]);d.add(qr)
+    renderPDF.draw(d,c,458.5,H-1761)
+    text(503.5,1763,'집에서도 디자인해요',9,NAVY,'DoHyeon','center')
+
+    c.showPage();c.save()
+    if bleed:
+        reader=PdfReader(str(file));writer=PdfWriter();page=reader.pages[0]
+        page.trimbox=RectangleObject([bleed*MM,bleed*MM,(W+bleed)*MM,(H+bleed)*MM])
+        page.bleedbox=RectangleObject([0,0,(W+2*bleed)*MM,(H+2*bleed)*MM])
+        writer.add_page(page);writer.add_metadata({'/Title':'상상을 클릭하다! X배너 v2 - 사방 3mm 재단 여유'})
+        with file.open('wb') as out:writer.write(out)
+    print(file)
+
+if __name__=='__main__':
+    build();build(3)
