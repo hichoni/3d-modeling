@@ -12,7 +12,7 @@
 - **전체 자동 검사 163개 통과, 실패·취소·건너뜀 0개.** 실제 브라우저 11층 슬라이싱, 모의 프린터 선택/출력 37%·남은 3분/연결 끊김/복구·완료, 1280×640 및 390×844 화면을 확인했다. 실제 프린터 출력·가열·이동·보정은 하지 않았다. 로그 `artifacts/production-tests-20261028.log`, 화면 기록 `artifacts/production-20261028/`.
 - 공개 웹 파일과 운영자 ZIP을 재생성했다. IWA/APK 재서명·Store 출시는 이번 범위가 아니다. 기존 Windows 로컬 화면은 최신 묶음 갱신이 필요하며 설치 앱의 기존 오프라인 화면은 바뀌지 않는다. 일반 STL 스튜디오와 프린터 프로토콜·슬라이서 프로필·받침 규격은 변경하지 않았다.
 
-배포 성공과 공개 화면 확인은 아래에 최종 커밋·Actions 링크로 추가한다.
+**배포 완료:** 구현 커밋 **`604d95b65d684cc5ab4cbde2bfafffcfd16d82de`**. [Pages 배포 성공](https://github.com/hichoni/3d-modeling/actions/runs/40619502116), [Windows 전체 검사·패키지 빌드 성공](https://github.com/hichoni/3d-modeling/actions/runs/40619502814)을 확인했다. 공개 [체험 페이지](https://hichoni.github.io/3d-modeling/index.html?start)를 새로 열어 `상상`(또박·민트)의 **11층·2분 22초 경로 예상·0.34g**, 속 채움 4층 전환, 출력 단계의 실제 작품, 연결 전 안내/버튼, 콘솔 오류 0건을 확인했다. 공개 화면 증거는 `artifacts/production-20261028/published-slicing.jpg`, `published-print.jpg`다. 문서·화면 검증을 위해 실제 프린터로 출력 명령을 보내지 않았다. 화면 기록은 로컬에만 보관하며, Windows CI 성공은 Store 서명·심사 완료가 아니다.
 
 ## 최신: 작업대 탭·실행 취소·내 작품 썸네일 적용 (2026-10-28)
 
