@@ -24,6 +24,22 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 22px;bo
 @media(max-width:900px){main{padding:25px}.hero{gap:0;grid-template-columns:1fr 1fr}h1{font-size:65px}.art{height:320px}.art img{height:310px}.art::before{width:240px;height:240px}.art::after{font-size:25px;right:0;top:35px;padding:12px 18px}.promise{font-size:21px}.eyebrow{font-size:10px}.journey{gap:7px}.journey li{font-size:15px;gap:7px}.journey b{width:28px;height:30px;font-size:16px}.cards{grid-template-columns:1.15fr 1fr}.card{padding:19px 35px 20px 19px}.card>b{font-size:24px}.card>i{right:12px}.about{gap:25px}}
 @media(max-width:600px){main{padding:20px}.masthead{padding-bottom:17px;gap:8px}.org{font-size:11px;gap:7px}.org b{font-size:14px;padding:4px 9px}.wordmark{font-size:12px;letter-spacing:.5px}.hero{grid-template-columns:1fr;padding:26px 0 15px}.eyebrow{margin-bottom:14px;font-size:11px}h1{font-size:clamp(56px,15vw,78px);line-height:1.03;letter-spacing:-2px}.promise{font-size:23px;margin-top:18px}.subline{font-size:12px}.art{height:270px;margin-top:8px}.art img{height:270px;max-width:390px}.art::before{width:236px;height:236px}.art::after{top:4px;right:0}.caption{font-size:13px;bottom:0}.journey{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 0;margin-bottom:23px}.journey li{font-size:17px}.journey i{display:none}.journey b{width:29px;height:31px}.cards{grid-template-columns:1fr;gap:17px}.card{padding:22px 45px 23px 22px}.card>b{font-size:27px}.card>small{font-size:12px}.card>i{right:20px}.about{grid-template-columns:1fr;gap:16px;margin-top:32px;padding-top:24px}.pitch{font-size:24px}.points{gap:10px 18px;margin-top:0}.points li{font-size:11px}footer{margin-top:24px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
+/* The installed launcher must put both starting actions inside a Chromebook viewport. */
+.about-details{margin-top:14px}.about-details>summary{width:fit-content;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;padding:7px 2px}.about-details[open]>summary{color:var(--ink)}.about-details .about{margin-top:12px;padding-top:18px}.connection-note{font-size:12px;color:var(--muted);line-height:1.75;max-width:900px}
+@media(min-width:701px) and (min-height:501px){
+ main{height:100svh;display:flex;flex-direction:column;gap:clamp(8px,1.5vh,14px);padding:clamp(12px,2.2vh,20px) clamp(24px,3.2vw,40px)}
+ .masthead{flex:none;padding-bottom:10px}.hero{flex:1;min-height:0;grid-template-columns:1.05fr 1fr;gap:22px;padding:0}
+ .eyebrow{font-size:11px;margin-bottom:10px}h1{font-size:clamp(44px,8.7vh,72px);line-height:1.02;letter-spacing:-2px}
+ .promise{font-size:clamp(19px,3.1vh,24px);line-height:1.3;margin:13px 0 7px}.subline{font-size:12px;line-height:1.55}
+ .art{height:100%;max-height:300px;min-height:0}.art img{height:100%;max-height:290px;max-width:440px}.art::before{width:min(27vh,245px);height:min(27vh,245px)}
+ .art::after{top:9%;right:10px;font-size:23px;padding:10px 17px}.caption{font-size:12px;bottom:3px;padding:6px 10px}
+ .journey{flex:none;padding:10px 0;margin:0;gap:10px}.journey li{font-size:16px;gap:8px}.journey b{width:27px;height:28px;font-size:15px}
+ .cards{flex:none;gap:16px}.card{padding:15px 42px 15px 19px}.card>b{font-size:25px}.card>small{font-size:11px;line-height:1.45;margin-top:6px}.card>i{right:16px}.tag{margin-bottom:6px;font-size:10px}.booth .tag{padding:3px 7px}
+ .about-details{flex:none;margin:0}.about-details>summary{padding:3px 1px}footer{flex:none;margin:0;padding-top:8px;font-size:10px;line-height:1.4}
+ main:has(.about-details[open]){height:auto;min-height:100svh}.about-details[open] .about{grid-template-columns:1fr 1.6fr}
+}
+@media(min-width:701px) and (max-width:1000px) and (min-height:501px){.hero{gap:12px}.journey li{font-size:14px;gap:6px}.card>b{font-size:22px}.subline{font-size:11px}.wordmark{font-size:14px}}
+@media(min-width:701px) and (max-height:600px) and (min-height:501px){main{gap:8px;padding-top:10px;padding-bottom:10px}.masthead{padding-bottom:8px}.eyebrow{margin-bottom:6px}.promise{margin-top:8px}.art::after{font-size:19px;padding:8px 12px}.journey{padding:8px 0}.card{padding-top:12px;padding-bottom:12px}.card>small{margin-top:4px}.tag{margin-bottom:5px}.caption{font-size:11px}}
 </style></head><body><main>
 <header class="masthead"><span class="org"><b>AIERA</b>안동발명교육연구회</span><span class="wordmark">CLICK STUDIO</span></header>
 <section class="hero" aria-label="3D 키캡 클리커 만들기">
@@ -35,6 +51,6 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 22px;bo
  <a class="card booth" href="{{BOOTH}}"><span class="tag">부스 체험 · 처음이라면 여기!</span><b>3D 키캡 클리커 만들기</b><small>이름·그림·캐릭터·픽셀·도장으로 나만의 조각을 만들고,<br>층층이 쌓이는 원리를 본 뒤 바로 출력해요.</small><i aria-hidden="true">→</i></a>
  <a class="card" href="{{STUDIO}}"><span class="tag">STL 스튜디오</span><b>내 모델 출력하기</b><small>STL·MakerWorld 모델을 불러와 배치하고,<br>레이어를 계산해 A1 mini로 보내요.</small><i aria-hidden="true">→</i></a>
 </nav>
-<section class="about" aria-label="AIERA가 만든 교육용 앱"><p class="pitch">{{DEVICE}}이 3D 프린터와<br><em>직접 이야기</em>해요</p><p class="lead"><b>안동발명교육연구회(AIERA)</b>가 학생 교육을 위해 <b>직접 만든 앱</b>이에요. 원래 3D 프린터는 출력 PC와 전용 프로그램이 있어야 했지만, Click Studio는 <b>{{DEVICE}}에서 프린터와 바로 통신</b>하도록 새로 만들었어요. 학생들이 디자인부터 슬라이싱, 진짜 출력까지 한자리에서 해보며 3D 프린터를 <b>쉽고 재미있게</b> 처음 만나요.</p><ul class="points"><li>{{DEVICE}} ↔ 프린터 직접 연결</li><li>출력 PC 필요 없음</li><li>학교 {{DEVICE}} 그대로</li><li>AIERA 자체 제작 교육용 앱</li></ul></section>
-<footer><span>© AIERA 안동발명교육연구회 · 학생 3D 프린팅 교육용 자체 제작 앱 · {{VERSION}}</span><span>{{NOTE}}</span></footer>
+<details class="about-details"><summary>앱 소개 · 연결 안내</summary><section class="about" aria-label="AIERA가 만든 교육용 앱"><p class="pitch">{{DEVICE}}이 3D 프린터와<br><em>직접 이야기</em>해요</p><p class="lead"><b>안동발명교육연구회(AIERA)</b>가 학생 교육을 위해 <b>직접 만든 앱</b>이에요. 원래 3D 프린터는 출력 PC와 전용 프로그램이 있어야 했지만, Click Studio는 <b>{{DEVICE}}에서 프린터와 바로 통신</b>하도록 새로 만들었어요. 학생들이 디자인부터 슬라이싱, 진짜 출력까지 한자리에서 해보며 3D 프린터를 <b>쉽고 재미있게</b> 처음 만나요.</p><ul class="points"><li>{{DEVICE}} ↔ 프린터 직접 연결</li><li>출력 PC 필요 없음</li><li>학교 {{DEVICE}} 그대로</li><li>AIERA 자체 제작 교육용 앱</li></ul></section><p class="connection-note">{{NOTE}}</p></details>
+<footer><span>© AIERA 안동발명교육연구회 · 학생 3D 프린팅 교육용 자체 제작 앱 · {{VERSION}}</span></footer>
 </main></body></html>
