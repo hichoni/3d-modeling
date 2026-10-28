@@ -1,5 +1,18 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-const {assertIdentity,assertNextVersion,requireKeyFiles,assertOfflinePages}=require('../tools/release-guard.cjs');
+const {assertIdentity,assertNextVersion,requireKeyFiles,assertOfflinePages,writeVersionedBundle}=require('../tools/release-guard.cjs');
+
+test('versioned IWA downloads keep old URLs immutable and give new versions distinct URLs',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'click-iwa-publish-')),one=Buffer.from('signed version 1'),two=Buffer.from('signed version 2');
+ try{
+  const old=writeVersionedBundle(dir,'1.1.5',one),next=writeVersionedBundle(dir,'1.1.6',two);
+  assert.notEqual(old,next);
+  assert.equal(writeVersionedBundle(dir,'1.1.5',one),old);
+  assert.throws(()=>writeVersionedBundle(dir,'1.1.5',two),/cannot be overwritten/);
+  assert.deepEqual(fs.readFileSync(path.join(dir,old)),one);
+  assert.deepEqual(fs.readFileSync(path.join(dir,next)),two);
+  assert.throws(()=>writeVersionedBundle(dir,'../escape',one),/version/);
+ }finally{for(const f of fs.readdirSync(dir))fs.unlinkSync(path.join(dir,f));fs.rmdirSync(dir);}
+});
 test('a replacement identity cannot be published as an existing app update',()=>{
  assert.doesNotThrow(()=>assertIdentity('same','same','IWA'));
  for(const [a,b]of [['new','old'],['','old'],['same',undefined]])assert.throws(()=>assertIdentity(a,b,'IWA'),/identity/);

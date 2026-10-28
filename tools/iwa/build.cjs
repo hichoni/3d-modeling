@@ -3,10 +3,10 @@
 //   IWA_SIGNING_KEY=<PEM text> or IWA_SIGNING_KEY_FILE=<path>, otherwise runtime/iwa-signing-key.pem.
 //   --new-key creates runtime/iwa-signing-key.pem once (git-ignored). Never commit the key.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const {assertIdentity,assertNextVersion}=require('../release-guard.cjs');
+const {assertIdentity,assertNextVersion,writeVersionedBundle}=require('../release-guard.cjs');
 const root=path.resolve(__dirname,'../..'),{out:app,VERSION,UPDATE_URL,manifest}=require('../../scripts/build-iwa-app.cjs');
 const publishedPath=path.join(root,'downloads','click-studio.json'),published=fs.existsSync(publishedPath)?JSON.parse(fs.readFileSync(publishedPath,'utf8')):null;
-const BUNDLE_URL='https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn';
+const DOWNLOAD_URL='https://hichoni.github.io/3d-modeling/downloads/';
 const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.webmanifest':'application/manifest+json','.png':'image/png','.ttf':'font/ttf'};
 function key(){
  if(process.env.IWA_SIGNING_KEY)return process.env.IWA_SIGNING_KEY;
@@ -27,6 +27,8 @@ function files(dir,prefix=''){return fs.readdirSync(dir,{withFileTypes:true}).fl
  const builder=new wbn.BundleBuilder();
  for(const name of files(app).sort()){const type=TYPES[path.extname(name)];if(!type)throw Error('No content type for '+name);builder.addExchange(origin+(name==='index.html'?'':name),200,{'Content-Type':type},fs.readFileSync(path.join(app,name)));}
  const signed=await wbnSign.SignedWebBundle.fromWebBundle(builder.createBundle(),[new wbnSign.NodeCryptoSigningStrategy(privateKey)]),bytes=signed.getSignedWebBundleBytes(),id=signed.getWebBundleId();
+ // Each version has a new URL so a cached previous bundle cannot satisfy its download.
+ const name=writeVersionedBundle(path.join(root,'downloads'),VERSION,bytes),BUNDLE_URL=DOWNLOAD_URL+name;
  fs.writeFileSync(path.join(root,'downloads','click-studio.swbn'),bytes);
  fs.writeFileSync(path.join(root,'downloads','click-studio-update.json'),JSON.stringify({versions:[{version:VERSION,src:BUNDLE_URL}]},null,1)+'\n');
  const info={bundleId:id,version:VERSION,updateManifestUrl:UPDATE_URL,bundleUrl:BUNDLE_URL,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
