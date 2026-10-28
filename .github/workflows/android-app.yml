@@ -30,13 +30,25 @@ jobs:
           cp index.html studio.html android/app/src/main/assets/web/
       - name: Build unsigned release APK
         run: gradle -p android assembleRelease --no-daemon --stacktrace
+      - name: Compile release signing verifier (no private keys in CI)
+        run: |
+          curl -fsSL -o /tmp/apksig.jar https://repo1.maven.org/maven2/com/android/tools/build/apksig/2.3.0/apksig-2.3.0.jar
+          echo '6ef7a58375aa68fb492b58edd97607bee8ee5c5c  /tmp/apksig.jar' | sha1sum -c -
+          mkdir -p /tmp/click-sign-classes
+          javac -cp /tmp/apksig.jar -d /tmp/click-sign-classes tools/android/SignApk.java
       - name: Publish to the android-build branch
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir out
           cp android/app/build/outputs/apk/release/app-release-unsigned.apk out/click-studio-unsigned.apk
-          printf '{"commit":"%s","ref":"%s","run":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "$GITHUB_RUN_ID" > out/build.json
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const gradle=fs.readFileSync('android/app/build.gradle','utf8');
+          const metadata={commit:process.env.GITHUB_SHA,ref:process.env.GITHUB_REF_NAME,run:process.env.GITHUB_RUN_ID,version:gradle.match(/versionName '([^']+)'/)[1],versionCode:Number(gradle.match(/versionCode (\d+)/)[1]),sha256:sha(fs.readFileSync('out/click-studio-unsigned.apk')),offlinePages:Object.fromEntries(['index.html','studio.html'].map(name=>[name,sha(fs.readFileSync(name))]))};
+          fs.writeFileSync('out/build.json',JSON.stringify(metadata,null,2)+'\n');
+          NODE
           cd out
           git init -q -b android-build
           git add .
