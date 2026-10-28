@@ -1,0 +1,12 @@
+{
+  "commit": "c459957d99129600b14890349145f29d5475406d",
+  "ref": "claude/awesome-noether-z4typz",
+  "run": "40633304011",
+  "version": "1.1.1",
+  "versionCode": 3,
+  "sha256": "f4075e69c3266ba64861b1875e147b3a1e9012c2421d96401ddc9561c1c79678",
+  "offlinePages": {
+    "index.html": "befce54f101c96e4a5040835854ce69cd2a31c0d419ce2ecb2108fc52a735bcb",
+    "studio.html": "bd73936141537df26b805a1463f379d42545979e089fc129b6e94b37b75856d1"
+  }
+}
