@@ -19,13 +19,13 @@ MM = 72 / 25.4
 W, H = 600, 1800
 NAVY, CORAL, BLUE, MINT, YELLOW = map(HexColor, ['#182943','#FF5266','#299FE7','#58BBA9','#FFD45E'])
 CREAM, MUTED, LINE = map(HexColor, ['#FFF9EE','#5B6675','#E5DCCB'])
-URL = 'https://hichoni.github.io/3d-modeling/index.html?start'
+URL = 'https://3d.aiera.co.kr/home.html'
 pdfmetrics.registerFont(TTFont('Jua', str(ROOT / 'fonts/Jua-Regular.ttf')))
 pdfmetrics.registerFont(TTFont('DoHyeon', str(ROOT / 'fonts/DoHyeon-Regular.ttf')))
 
 def build(bleed=0):
     suffix = '-bleed3mm' if bleed else ''
-    file = OUT / f'click-booth-x-banner-v6-600x1800{suffix}.pdf'
+    file = OUT / f'click-booth-x-banner-v6-aiera-home-600x1800{suffix}.pdf'
     c = canvas.Canvas(str(file), pagesize=((W+2*bleed)*MM,(H+2*bleed)*MM), pageCompression=1)
     c.setTitle('상상을 클릭하다! 3D 키캡 클리커 만들기 | X배너 v6')
     c.setAuthor('AIERA 안동발명교육연구회 / 풍천풍서초 발명동아리 WNL')
@@ -59,7 +59,7 @@ def build(bleed=0):
     box(31,34,258,42,21,white,NAVY,1.2)
     box(36,40,64,30,15,CORAL)
     text(68,46,'AIERA',18,white,'DoHyeon','center')
-    text(277,47,'안동발명교육연구회',16,NAVY,'DoHyeon','right')
+    text(110,47,'안동발명교육연구회',16,NAVY,'DoHyeon','left')
     box(312,38,258,42,21,HexColor('#D5E7E2'))
     box(310,34,258,42,21,white,NAVY,1.2)
     text(503,47,'풍천풍서초 발명동아리',16,NAVY,'DoHyeon','right')

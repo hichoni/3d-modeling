@@ -1,6 +1,8 @@
 # X배너 v6 / 대문 — AIERA 자체 개발
 
-2026-10-28 추가 수정: 상단 **안동발명교육연구회 / 풍천풍서초 발명동아리**를 DoHyeon 같은 크기(도면 좌표 16), 같은 기준선, 각각 우측 정렬로 맞췄다. PDF 두 종류·JPG·미리보기·인쇄 ZIP에 반영했다. `output/banner/click-booth-x-banner-v6-header.png`는 수정한 상단 확대 보기다.
+2026-10-28 최종 수정: 상단 **안동발명교육연구회는 왼쪽 정렬**, **풍천풍서초 발명동아리는 우측 정렬**이다. DoHyeon 같은 크기(도면 좌표 16), 같은 기준선은 유지한다. QR 목적지는 **https://3d.aiera.co.kr/home.html**로, 스캔하면 체험 대신 대문이 열린다. PDF 두 종류·JPG·미리보기·인쇄 ZIP에 반영했다. `output/banner/click-booth-x-banner-v6-header.png`는 수정한 상단 확대 보기다.
+
+최신 인쇄 PDF는 파일명에 **`aiera-home`**이 들어간다. 기존 PDF는 변경 전 이력으로 보존했다. 최종 150dpi JPG와 재단 여유 PDF 렌더의 QR을 실제 해독하여 대문 URL 일치를 확인했으며, 해당 HTTPS 주소에서 대문과 두 시작 버튼이 열리는 것을 확인했다.
 
 사용자의 2026-10-28 요청: 승인한 v5 구성을 유지하고 전체 배너와 대문을 함께 보여 주며, 모델링·앱의 AIERA 자체 개발을 강조한다.
 
@@ -18,8 +20,8 @@
 
 ## 인쇄 파일
 
-- `output/pdf/click-booth-x-banner-v6-600x1800.pdf`: 600×1800mm.
-- `output/pdf/click-booth-x-banner-v6-600x1800-bleed3mm.pdf`: 사방 3mm 여유, 606×1806mm.
+- `output/pdf/click-booth-x-banner-v6-aiera-home-600x1800.pdf`: 600×1800mm.
+- `output/pdf/click-booth-x-banner-v6-aiera-home-600x1800-bleed3mm.pdf`: 사방 3mm 여유, 606×1806mm.
 - `output/banner/click-booth-x-banner-v6-150dpi.jpg`: 3544×10630px.
 - `output/banner/click-booth-x-banner-v6-print.zip`: PDF 두 종류·JPG·인쇄 안내.
 
