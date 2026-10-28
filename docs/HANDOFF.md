@@ -1,5 +1,14 @@
 # 인수인계 — Click Studio·운영자 공방 (2026-10-28)
 
+## 최신: 기존 서명 키 복구·크롬북 1.1.4 / APK 1.1.1 (2026-10-28)
+
+사용자 요청에 따라 기존 키를 원래 작업에서 복구하고 **크롬북 IWA 1.1.4, Android APK 1.1.1(versionCode 3)**을 같은 신원으로 서명했다. 1단계 도구 패널·실행 취소·실제 작품 썸네일과 2·3단계 슬라이싱·출력 작업대를 **설치 파일 안의 오프라인 화면에도** 반영했다. [릴리스·서명·검증·업데이트 인수인계](APP_RELEASE_2026-10-28.md).
+
+- **키 복구 완료:** `runtime/iwa-signing-key.pem`, `runtime/android-signing.p12`, `runtime/android-signing.pass`. 비공개 ZIP은 `runtime/signing-keys-backup-2026-10-28.zip`. Git/Pages/CI에는 포함하지 않는다. 아래의 “이 PC에는 키가 없다”, “IWA/APK 재서명은 이번 범위가 아니다”는 이전 작업 시점의 기록이다.
+- 기존 IWA 앱 ID 및 Android 인증서 지문이 동일하다. 기존 앱을 삭제하지 않고 업데이트할 수 있는 서명이다. 키·신원·버전·APK 페이지 검사로 다른 키나 오래된 묶음의 배포를 막았다.
+- 전체 검사 **167개 통과**. Android CI 빌드, APK v2 서명 검증, IWA 서명 및 16개 내장 파일 비교, 두 패키지의 최신 작업대 코드 포함을 확인했다. 상세 커밋/해시/CI 링크는 위 문서에 기록했다.
+- 설치 안내: <https://hichoni.github.io/3d-modeling/chromebook.html>. 크롬북은 기존 앱 **Update**, Android는 **v1.1.1 APK**를 설치한다. 이번 버전의 실제 기기 업데이트/출력은 아직 수행하지 않았다. Windows Store 승인이나 학교 관리 정책 변경은 이번 작업에 포함되지 않는다.
+
 ## 최신: 2·3단계 슬라이싱·출력 작업대 (2026-10-28)
 
 사용자 요청에 따라 부스 체험 **`index.html?start`의 2·3단계**를 1단계 작업대와 같은 분위기로 정리했다. [구현·상태 규칙·소스 안내](PRODUCTION_WORKBENCH_2026-10-28.md).

@@ -1,7 +1,7 @@
 {
- "version": "1.1.0",
+ "version": "1.1.1",
  "file": "click-studio.apk",
- "bytes": 10451766,
- "sha256": "12ed8d364b7bbaf93a67a48cb7788063ebfae9ae9f52524cbbf2d805aafaf616",
+ "bytes": 11013974,
+ "sha256": "e9a2e0ee526c5aaa093f1f7968bf6063c3209671b223506781696452c31a1176",
  "signerSha256": "5B:32:A5:2F:36:0A:E4:6F:00:76:56:78:1E:B2:58:F0:9F:CD:CD:8F:9E:E9:E9:D7:76:8E:DC:3F:5C:1D:6E:47"
 }
