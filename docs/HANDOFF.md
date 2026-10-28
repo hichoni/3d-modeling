@@ -8,6 +8,7 @@
 - 기존 IWA 앱 ID 및 Android 인증서 지문이 동일하다. 기존 앱을 삭제하지 않고 업데이트할 수 있는 서명이다. 키·신원·버전·APK 페이지 검사로 다른 키나 오래된 묶음의 배포를 막았다.
 - 전체 검사 **167개 통과**. Android CI 빌드, APK v2 서명 검증, IWA 서명 및 16개 내장 파일 비교, 두 패키지의 최신 작업대 코드 포함을 확인했다. 상세 커밋/해시/CI 링크는 위 문서에 기록했다.
 - 설치 안내: <https://hichoni.github.io/3d-modeling/chromebook.html>. 크롬북은 기존 앱 **Update**, Android는 **v1.1.1 APK**를 설치한다. 이번 버전의 실제 기기 업데이트/출력은 아직 수행하지 않았다. Windows Store 승인이나 학교 관리 정책 변경은 이번 작업에 포함되지 않는다.
+- **배포 완료:** 릴리스 `df26787`의 [Pages 40623648896](https://github.com/hichoni/3d-modeling/actions/runs/40623648896)와 [Windows CI 40623649904](https://github.com/hichoni/3d-modeling/actions/runs/40623649904) 성공. 공개 설치 안내의 새 버전을 확인했고, 실제 공개 SWBN·APK 및 메타데이터 3개를 내려받아 로컬 최종 파일과 **모두 바이트 단위 일치**를 확인했다. `artifacts/app-release-20261028/published-verification.json`에 근거를 보관했다.
 
 ## 최신: 2·3단계 슬라이싱·출력 작업대 (2026-10-28)
 

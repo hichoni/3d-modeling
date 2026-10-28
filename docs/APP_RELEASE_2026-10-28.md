@@ -10,6 +10,12 @@
 
 1단계 도구 패널·실행 취소·실제 작품 썸네일, 2·3단계 작품/프린터/시간 요약과 새 작업대를 두 설치 패키지의 오프라인 화면에도 포함했다. 온라인 화면만 바꾸고 설치 파일을 남겨 두었던 이전 상태를 갱신했다. Windows Store 제출·인증과는 별개이며 Store 출시는 완료되지 않았다.
 
+## 최종 배포 확인
+
+배포 커밋 **`df26787a6a3514b87c68bae24c1ff16b2d7d11b6`**의 [GitHub Pages 40623648896](https://github.com/hichoni/3d-modeling/actions/runs/40623648896)와 [Windows 검사 40623649904](https://github.com/hichoni/3d-modeling/actions/runs/40623649904)가 모두 성공했다. 공개 `chromebook.html`에서 **크롬북 v1.1.4 / 태블릿 v1.1.1** 표시와 실제 다운로드 버튼을 확인했다.
+
+공개 주소에서 메타데이터 JSON 3개와 SWBN·APK를 다시 받아 **5개 모두 로컬 최종 파일과 바이트 단위로 일치**함을 확인했다. Chrome의 다운로드 버튼으로 받은 두 설치 파일도 같은 결과였다. 배포 요청만 하고 끝낸 상태가 아니다. 증거는 로컬 `artifacts/app-release-20261028/published-verification.json`, `published-install-guide.png`와 내려받은 파일에 있다.
+
 ## 기존 키 복구와 보관
 
 원래 앱을 만들었던 Claude Code 작업의 비공개 `runtime/`에서 원본을 복구했다. 사용자는 해당 작업에 **키 백업 파일 생성만** 요청하도록 허용했다. 요청에는 새 키 생성·기존 키 변경·Git 업로드·앱 빌드/배포를 제외했고, 세 파일만 담긴 ZIP을 내려받았다. 이미 따로 복구한 PEM·암호 파일과 ZIP 안의 원본이 바이트 단위로 일치한다.
@@ -31,6 +37,7 @@
 - [Android CI 40621991823](https://github.com/hichoni/3d-modeling/actions/runs/40621991823)에서 versionName 1.1.1 / versionCode 3의 미서명 APK와 원본 커밋·페이지 해시가 담긴 `build.json` 생성. 서명 검증 Java 코드 컴파일도 통과했다.
 - [Windows CI 40621991916](https://github.com/hichoni/3d-modeling/actions/runs/40621991916) 통과. Windows CI는 미서명 패키지 검사이며 Store 승인 근거가 아니다.
 - 로컬에서 원래 Android 인증서 일치, APK v2 서명 검증과 인증서 일치 검사를 통과했다. 키 암호를 명령행이나 로그에 출력하지 않았다.
+- APK의 바이너리 `AndroidManifest.xml`에서도 패키지 ID `io.github.hichoni.clickstudio` 유지, versionCode 2→3 / versionName 1.1.0→1.1.1을 확인했다. `resources.arsc` 비압축·4바이트 정렬도 확인했다. 공개 ZIP·APK 안에 서명 키 파일이 포함되지 않았음을 검사했다.
 - 최종 IWA 파일을 다시 읽어 서명을 독립 검증하고, 안의 **16개 파일 모두**를 최종 빌드와 바이트 단위 비교했다.
 - APK 안의 `index.html`, `studio.html`은 CI 페이지 해시와 일치한다. `design-history`, `design-workbench`, `production-status`, `production-workbench` 소스가 IWA와 APK에 모두 포함됨을 확인했다. 현재 공개 HTML과 APK 페이지의 차이는 APK 다운로드 이름을 만드는 상수의 1.1.0→1.1.1 변경뿐이며 기능 코드는 동일하다. APK 자체 버전은 1.1.1이다.
 - 로컬 상세 자료: `artifacts/app-release-20261028/android-build.json`, `verification.json`, 미서명 APK. Microsoft 공식 JDK ZIP의 SHA-256 및 Maven apksig의 고정 체크섬을 확인해 사용했다. 시스템 Java 설정은 바꾸지 않았다.
