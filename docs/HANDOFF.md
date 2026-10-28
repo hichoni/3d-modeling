@@ -2,7 +2,7 @@
 
 ## 최신: 새 도메인 배포 / 크롬북 연결 성공 / 배너 기관명 정렬
 
-- **https://3d.aiera.co.kr/ HTTPS 배포 완료.** 예스닉 TXT/CNAME, GitHub 소유 확인, 별도 미러 배포와 실제 HTTPS 응답 확인. 원본 Pages 도메인은 바꾸지 않아 설치 앱의 GitHub 주소를 유지한다. Enforce HTTPS 저장 완료; 설정 직후 HTTP→HTTPS 전환은 아직 확인되지 않아 추후 확인한다. [구성·배포·검증](CUSTOM_DOMAIN_2026-10-28.md).
+- **https://3d.aiera.co.kr/ HTTPS 배포 완료.** 예스닉 TXT/CNAME, GitHub 소유 확인, 별도 미러 배포와 실제 HTTPS 응답 확인. 원본 Pages 도메인은 바꾸지 않아 설치 앱의 GitHub 주소를 유지한다. Enforce HTTPS 저장 및 새 쿼리의 HTTP→HTTPS 전환 확인. [구성·배포·검증](CUSTOM_DOMAIN_2026-10-28.md).
 - 사용자가 **풍풍 미니 02 크롬북 연결 성공**을 확인했다. 이전 MQTT·FTPS 인증 거절에서 회복된 원인은 미확정이며 실제 출력 완료는 검증 전이다. [진단과 다음 현장 확인](PRINTER_AUTH_2026-10-28.md).
 - 배너 상단 두 기관명을 DoHyeon 같은 크기 16, 같은 기준선, 각각 우측 정렬로 맞췄다. PDF 두 종류·150dpi JPG·미리보기·인쇄 ZIP을 재생성했다. [배너 v6](../design/banner-v6/README.md). 대문은 이번 배너 정렬 수정 대상이 아니다.
 - 전체 검사 170개 통과, 마지막 인증 안내 변경 후 관련 검사 17개 재통과. IWA 1.1.6 / APK 1.1.1 유지. 온라인 연결 안내에 반영되며 오프라인 내장 안내는 이전 내용이다.

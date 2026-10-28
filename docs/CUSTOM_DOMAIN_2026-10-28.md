@@ -40,6 +40,6 @@ GitHub에서 도메인 소유 확인 성공 후 미러 Pages에 도메인을 저
 
 ## 후속 확인
 
-Enforce HTTPS는 저장됐지만 설정 직후 HTTP 루트 응답은 아직 200이었다. HTTPS 주소 자체는 정상이며, HTTP 리디렉션은 캐시/전파 이후 별도로 재확인한다. GitHub UI의 DNS Check in Progress 문구가 한동안 남아 있어도 실제 DNS·인증서·HTTPS 파일 응답을 구분해서 기록한다. 기존 설치 앱의 주소와 서명은 유지했다. 실제 크롬북의 프린터 연결 성공은 사용자가 확인했고 출력 완료는 아직 확인 전이다.
+Enforce HTTPS 설정 직후 캐시된 HTTP 루트는 200이었지만, 새 쿼리로 재확인한 HTTP 요청은 **같은 경로의 HTTPS로 전환**됐다. GitHub UI의 DNS Check in Progress 문구가 한동안 남아 있어도 실제 DNS·인증서·HTTPS 파일 응답을 구분해서 기록한다. 기존 설치 앱의 주소와 서명은 유지했다. 실제 크롬북의 프린터 연결 성공은 사용자가 확인했고 출력 완료는 아직 확인 전이다.
 
 근거: [GitHub 도메인 연결](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site), [도메인 소유 확인](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages), [예스닉 DNS](https://www.yesnic.com/?_task=ns&_action=index).
