@@ -1,10 +1,16 @@
 # 인수인계 — Click Studio·운영자 공방 (2026-10-28)
 
+## 최신: 3d.aiera.co.kr 도메인 연결 준비
+
+사용자는 연구회 도메인 아래에서 앱을 이용하기를 원한다. `aiera.co.kr` 홈페이지 정상 응답, 후이즈 네임서버, `3d.aiera.co.kr` 미설정을 확인했다. **DNS/Pages 변경은 아직 하지 않았으며 관리 계정 접근 여부를 확인 중이다.** 기존 IWA·APK·Windows 연결 프로그램이 GitHub origin을 기준으로 하므로 앱 호환성과 업데이트 경로를 먼저 준비해야 한다. [DNS 값·실제 조사 결과·이전 순서](CUSTOM_DOMAIN_2026-10-28.md).
+
 ## 최신: AIERA 자체 개발 강조 / 전체 배너·대문 / IWA 1.1.6
 
 사용자 요청으로 배너 v6와 앱 대문에 **“모델링부터 앱까지, AIERA 100% 자체 개발”**을 강조했다. 대문에도 실제 STL 렌더링과 WNL 헤더를 반영했으며 작은 크롬북의 첫 화면에 시작 버튼 두 개를 유지했다. [변경·검증·서명 인수인계](BRANDING_RELEASE_2026-10-28.md), [전체 배너·대문 한눈에 보기](../design/banner-v6/overview.html), [최신 인쇄 파일 안내](../design/banner-v6/README.md).
 
 **IWA 최신 번들 1.1.6**, 기존 앱 ID와 키 유지, 서명/16개 파일 비교 통과. 이번부터 업데이트 파일 주소가 `click-studio-v1.1.6.swbn`처럼 버전별로 달라진다. APK 버전은 1.1.1 유지하며 온라인 공통 대문에 반영된다. **사용자가 실제 업데이트를 확인한 것은 1.1.5까지**이고, 1.1.6 실기 적용과 프린터 연결·출력은 후속 확인 대상이다. 이전 v2~v5 배너는 이력으로 보존한다.
+
+배포 커밋 **38f0835**의 [Pages 40634433644](https://github.com/hichoni/3d-modeling/actions/runs/40634433644)와 [Windows CI 40634434373](https://github.com/hichoni/3d-modeling/actions/runs/40634434373)가 성공했다. 공개 SWBN을 내려받아 로컬 1.1.6과 SHA-256 동일함을 확인했다. [공개 전체 배너·대문 보기](https://hichoni.github.io/3d-modeling/design/banner-v6/overview.html).
 
 ## 최신: X배너 v5 제품 영역 여백 보강
 

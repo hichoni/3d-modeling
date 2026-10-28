@@ -26,3 +26,12 @@
 사용자가 실제 크롬북에서 적용했다고 확인한 버전은 **1.1.5**까지다. 1.1.6은 앱 창을 닫고 `chrome://iwa-dev`에서 Update 후 확인해야 한다. 실제 프린터 연결·출력은 아직 확인 대기다.
 
 Android APK 자체는 **1.1.1(versionCode 3)** 그대로다. 온라인에서 여는 공통 대문이 갱신되며 APK 자체를 새 버전으로 배포한 것은 아니다. 새로운 오프라인 작업대 기능 변경은 없다.
+
+## 배포 확인
+
+- 배포 커밋: `38f083502bda15bc5071350b7723ed2ccf92f9a4`.
+- [GitHub Pages 40634433644](https://github.com/hichoni/3d-modeling/actions/runs/40634433644): 성공.
+- [Windows operator app 40634434373](https://github.com/hichoni/3d-modeling/actions/runs/40634434373): 성공.
+- 공개 업데이트 매니페스트의 1.1.6 버전 전용 URL에서 SWBN을 내려받았고, 파일 SHA-256이 위 로컬 서명 번들과 일치한다. 로컬 확인 파일: `artifacts/banner-20261028/published-1.1.6.swbn`.
+- 공개 비교 페이지: <https://hichoni.github.io/3d-modeling/design/banner-v6/overview.html>.
+- 후속으로 요청한 `3d.aiera.co.kr`은 아직 연결 전이다. [별도 도메인 준비 기록](CUSTOM_DOMAIN_2026-10-28.md)을 따른다.
