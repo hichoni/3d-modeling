@@ -1,5 +1,11 @@
 # 인수인계 — Click Studio·운영자 공방 (2026-10-28)
 
+## 최신: 배너 인쇄 확정 / 도메인 첫 화면을 대문으로
+
+사용자가 **“이제 큐알은 고치면 안된다”, “X배너 이제 출력할거야”**라고 확정했다. **배너·QR·인쇄 PDF·JPG·ZIP을 다시 생성하거나 수정하지 않는다.** 인쇄 확정본과 해시는 [인쇄 확정 기록](BANNER_PRINT_LOCK_2026-10-28.md)에 있다. QR 목적지 `https://3d.aiera.co.kr/home.html`도 유지한다.
+
+웹 진입 동작만 수정했다. `https://3d.aiera.co.kr/` 또는 `/index.html`을 직접 열면 매번 `home.html` 대문으로 이동한다. 대문의 체험 버튼은 `index.html?start`로 열려 정상 진입한다. 부스 공유 링크의 쿼리·해시, 설치 앱 iframe, 로컬·오프라인 진입은 유지한다. AIERA 대문 이동은 세션 저장소 접근이 막혀도 동작한다. 서명 패키지·앱 버전과 배너 파일은 그대로다.
+
 ## 최신: 새 도메인 배포 / 크롬북 연결 성공 / 배너 기관명 정렬
 
 - **https://3d.aiera.co.kr/ HTTPS 배포 완료.** 예스닉 TXT/CNAME, GitHub 소유 확인, 별도 미러 배포와 실제 HTTPS 응답 확인. 원본 Pages 도메인은 바꾸지 않아 설치 앱의 GitHub 주소를 유지한다. Enforce HTTPS 저장 및 새 쿼리의 HTTP→HTTPS 전환 확인. [구성·배포·검증](CUSTOM_DOMAIN_2026-10-28.md).

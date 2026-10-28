@@ -31,8 +31,8 @@ fs.writeFileSync('setup.html',setup.replace(/\r\n/g,'\n'));console.log('Built of
 const bundleInfo=fs.existsSync('downloads/click-studio.json')?JSON.parse(fs.readFileSync('downloads/click-studio.json','utf8')):null;
 const chromebook=fs.readFileSync('src/chromebook.html','utf8').replace('/* SETUP_CSS */',fs.readFileSync('src/setup.css','utf8')).replace('/* CHROMEBOOK_CSS */',fs.readFileSync('src/chromebook.css','utf8')).replace('/* CHROMEBOOK_JS */',()=>fs.readFileSync('src/chromebook.js','utf8').replace('/* APK_INFO */null',()=>{const f='downloads/click-studio-android.json';if(!fs.existsSync(f))return 'null';const a=JSON.parse(fs.readFileSync(f,'utf8'));return JSON.stringify({version:a.version,bytes:a.bytes,signerSha256:a.signerSha256});}).replace('/* BUNDLE_INFO */null',JSON.stringify(bundleInfo&&{version:bundleInfo.version,bytes:bundleInfo.bytes,bundleId:bundleInfo.bundleId})).replace(/<\/script/gi,'<\\/script'));
 fs.writeFileSync('chromebook.html',chromebook.replace(/\r\n/g,'\n'));console.log('Built offline chromebook.html ('+(Buffer.byteLength(chromebook)/1024).toFixed(0)+' KB)');
-// The site's and tablet app's launcher (대문): the Chromebook app's, pointing at the site's pages. index.html opens it
-// once per visit; its booth link carries ?start so it goes straight in.
+// The site's and tablet app's launcher (대문): bare AIERA visits always open it, GitHub opens it once per visit.
+// Its booth link carries ?start so it goes straight in.
 const home=require('./build-iwa-app.cjs').launcher({FONTS:'fonts/',DEVICE:'크롬북·태블릿',BOOTH:'index.html?start',STUDIO:'studio.html#connect=1',
  VERSION:[bundleInfo&&'크롬북 앱 v'+bundleInfo.version,apkVersion&&'태블릿 앱 v'+apkVersion].filter(Boolean).join(' · '),
  NOTE:'항상 사이트의 최신 화면으로 열려요. 프린터로 바로 보내려면 <a href="chromebook.html">크롬북·태블릿 앱</a>을 설치해요. 처음이라면 프린터의 LAN Only·개발자 모드를 켜고, [프린터 연결]에서 8자리 코드를 넣어요.'});
