@@ -101,7 +101,7 @@ function codeView(){
   h('div',{class:'pp-target'},h('span',{class:'pp-printer','aria-hidden':'true'}),h('span',{class:'pp-main'},h('b',{},(target.name||'A1 mini')+' · SN 끝 '+tail(target.serial)),h('small',{},target.ip))),
   h('form',{class:'pp-code-form',onsubmit:e=>{e.preventDefault();save(input.value);}},
    h('label',{for:'ppCode'},'프린터 액세스 코드 8자리'),h('div',{class:'pp-code-row'},input,count),
-   h('small',{id:'ppCodeHelp'},'프린터 화면 › 설정 › LAN Only 화면에 보이는 8자리예요. 대소문자까지 그대로 입력해요.'),
+   h('small',{id:'ppCodeHelp'},'프린터 화면 › 설정 › LAN Only의 현재 8자리예요. 대문자·소문자를 본체에 보이는 그대로 입력해요.'),
    busy?h('p',{class:'pp-searching',role:'status'},h('span',{class:'pp-spin','aria-hidden':'true'}),'프린터와 연결하고 있어요… 보통 5~15초 걸려요.'):null,note(),submit)];
 }
 function render(){
@@ -120,7 +120,7 @@ async function probe(ip){ip=String(ip||'').trim();if(!ip)return;busy=true;messag
  try{const r=await call('/api/discover-printers',{mode:'probe',ip}),p=r.printers[0];if(!p?.supported&&p?.supported!==undefined)throw Error('Bambu Lab 프린터지만 A1 mini가 아니에요.');
   target={id:printers.find(x=>x.serial===p.serial)?.id,ip,serial:p.serial,name:p.name};message=null;view='code';}
  catch(e){message={tone:'bad',text:e.message,tip:'IP를 다시 확인하고, 프린터와 이 기기가 같은 Wi-Fi인지 봐요.'};}finally{busy=false;render();}}
-function hint(text){return /코드|인증|access|code|auth|password|401|403/i.test(text)?'코드가 바뀌었을 수 있어요. 프린터 화면 › 설정 › LAN Only의 8자리를 다시 확인해요.':'프린터 전원 · 같은 Wi-Fi · LAN Only와 개발자 모드가 켜졌는지 확인하고 다시 시도해요.';}
+function hint(text){return /코드|인증|access|code|auth|password|401|403/i.test(text)?'선택한 프린터의 현재 코드와 LAN Only · 개발자 모드를 확인해요. 모두 맞아도 프린터가 일시적으로 로그인을 거절할 수 있어요. 잠시 뒤 다시 연결해요.':'프린터 전원 · 같은 Wi-Fi · LAN Only와 개발자 모드가 켜졌는지 확인하고 다시 시도해요.';}
 async function save(code){
  busy=true;message=null;render();
  try{let id=target.id;if(!id){const data=await call('/api/connection-settings');id=data.printers.find(p=>p.serial===target.serial)?.id||data.printers.find(p=>p.blank)?.id;if(!id)throw Error('이 기기에는 프린터를 8대까지 등록할 수 있어요. 안 쓰는 프린터를 지운 뒤 추가해요.');}
@@ -128,7 +128,7 @@ async function save(code){
   await load();await changed();busy=false;
   if(result.paired){message={tone:'ok',text:'✓ 연결됐어요! 이제 이 프린터로 출력해요.'};view='list';render();setTimeout(()=>hooks.onDone?.('연결됐어요! 이제 이 프린터로 출력해요.'),900);}
   else{message={tone:'ok',text:'✓ 연결됐어요. [이 프린터 사용하기]를 누르면 이 프린터로 출력해요.'};view='list';render();}}
- catch(e){busy=false;message={tone:'bad',text:e.message,tip:hint(e.message)};render();}}
+ catch(e){busy=false;const auth=/액세스 코드 인증이 거절/.test(e.message);message={tone:'bad',text:auth?'프린터는 응답했지만 로그인을 거절했어요.':e.message,tip:hint(e.message)};render();}}
 async function usePrinter(p){busy=true;message=null;render();
  try{await call('/api/pair',{printerId:p.id});await load();await changed();busy=false;message={tone:'ok',text:'✓ '+(p.name||'A1 mini')+'로 출력해요.'};render();setTimeout(()=>hooks.onDone?.('이제 '+(p.name||'이 A1 mini')+'로 출력해요.'),700);}
  catch(e){busy=false;message={tone:'bad',text:e.message};render();}}

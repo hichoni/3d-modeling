@@ -22,6 +22,17 @@ test('browser parses only private booth endpoints with a complete participant ke
  for(const base of ['http://8.8.8.8:5188','javascript:alert(1)','http://user:password@192.168.1.2','http://192.168.1.2/path','http://192.168.1.2/?foo=bar'])assert.throws(()=>c.parseBoothLink(pages+'/#'+new URLSearchParams({booth:base,key})));
  assert.throws(()=>c.parseBoothLink(pages+'/#'+new URLSearchParams({booth:hub,key:'bad'})));
 });
+
+test('AIERA domain has participant CORS only in booth mode, without granting operator access',()=>{
+ const source='https://3d.aiera.co.kr',a=makeAccess({booth:{enabled:true,host:'192.168.60.9',key}},port);
+ const participant=req({host:'192.168.60.9:'+port,origin:source,'x-booth-key':key});
+ const headers={};assert.equal(a.allowedOrigin(source),true);assert.equal(a.cors(participant,{setHeader:(k,v)=>headers[k]=v}),true);
+ assert.equal(headers['Access-Control-Allow-Origin'],source);assert.equal(a.participant(participant),true);assert.equal(a.isOperator(participant),false);
+ for(const other of ['http://3d.aiera.co.kr','https://other.aiera.co.kr','https://3d.aiera.co.kr.evil.test','https://3d.aiera.co.kr:444']){
+  assert.equal(a.allowedOrigin(other),false);assert.equal(a.cors(req({origin:other}),{setHeader(){throw Error('unexpected CORS grant');}}),false);
+ }
+ const local=makeAccess({},port);assert.equal(local.allowedOrigin(source),false);assert.equal(local.cors(participant,{setHeader(){throw Error('unexpected CORS grant');}}),false);
+});
 function request(route,{method='GET',headers={},body}={}){return new Promise((resolve,reject)=>{const r=http.request('http://127.0.0.1:'+port+route,{method,headers},s=>{let text='';s.on('data',x=>text+=x);s.on('end',()=>resolve({status:s.statusCode,headers:s.headers,text,json:()=>JSON.parse(text)}));});r.on('error',reject);r.end(body);});}
 test('browser connection attaches the booth key and keeps loopback operator mode on return',async()=>{
  const dom=new Map(),get=id=>{if(!dom.has(id)){const classes=new Set();dom.set(id,{textContent:'',hidden:false,value:'',open:false,title:'',classList:{toggle:(c,on)=>on?classes.add(c):classes.delete(c),contains:c=>classes.has(c)}});}return dom.get(id);};

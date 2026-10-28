@@ -24,7 +24,7 @@ function link(id){if(!links.has(id))links.set(id,{mqtt:null,error:'',connecting:
 function device(p){return {ip:p.ip,serial:p.serial,password:p.accessCode,ca:root.BAMBU_CA_PEM};}
 function nextId(){for(let i=1;i<=99;i++){const id='mini-'+String(i).padStart(2,'0');if(!store.printers.some(p=>p.id===id))return id;}return null;}
 function fresh(l){return !!l?.mqtt?.online&&Date.now()-l.mqtt.lastReportAt<15000;}
-function connectionError(e){if(/^MQTT_AUTH_[45]$/.test(e.code||''))return '액세스 코드 인증이 거절됐습니다. 프린터 화면(설정 → LAN Only)의 현재 8자리 코드를 다시 입력하세요.';if(/^TLS_(NAME_MISMATCH|UNTRUSTED)$/.test(e.code||''))return e.message;if(e.code==='NO_DIRECT_SOCKETS')return e.message;if(e.code==='TLS_CERT_EXPIRED')return e.message;return '이 미니와 연결하지 못했습니다. 같은 Wi-Fi·전원·LAN Only·개발자 모드·IP를 확인하세요.';}
+function connectionError(e){if(/^MQTT_AUTH_[45]$/.test(e.code||''))return '액세스 코드 인증이 거절됐습니다. 본체의 현재 코드·LAN Only·개발자 모드를 확인하세요. 모두 맞으면 잠시 뒤 다시 연결하세요.';if(/^TLS_(NAME_MISMATCH|UNTRUSTED)$/.test(e.code||''))return e.message;if(e.code==='NO_DIRECT_SOCKETS')return e.message;if(e.code==='TLS_CERT_EXPIRED')return e.message;return '이 미니와 연결하지 못했습니다. 같은 Wi-Fi·전원·LAN Only·개발자 모드·IP를 확인하세요.';}
 
 // --- Status, as the relay's fleet.state() plus what Bambu Studio's device panel shows. ---
 function hms(s,serial){return (Array.isArray(s.hms)?s.hms:[]).slice(0,8).map(h=>{const a=Number(h.attr)>>>0,c=Number(h.code)>>>0,long=(a.toString(16).padStart(8,'0')+c.toString(16).padStart(8,'0')).toUpperCase();return {code:'HMS_'+long.match(/.{4}/g).join('_'),severity:['','fatal','serious','common','info'][c>>>16]||'info',url:'https://e.bambulab.com/index.php?e='+long+'&d='+encodeURIComponent(serial)+'&s=device_hms&lang=ko'};});}

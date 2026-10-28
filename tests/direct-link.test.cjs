@@ -18,6 +18,15 @@ test('MQTT reports a refused access code without exposing it',async t=>{
  await assert.rejects(mqtt.connect(),e=>e.code==='MQTT_AUTH_5'&&!e.message.includes('00000000'));
 });
 
+test('MQTT preserves the exact access-code case; changing case is refused',async t=>{
+ const code='Ab3dE7f9',printer=await new MockPrinter({accessCode:code}).start();t.after(()=>printer.stop());
+ const wrong=new Mqtt({...printer.device(),password:code.toLowerCase()});t.after(()=>wrong.close());
+ await assert.rejects(wrong.connect(),e=>e.code==='MQTT_AUTH_5'&&!e.message.includes(code.toLowerCase()));
+ const exact=new Mqtt(printer.device());t.after(()=>exact.close());
+ await exact.connect();await exact.refresh();await wait(()=>exact.state.gcode_state==='IDLE');
+ assert.equal(exact.online,true);
+});
+
 test('FTPS uploads over a resumed TLS data channel and verifies the size',async t=>{
  const printer=await new MockPrinter().start();t.after(()=>printer.stop());
  const ftp=new Ftps(printer.device());await ftp.connect();t.after(()=>ftp.close());

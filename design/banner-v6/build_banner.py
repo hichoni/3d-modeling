@@ -59,10 +59,10 @@ def build(bleed=0):
     box(31,34,258,42,21,white,NAVY,1.2)
     box(36,40,64,30,15,CORAL)
     text(68,46,'AIERA',18,white,'DoHyeon','center')
-    text(110,47,'안동발명교육연구회',16,NAVY,'DoHyeon')
+    text(277,47,'안동발명교육연구회',16,NAVY,'DoHyeon','right')
     box(312,38,258,42,21,HexColor('#D5E7E2'))
     box(310,34,258,42,21,white,NAVY,1.2)
-    text(323,48,'풍천풍서초 발명동아리',14,NAVY,'DoHyeon')
+    text(503,47,'풍천풍서초 발명동아리',16,NAVY,'DoHyeon','right')
     box(513,40,49,30,15,BLUE)
     text(537.5,46,'WNL',19,white,'DoHyeon','center')
     # Project authorship supplied by AIERA: booth models and the dedicated experience app.

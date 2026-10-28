@@ -1,6 +1,7 @@
 const crypto=require('node:crypto');
 const net=require('node:net');
 const PAGES='https://hichoni.github.io';
+const PUBLIC_ORIGINS=new Set([PAGES,'https://3d.aiera.co.kr']);
 const SITE=PAGES+'/3d-modeling/';
 function privateIPv4(ip){return net.isIP(ip)===4&&/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);}
 function equalSecret(a,b){const x=Buffer.from(String(a||'')),y=Buffer.from(String(b||''));return !!y.length&&x.length===y.length&&crypto.timingSafeEqual(x,y);}
@@ -11,10 +12,10 @@ function makeAccess(config,port){
  const hosts=new Set(['127.0.0.1:'+port,...(booth?[config.booth.host+':'+port]:[])]);
  function isOperator(req){return req.headers.host==='127.0.0.1:'+port&&['127.0.0.1','::ffff:127.0.0.1','::1'].includes(req.socket.remoteAddress)&&(!req.headers.origin||req.headers.origin===origin);}
  function participant(req){return isOperator(req)||booth&&equalSecret(req.headers['x-booth-key'],config.booth.key);}
- function allowedOrigin(value){return value===origin||booth&&(value===lanOrigin||value===PAGES);}
+ function allowedOrigin(value){return value===origin||booth&&(value===lanOrigin||PUBLIC_ORIGINS.has(value));}
  function cors(req,res){
   const source=req.headers.origin;
-  if(source&&source!==origin){if(!booth||![PAGES,lanOrigin].includes(source))return false;
+  if(source&&source!==origin){if(!booth||!(source===lanOrigin||PUBLIC_ORIGINS.has(source)))return false;
    res.setHeader('Access-Control-Allow-Origin',source);res.setHeader('Vary','Origin');
    res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
    res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Click-Token, X-Booth-Key, X-Client-Token, X-Operator-Token, X-Model-Name');

@@ -28,7 +28,7 @@ class Mqtt extends Emitter{
    while(incoming.length>=2){
     let n=0,m=1,i=1,b;do{if(i>=incoming.length)break;b=incoming[i++];n+=(b&127)*m;m*=128;if(i>5)throw linkError('MQTT_FRAME','프린터 응답 형식이 올바르지 않습니다.');}while(b&128);
     if(b&128||incoming.length<i+n)break;const header=incoming[0],body=incoming.subarray(i,i+n);incoming=incoming.slice(i+n);
-    if(header>>4===2){if(body[1]!==0)throw linkError('MQTT_AUTH_'+body[1],body[1]===4||body[1]===5?'액세스 코드 인증이 거절됐습니다. 프린터 화면의 8자리 코드를 다시 확인하세요.':'프린터가 연결을 거절했습니다. ('+body[1]+')');
+    if(header>>4===2){if(body[1]!==0)throw linkError('MQTT_AUTH_'+body[1],body[1]===4||body[1]===5?'액세스 코드 인증이 거절됐습니다. 본체의 현재 코드·LAN Only·개발자 모드를 확인하세요. 모두 맞으면 잠시 뒤 다시 연결하세요.':'프린터가 연결을 거절했습니다. ('+body[1]+')');
      await this.conn.write(frame(0x82,concat(u16(1),utf('device/'+this.device.serial+'/report'),Uint8Array.of(0))));}
     else if(header>>4===9){if(body[2]===128)throw linkError('MQTT_SUBSCRIBE','프린터 상태 구독이 거절됐습니다.');this.online=true;clearTimeout(timer);settled=true;this.nextId=2;this.ping=setInterval(()=>{if(this.online)this.conn.write(frame(0xc0)).catch(()=>{});},10000);resolve();}
     else if(header>>4===3){if(body.length<2)continue;let offset=2+(body[0]<<8|body[1]);if(header&6){await this.conn.write(frame(0x40,body.subarray(offset,offset+2)));offset+=2;}
