@@ -1,5 +1,18 @@
 # Microsoft Store 패키지 업로드 문의 발송 기록
 
+## 후속 확인 · 2026-10-28
+
+해당 Gmail 대화를 읽어 **Microsoft 회신 2개**를 확인했다. 따라서 아래 발송 당시의 ‘답변 미확인’은 현재 상태가 아니다.
+
+- **10월 21일 16:12 KST:** 요청을 받았으며 후속 안내하겠다는 수신 확인.
+- **10월 27일 09:50 KST:** ReportApp의 담당은 Apps & Games의 인증 결과·Store 정책 설명이며 이 업로드 문의는 담당 범위 밖이라고 답변했다. 게시·기술 문의는 **Developer Support (`https://aka.ms/storesupport`) → Copilot**, 개발자 계정으로 로그인하라고 안내했다. 함께 안내한 [Partner Center 지원 문서](https://learn.microsoft.com/en-us/partner-center/support/report-problems-with-partner-center#contact-support-using-partner-center-ai-assistant).
+- **해결책·오류 원인·다른 부서로 이관 완료·지원 티켓 번호는 없다.** 단순히 답변 대기 중이라고 기록하거나 이 회신을 업로드 해결로 설명하지 않는다.
+- 같은 날 Partner Center 앱 개요는 Submission 1 초안, 패키지 Error/미완료, 인증 제출 비활성을 표시했다. 새 업로드나 문의는 하지 않았다.
+- 사용자의 **전화번호 미제공** 선택은 유지한다. Developer Support에서 같은 필수 연락처가 나오면 임의 번호를 넣지 않는다. ReportApp에 같은 문의를 중복 발송하지 않는다.
+- 비공개 증거: `artifacts/handoff-20261028/microsoft-reply.jpg`, `store-overview.jpg`. 원문·계정 주소·Gmail 링크를 공개 저장소에 복사하지 않는다.
+
+## 최초 발송 당시 기록 · 2026-10-21
+
 **2026-10-21 16:03 KST 이메일 발송 완료.** 사용자가 Microsoft 문의 발송과 Gmail 접속·발송을 각각 명시적으로 허용했다. 전화번호는 제공하지 않겠다고 선택했으며 메일에도 넣지 않았다. Gmail의 **메시지 전송됨**과 보낸편지함의 해당 제목·수신자·오류 이미지 첨부 1개를 확인했다. **Microsoft 담당 배정·답변·접수 번호는 아직 확인되지 않았다.** 아래에는 공개 앱 식별값과 기술 정보만 기록한다. 개인 계정 이메일·신분증·주소·전화번호·인증 토큰·프린터 접근 코드는 공개하지 않는다.
 
 ## 발송 결과

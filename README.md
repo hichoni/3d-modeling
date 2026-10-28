@@ -2,7 +2,7 @@
 
 **[바로 체험하기 →](https://hichoni.github.io/3d-modeling/)**
 
-**[새 · 크롬북만으로 출력 — Click Studio 앱 설치하기 →](https://hichoni.github.io/3d-modeling/chromebook.html)** — 크롬북에 앱(Isolated Web App)을 한 번 설치하면 출력 PC 없이 같은 Wi-Fi의 A1 mini를 찾아 1:1 연결하고, 슬라이싱·전송·출력·일시정지·속도·조명까지 앱에서 합니다. [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) · [기술 문서](docs/CHROMEBOOK_DIRECT.md) · 모의 프린터와 실제 Chromium으로 끝까지 시험했고, **실물 A1 mini·실제 크롬북 시험은 남아 있습니다.**
+**[크롬북만으로 출력 — Click Studio 앱 설치하기 →](https://hichoni.github.io/3d-modeling/chromebook.html)** — 설치한 IWA 앱은 출력 PC 없이 같은 Wi-Fi의 A1 mini에 직접 연결합니다. [앱 파일](https://hichoni.github.io/3d-modeling/downloads/click-studio.swbn) · [기술·검증 기록](docs/CHROMEBOOK_DIRECT.md). 모의 프린터의 전체 흐름, 실제 크롬북 설치·검색, PC 어댑터를 통한 실제 A1 mini 인증·상태 수신을 각각 확인했습니다. **실제 크롬북 앱 UI의 파일 전송→출력→완료는 아직 미확인입니다.**
 
 **[새 · 안드로이드 태블릿 앱 (APK) →](https://hichoni.github.io/3d-modeling/chromebook.html#android)** — 태블릿에 Click Studio 앱을 설치하면 크롬북 앱과 같은 방식으로 같은 Wi-Fi의 A1 mini에 바로 출력합니다. Windows·Mac·iPad에서 사이트를 열면 STL 저장 + Bambu Studio 안내가 나옵니다. [APK](https://hichoni.github.io/3d-modeling/downloads/click-studio.apk) · [기술 문서](docs/ANDROID_APP.md) · 실제 태블릿 + A1 mini에서 부스 출력까지 확인했습니다(MakerWorld 링크 받기는 시험 전).
 
@@ -26,7 +26,9 @@
 
 처음 연결에는 운영자 링크와 Chrome의 로컬 네트워크 허용이 필요할 수 있습니다. 기기 간 통신을 차단하는 학교 Wi-Fi/관리 정책은 현장에서 확인해야 합니다.
 
-## 두 가지 실행 방식
+## 일반 웹의 두 가지 실행 방식
+
+아래 표는 일반 웹과 Windows 중계기 경로입니다. 설치형 크롬북 IWA·안드로이드 앱은 자체 소켓으로 직접 연결하므로 별도 출력 PC가 필수인 방식이 아닙니다.
 
 | 기능 | GitHub Pages / HTML 파일 | 현장 PC 로컬 공방 |
 | --- | --- | --- |
@@ -39,7 +41,7 @@
 | 3D 프린터 튜토리얼·온도·진행 상태 | 원리 미리보기 / 연결 시 실제 상태 | 가능 |
 | 운영자 문제 해결·전체 관리 | 제한 | PIN으로 관리 |
 
-Pages는 정적 웹사이트이며 슬라이싱은 브라우저의 Kiri:Moto FDM worker가 계산합니다. 프린터로 보내려면 같은 Wi-Fi의 공용 PC 중계기가 실행되어 있어야 합니다. 일반 브라우저가 A1 mini의 FTPS·MQTT에 직접 연결하는 구조는 아닙니다.
+일반 Pages에서 슬라이싱은 브라우저의 Kiri:Moto FDM worker가 계산하며, 이 일반 웹 경로의 출력에는 같은 Wi-Fi에서 실행 중인 PC 중계기 등이 필요합니다. 크롬북 IWA·안드로이드 앱의 직접 연결 경로와 구분합니다.
 
 ## 집에서 이어가기
 
