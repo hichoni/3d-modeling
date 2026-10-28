@@ -10,6 +10,8 @@
 - IWA 최종 서명을 독립 검증했고 16개 내장 파일 모두 최종 빌드와 바이트 단위로 일치한다. 로그/화면: `artifacts/launcher-20261028/viewport-checks.json`, `iwa-1180x550.png`, `signed-package.json`.
 - 최종 SWBN: 18,600,857 bytes, SHA-256 `8ab85302cb92f16cbf73a7e3b2153d5325de458b7f52d38f3ef41f8da0f31700`.
 
+배포 커밋 **`144ddac`**의 [Pages 40627528886](https://github.com/hichoni/3d-modeling/actions/runs/40627528886), [Windows CI 40627529605](https://github.com/hichoni/3d-modeling/actions/runs/40627529605)가 모두 성공했다. 공개 `home.html`을 1180×550으로 열어 두 버튼이 보이고 문서 높이가 정확히 550px임을 확인했다. 공개 SWBN·메타데이터를 다시 받아 로컬 최종 파일과 바이트 단위 일치도 확인했다. 증거: `artifacts/launcher-20261028/published-1180x550.png`, `published.swbn`, `published.json`.
+
 ## 실제 기기 확인 범위
 
 사용자는 IWA 1.1.1에서 Update 버튼이 회색으로 멈춘다고 보고했다. 앱 창을 닫고 개발자 페이지를 새로고침한 뒤 다시 시도하여 **1.1.4로 바뀌었음을 직접 확인**했다. 앱 닫기가 유일한 원인이었다고 단정하지 않는다. 1.1.5의 실제 설치와 프린터 연결→출력은 후속 확인 대상이다. [실기 기록](DEVICE_VERIFICATION_2026-10-28.md).
