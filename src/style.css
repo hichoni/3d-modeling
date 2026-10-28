@@ -513,3 +513,63 @@ body{background:var(--paper)}
 @media(max-width:700px){.app-shell{padding:14px}.topbar{gap:12px;padding-bottom:11px}.top-actions{gap:4px}.top-actions .booth-btn{font-size:11px;padding:6px 7px;border:1px solid #e0e3d8;background:#ffffff60}.brand strong{font-size:27px}.quest-nav{border-radius:13px}.quest-nav button{grid-template-columns:25px 1fr;gap:5px;padding:7px 4px}.quest-nav button span{width:25px;height:28px;font-size:11px;border-radius:7px}.quest-nav b{font-size:12px}.workshop-statistics{padding:9px 10px}.statistics-totals b{font-size:22px}.statistics-info{font-size:8px}.heading .eyebrow{font-size:8px}.coach-tip{top:13px;left:12px;max-width:calc(100% - 24px);gap:8px;width:330px}.coach-face{width:39px;height:42px;border-radius:11px}.coach-face .mascot.tiny{transform:scale(.67) rotate(-7deg)}.coach-tip .game-dialog{padding:8px 20px 10px 11px}.coach-tip .game-dialog p{font-size:13px;line-height:1.5}.coach-tip .game-dialog .dialog-name{font-size:11px;margin-bottom:4px}.model-stage .stage-top{left:65px}.stage-top .pill{font-size:8px;letter-spacing:.6px;padding:6px}.size-lock{font-size:8px;padding:6px}.stage-bottom{padding:8px;gap:5px}.stage-bottom .small-btn{min-height:35px;border-radius:8px}.actionbar{background:#f7f5eef2}.actionbar .primary.next{border-radius:13px}}
 @media(prefers-reduced-motion:reduce){#designControls button,.stage-bottom .small-btn,.quest-nav button,.primary{transition:none}}
 @media(max-width:700px){.quest-nav b{word-break:keep-all;white-space:normal;line-height:1.3}}
+
+/* Workbench: a stable name/header, one scrolling tool pane, live work comparisons. */
+#designControls.workbench{padding:0;display:flex;flex-direction:column;overflow:hidden;border-top:1px solid #d8ddd3;background:#fffefa}
+.workbench-fixed{flex:none;padding:14px 16px 0;background:#fffefa;border-radius:20px 20px 0 0}
+.workbench-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.workbench-heading h2{margin:0;font:20px Jua,sans-serif;letter-spacing:-.4px}
+.history-actions{display:flex;gap:5px}
+.history-actions button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:56px;min-height:36px;padding:4px 8px;border:1px solid #dbe0d7;border-radius:9px;background:#f4f6ef;color:#35544b;font:22px system-ui;box-shadow:0 2px 0 #e1e5da;transition:transform .12s}
+.history-actions button span{font:600 11px 'Malgun Gothic',sans-serif}.history-actions button:disabled{opacity:.35;box-shadow:none}.history-actions button:active:not(:disabled){transform:translateY(2px)}
+#designControls .workbench-fixed .input-row{gap:7px}
+#designControls .workbench-fixed .input-head{width:100%}
+#designControls .workbench-fixed .content-choices button{min-height:34px}
+#designControls .design-summary{min-height:16px;margin:9px 0 12px;color:#66796f;font:500 10px/1.5 'Malgun Gothic',sans-serif;overflow-wrap:anywhere}
+.tool-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:#eef1e9;padding:4px;margin-bottom:0;border-radius:12px}
+.tool-tabs button{min-height:36px;padding:7px 3px;border:1px solid transparent;border-radius:9px;background:transparent;font:700 12px 'Malgun Gothic',sans-serif;color:#738178;box-shadow:none;white-space:nowrap}
+.tool-tabs button[aria-selected=true]{background:#fffefa;border-color:#d8dfd2;color:#243b34;box-shadow:0 2px 2px #233b2410}.tool-tabs button:hover{transform:none}
+.tool-body{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:16px;flex:1;scrollbar-color:#c6d2c4 transparent}
+.tool-panel[hidden]{display:none!important}.tool-panel{outline-offset:-3px}
+#designControls .tool-panel .control-label,#designControls .tool-panel label{font:600 12px/1.5 'Malgun Gothic',sans-serif;color:#53675e;display:block;width:auto;min-width:0;margin:0 0 10px}
+#designControls .tool-panel .control-row{display:block;margin:0}
+#designControls #fontRow .control-label{flex:none}
+#designControls #fontTiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#designControls #fontTiles button{display:flex;align-items:center;flex-direction:column;min-height:106px;padding:4px 6px 10px;gap:0}
+#designControls #fontTiles button span{font:700 12px 'Malgun Gothic',sans-serif}
+.work-thumb{width:100%;max-width:140px;height:79px;object-fit:contain;pointer-events:none}
+#designControls #modeRow .options{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#designControls #modeRow button{min-height:107px;padding:3px 3px 9px;overflow:hidden}
+#designControls #modeRow .work-thumb{height:65px}
+#designControls #modeRow .mode-caption{font-size:12px}
+#designControls #modeRow small{font-size:9px;white-space:normal}
+#designControls .tool-intro{margin:0 0 12px;font:600 12px 'Malgun Gothic',sans-serif;color:#53675e}
+#designControls .tool-note{font:11px/1.7 'Malgun Gothic',sans-serif;color:#7a817c;margin:12px 0 0;word-break:keep-all}
+#designControls .tool-panel .height-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:20px;padding-top:15px;border-top:1px solid #e5e8df}
+#designControls .height-row label{flex:1 1 100%;margin:0}
+#designControls .height-row output{font-size:12px}
+#designControls .height-row input{min-height:30px}
+#designControls .tool-panel #edgeRow{display:block}
+#designControls #edgeTiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:22px}
+#designControls #edgeTiles button{width:100%;height:40px;min-height:40px}
+#designControls .symbols,#designControls .symbols.pictures{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;overflow:visible;max-height:none;padding:2px;margin-bottom:22px}
+#designControls .symbols button,#designControls .symbols.pictures button{width:100%;height:47px;min-height:44px;margin:0}
+#designControls .symbols.pictures .char-thumb{height:34px;width:34px}
+#designControls .color-tools{padding-top:15px;border-top:1px solid #e5e8df}
+#designControls .swatches{display:flex;justify-content:space-between;gap:10px;padding:5px}
+#designControls .swatches button{width:32px;height:32px;min-height:32px}
+#designControls>.warning{flex:none;max-height:80px;overflow:auto;margin:0;padding:10px 16px;border:0;border-top:1px solid #e8d9b2;border-radius:0;font-size:11px}
+.stage-bottom:has(.pair-slots:not([hidden])){flex-wrap:wrap}
+.stage-bottom .pair-slots{display:flex;gap:8px;justify-content:center;flex:1 0 100%;flex-wrap:nowrap;max-width:none}
+.stage-bottom:has(.pair-slots:not([hidden]))>div{width:100%;justify-content:center;flex-wrap:wrap}
+.model-stage #stage{bottom:calc(var(--stage-controls-height,54px) + 26px)}
+.stage-bottom .pair-slots button{display:grid;grid-template-columns:48px auto;grid-template-rows:1fr 1fr;gap:0 5px;min-width:97px;padding:5px 8px;text-align:left}
+.slot-thumb{grid-row:1/3;width:48px;height:42px;object-fit:contain;pointer-events:none}
+.slot-label{align-self:end;font:700 11px 'Malgun Gothic',sans-serif}.slot-status{align-self:start;margin-top:3px;font:10px 'Malgun Gothic',sans-serif;color:#788779}
+[data-slot][aria-pressed=true] .slot-status{color:#b14b62}
+[data-slot][data-empty=true] .slot-status{color:#999d95}
+@media(min-width:1001px){#workshop{grid-template-columns:minmax(0,1fr) clamp(350px,30vw,430px)}#designControls.workbench{overflow:hidden}.tool-body{padding-top:14px}}
+@media(min-width:1001px) and (max-height:700px){.workbench-fixed{padding:10px 13px 0}.workbench-heading{margin-bottom:8px}.workbench-heading h2{font-size:18px}.history-actions button{min-height:32px}.tool-tabs button{min-height:33px}#designControls .design-summary{margin:6px 0 8px}.tool-body{padding:12px 13px}.work-thumb{height:64px}#designControls #fontTiles button{min-height:90px}#designControls .workbench-fixed .name-field input{height:39px}#designControls .workbench-fixed .content-choices button{min-height:30px}}
+@media(max-width:1000px){#designControls.workbench{min-height:445px}.tool-body{overflow:visible}.workbench-fixed{padding:18px 20px 0}.tool-body{padding:18px 20px}.tool-tabs button{min-height:44px}.history-actions button{min-height:44px}#designControls #fontTiles{grid-template-columns:repeat(4,minmax(0,1fr))}#designControls #modeRow .options{grid-template-columns:repeat(5,minmax(0,1fr))}#designControls .symbols.pictures{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@media(max-width:600px){#designControls.workbench{min-height:450px}.workbench-fixed{padding:14px 16px 0}.tool-body{padding:16px}#designControls #fontTiles{grid-template-columns:repeat(2,minmax(0,1fr))}#designControls #modeRow .options{grid-template-columns:repeat(3,minmax(0,1fr))}#designControls .symbols.pictures{grid-template-columns:repeat(5,minmax(0,1fr))}.stage-bottom .pair-slots button{min-width:82px;padding:4px 5px;grid-template-columns:36px auto}.slot-thumb{width:36px;height:36px}}
+@media(prefers-reduced-motion:reduce){.history-actions button{transition:none}}

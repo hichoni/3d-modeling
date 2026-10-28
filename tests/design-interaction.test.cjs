@@ -14,7 +14,8 @@ function fixture(){
   setTimeout:f=>{const id=++sequence;timers.set(id,f);return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:f=>{const id=++sequence;frames.set(id,f);return id;},cancelAnimationFrame:id=>frames.delete(id),
   fontById:()=>({}),ensureFont:()=>new Promise(resolve=>fonts.push(resolve)),clearBrowserSlice(){},
   performance:{now:()=>0},THREE:{},bindPrintPreparation(){},bindBoothConnection(){},bindPairing(){},sliceInBrowser(){},saveBrowserPaths(){}});
- vm.runInContext(source,c);
+ vm.runInContext(fs.readFileSync('src/design-history.js','utf8')+'\n'+fs.readFileSync('src/design-workbench.js','utf8')+'\n'+source,c);
+ vm.runInContext('syncWorkbench=()=>{};activeHistory();',c);
  c.calls=calls;c.fakeElement=element;
  vm.runInContext(`characterThumb=()=>{calls.push('thumbnail');return fakeElement();};`,c);
  const run=code=>vm.runInContext(code,c);
@@ -81,4 +82,39 @@ test('keychain slots retain the finished design even when WebGL is unavailable',
  f.run(`fit='case3';current={totalH:2.3,parts:{plate:[{clone(){return {dispose(){}};}}],relief:[]}};built=revision;change=()=>{};showModel=()=>{};choosePairSlot(2);`);
  assert.equal(f.run('pairSlot'),2);assert.equal(f.run('pairSaved[0].design.text'),'AB');
  assert.equal(f.run('pairSaved[0].parts.plate[0]!==current.parts.plate[0]'),true);
+});
+
+test('undo before a pending build completes prevents it from restoring the wrong design',async()=>{
+ const f=fixture();f.prepareBuild();f.run(`S.text='CD';change();`);f.frame();await f.timer();
+ f.run('undoDesign();');assert.equal(f.c.S.text,'AB');f.frame();await f.timer();
+ f.fonts[0](true);await Promise.resolve();await Promise.resolve();assert.equal(f.calls.filter(v=>v.startsWith('build:')).length,0);
+ f.fonts[1](true);await Promise.resolve();await Promise.resolve();assert.deepEqual(f.calls.filter(v=>v.startsWith('build:')),['build:AB']);
+ f.run('undoDesign(true);');assert.equal(f.c.S.text,'CD');
+});
+
+test('slot switching preserves separate undo and redo records without recording navigation',()=>{
+ const f=fixture();f.c.THREE.MeshStandardMaterial=class{constructor(){this.color={set(){return this;},offsetHSL(){return this;},convertSRGBToLinear(){return this;}};}dispose(){}};
+ f.run(`fit='case3';showModel=()=>{};current={totalH:2.3,parts:{plate:[],relief:[]}};built=revision;
+  S.text='LEFT';recordDesignEdit();change=()=>{};choosePairSlot(2);S.text='RIGHT';recordDesignEdit();
+  choosePairSlot(0);undoDesign();`);
+ assert.equal(f.c.S.text,'AB');assert.equal(f.run('editHistories[0].future.length'),1);
+ f.run('choosePairSlot(2);undoDesign();');assert.equal(f.c.S.text,'LEFT');
+ f.run('choosePairSlot(0);undoDesign(true);');assert.equal(f.c.S.text,'LEFT');
+});
+
+test('undo cancels a queued slot request and is blocked while composing or printing',()=>{
+ const f=fixture();f.run(`S.text='CD';recordDesignEdit();change=()=>{};pendingPairSlot=2;composing=true;undoDesign();`);
+ assert.equal(f.c.S.text,'CD');f.run(`composing=false;job={state:'printing'};undoDesign();`);assert.equal(f.c.S.text,'CD');
+ f.run('job=null;undoDesign();');assert.equal(f.c.S.text,'AB');assert.equal(f.run('pendingPairSlot'),null);
+});
+
+test('switching to fewer keyring slots moves the active history together with its plate',()=>{
+ const f=fixture();f.run(`editHistories[2]=new DesignHistory({...S,text:'RIGHT'});editHistories[2].record({...S,text:'NEW'});pairSlot=2;fit='case2';fitSlots();`);
+ assert.equal(f.run('pairSlot'),1);assert.equal(f.run('activeHistory().undo().text'),'RIGHT');
+});
+
+test('thumbnail rendering restores all model state even if canvas rendering fails',()=>{
+ const f=fixture();f.run('let characterPart="top",lastCellMinMm=7;');const before=JSON.stringify(f.c.S);
+ assert.throws(()=>f.run(`withPreviewDesign({...S,text:'THUMB',mode:'stamp'},()=>{lastCellMinMm=2;throw Error('canvas');});`),/canvas/);
+ assert.equal(JSON.stringify(f.c.S),before);assert.equal(f.run('characterPart'),'top');assert.equal(f.run('lastCellMinMm'),7);
 });
