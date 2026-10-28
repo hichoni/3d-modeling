@@ -14,3 +14,6 @@ vendor/kiri/fdm-worker.js linguist-generated=true whitespace=-blank-at-eol,-blan
 *.swbn binary
 *.gz binary
 *.apk binary
+*.pdf binary
+*.png binary
+*.jpg binary
