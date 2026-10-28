@@ -12,7 +12,7 @@
 - 브라우저에서 1280×640 데스크톱 패널과 390×844 좁은 화면을 확인했다. 글씨·입체·색 변경과 버튼/키보드 취소·다시 실행, 3구 칸별 기록, 탭 방향키, 초기화 후 버튼 비활성을 확인했다. `상상` 픽셀 작품을 실제 브라우저 슬라이싱하여 **11층** 경로가 완성되는 것도 확인했다. 실제 프린터에 파일/출력/가열 명령을 보내지 않았다. 실제 ChromeOS/Android 기기의 터치·OS IME 시험은 이번 검증에 포함하지 않았다.
 - 공개 HTML·공통 빌드 ID·운영자 ZIP을 갱신했다. IWA/APK는 재서명하지 않았고 설치 앱의 온라인 화면에 적용되는 변경이다. 기존 설치 묶음의 오프라인 화면과 이미 실행 중인 Windows 로컬 ZIP은 자동으로 이 코드로 바뀌지 않는다. 서명 키·Store 문제의 상태는 아래 기록과 같다.
 
-배포 확인 결과와 커밋은 이 절 끝에 후속 기록한다.
+**배포 완료:** 구현 커밋 **`f8fcc1fc323ea54ab031154de9820731a4b0aab9`**. [Pages 배포 성공](https://github.com/hichoni/3d-modeling/actions/runs/40614004454), [Windows 전체 검사·패키지 빌드 성공](https://github.com/hichoni/3d-modeling/actions/runs/40614004433)을 확인했다. 공개 [체험 페이지](https://hichoni.github.io/3d-modeling/index.html?start)를 새로 열어 세 탭, `상상` 글씨체 4종 Canvas, 볼록→취소(말랑)→다시(볼록), 다음 단계 활성화, 콘솔 오류 0건을 확인했다. 공개 화면 증거: `artifacts/workbench-20261028/published-workbench.jpg`. 이 증거는 로컬 검증 자료이며 저장소에는 포함하지 않았다. Windows CI 성공은 정식 Store 서명·심사 완료가 아니다.
 
 ## 최신: 1단계 조작 반응 수정·전체 UX 개선안 (2026-10-28)
 
