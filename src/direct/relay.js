@@ -87,9 +87,17 @@ function report(id,r){
  if(j.state==='failed'&&Number(s.print_error)>0)j.attention=(j.attention||'프린터가 출력을 멈췄습니다.')+' [오류 '+Number(s.print_error).toString(16).toUpperCase().padStart(8,'0')+']';saveJob(j);
 }
 // Bambu Studio sends pushall at most every few seconds and as a 5-minute keepalive; A1/P1 otherwise report deltas only.
+// A printer that reports itself idle (IDLE, FINISH, FAILED) on a fresh report two minutes after the start command is not
+// running the tracked job, whatever its subtask says: e.g. it finished and went straight back to IDLE. Close the job so the
+// printer is not shown 사용 중 for good. FINISH of the same job is a completed print.
+function settleIdle(l){const j=l.active;if(!j||!fresh(l)||!['sent','accepted','printing','paused','uncertain'].includes(j.state))return;const s=l.mqtt.state;
+ if(!s.gcode_state||['PREPARE','RUNNING','PAUSE','SLICING'].includes(s.gcode_state)||Date.now()-(j.sentAt||Date.parse(j.createdAt)||0)<=120000)return;
+ if(s.gcode_state==='FINISH'&&J().matchesJob(s,j)){j.state='complete';j.completedAt||=new Date().toISOString();j.progress=100;}
+ else{j.state='failed';j.attention=j.error='이 앱이 출력 결과를 확인하지 못했어요. 프린터는 지금 쉬고 있어요. 출력물은 본체에서 확인하세요.';}saveJob(j);}
 function tick(){
  for(const [id,l] of links){
   if(!store.printers.some(p=>p.id===id))continue;
+  settleIdle(l);
   if(l.mqtt?.online){const quiet=Date.now()-l.mqtt.lastReportAt>8000,stale=Date.now()-l.lastFull>300000,tracking=!!l.active&&[...ACTIVE,'uncertain'].includes(l.active.state);
    // While a job runs, ask for a full report every 10 s (as the relay does) so subtask/job matching stays current.
    if((quiet&&Date.now()-l.lastPush>5000)||(tracking&&Date.now()-l.lastPush>10000)||stale){l.lastPush=Date.now();if(stale)l.lastFull=Date.now();l.mqtt.refresh().catch(()=>{});}}
