@@ -18,7 +18,7 @@ const webBuild=require('node:crypto').createHash('sha256').update([...new Set([.
 const concat=list=>directConstants+'globalThis.CLICK_WEB_BUILD='+JSON.stringify(webBuild)+';\n'+list.map(f=>fs.readFileSync(f,'utf8')).join('\n;\n');
 const worker = 'const BROWSER_SLICE_WORKER='+JSON.stringify(fs.readFileSync('vendor/kiri/fdm-worker.js','utf8'))+';\n';
 const js = (worker+concat(boothScripts)).replace(/<\/script/gi,'<\\/script');
-const licenses = fs.readFileSync('vendor/kiri/LICENSES.txt','utf8')+'\n\n'+fs.readFileSync('vendor/THREE-LICENSE.txt','utf8')+'\n\n'+fs.readdirSync('fonts').filter(f=>f.endsWith('OFL.txt')).map(f=>fs.readFileSync('fonts/'+f,'utf8')).join('\n\n');
+const licenses = fs.readFileSync('vendor/kiri/LICENSES.txt','utf8')+'\n\n'+fs.readFileSync('vendor/THREE-LICENSE.txt','utf8')+'\n\n'+fs.readdirSync('fonts').filter(f=>f.endsWith('OFL.txt')).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())).map(f=>fs.readFileSync('fonts/'+f,'utf8')).join('\n\n');
 const html = fs.readFileSync('src/index.html','utf8').replace('/* BUNDLED_CSS */',css).replace('/* BUNDLED_JS */',()=>js).replace('<!-- LICENSES -->',()=>`<!-- Bundled font licenses\n${licenses.replace(/-->/g,'')}\n-->`);
 fs.writeFileSync('index.html', html.replace(/\r\n/g,'\n'));
 console.log('Built offline index.html ('+(Buffer.byteLength(html)/1024/1024).toFixed(1)+' MB)');

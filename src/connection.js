@@ -47,6 +47,7 @@ async function connectWorkshop(target,{save=false,showError=false}={}){
   if(save&&target)try{localStorage.setItem('click-booth-v1',JSON.stringify(target));}catch{}
   syncConnection();renderSlice();renderTicket();
   try{const saved=JSON.parse(sessionStorage.getItem('click-current-job'));if(saved?.design===JSON.stringify(S)&&saved.backend===(boothTarget?.base||location.origin)){job=await api('/api/jobs/'+saved.id);if(typeof noteProductionFeed==='function')noteProductionFeed('job');renderSlice();renderTicket();if(printActive()&&ready())setStep(2);clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);}}catch{}
+  try{const held=JSON.parse(sessionStorage.getItem('click-held-job'));if(held&&held.backend===(boothTarget?.base||location.origin)&&typeof resumeHeld==='function')resumeHeld(held);}catch{}
   $('boothError').textContent='';$('boothFallback').hidden=true;return true;
  }catch(e){
   local=null;syncConnection();renderSlice();renderTicket();
