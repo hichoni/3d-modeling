@@ -22,6 +22,9 @@ test('a pair slices in the browser engine and packs with one bed mesh over both 
  const job=prepareBrowserJob({profile:r.profile,stl:stl.toString('base64'),gcode:r.gcode,seconds:r.summary.time}),entries=zipEntries(job.bytes),gcode=entries.get('Metadata/plate_1.gcode')().toString(),plate=JSON.parse(entries.get('Metadata/plate_1.json')());
  assert.match(gcode,/G29 A1 X73 Y83 I34 J14\n/);assert.deepEqual(plate.bbox_all,[73,83,107,97]);assert.equal(plate.bbox_objects[0].name,'keycap pair');assert.equal(job.dimensions.pair,true);
  assert.ok(parseGcode(gcode,14,PAIR_OFFSET).length>=21,'the relay reads paths on both plates');
+ // The printer screen counts down from M73 R (minutes left); percent and minutes only move forward.
+ const m73=[...gcode.matchAll(/^M73 P(\d+) R(\d+)$/gm)].map(m=>[+m[1],+m[2]]);assert.ok(m73.length>=10);assert.equal(m73[0][0],0);assert.ok(m73[0][1]>=1);
+ for(let i=1;i<m73.length;i++)assert.ok(m73[i][0]>=m73[i-1][0]&&m73[i][1]<=m73[i-1][1],'M73 '+m73[i]);assert.match(gcode,/^M73 P100$/m);
 });
 
 // A 3-key keychain: three plates in a row, 20 mm apart (54 x 14 mm overall).

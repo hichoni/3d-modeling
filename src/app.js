@@ -214,13 +214,17 @@ async function printNow(){if(pairNeedsUpdate()){toast(PAIR_UPDATE);return;}
   if(!job?.slice){
    if(!browserSlice)await sliceInBrowser();if(!browserSlice||mine!==revision)return;
    const bytes=toSTL(geometries());let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
-   const data=await api('/api/browser-jobs',{stl:btoa(binary),gcode:browserSlice.gcode,profile:browserSlice.profile,name:modelName(),seconds:browserSlice.slice.seconds});if(mine!==revision||lease!==pairing?.revision)return;job=data;
+   const data=await api('/api/browser-jobs',{stl:btoa(binary),gcode:browserSlice.gcode,profile:browserSlice.profile,name:modelName(),seconds:browserSlice.slice.seconds,...printThumbnails()});if(mine!==revision||lease!==pairing?.revision)return;job=data;
    sessionStorage.setItem('click-current-job',JSON.stringify({id:job.id,design:JSON.stringify(S),backend:boothTarget?.base||location.origin}));
   }
   clearInterval(jobTimer);jobTimer=setInterval(pollJob,2000);
   job=await api('/api/jobs/'+job.id+'/print',{ready:true,sha256:job.sha256,printOptions});if(heldJob&&!heldActive())dropHeld();noteProductionFeed('job');beep(900);toast('A1 mini로 보내고 있어요. 프린터의 준비 과정을 함께 살펴봐요.');
  }catch(e){toast(e.message);if(job)await pollJob();}finally{queueBusy=false;renderTicket();}
 }
+// The printer screen shows the job's plate_1.png; without one the A1 shows a generic "G-Code" picture, so nobody can tell
+// whose piece is printing. Use the 3D view (the keychain on the print step), square-cropped, at Bambu Studio's sizes.
+function printThumbnails(){if(!R)return {};try{R.renderer.render(R.scene,R.camera);const src=R.renderer.domElement,w=src.width,h=src.height;if(w<16||h<16)return {};const side=Math.min(w,h),sx=(w-side)/2,sy=(h-side)/2;
+ const png=n=>{const c=document.createElement('canvas');c.width=c.height=n;c.getContext('2d').drawImage(src,sx,sy,side,side,0,0,n,n);return c.toDataURL('image/png').split(',')[1];};return {thumbnail:png(512),thumbnailSmall:png(128)};}catch{return {};}}
 const stateLabel={slice_wait:'슬라이싱 순서 대기',slicing:'슬라이싱 중',ready:'준비 완료 · 바로 출력할 수 있어요',queued:'준비된 작품 · 바로 출력할 수 있어요',uploading:'프린터로 전송 중',sent:'시작 명령 전송 · 응답 확인 중',accepted:'프린터 준비 중',printing:'내 작품을 출력하고 있어요',paused:'프린터 본체 확인 필요',complete:'출력 완료! 충분히 식힌 뒤 꺼내요',failed:'작업 확인 필요',uncertain:'전송 결과를 확인해주세요',cancelled:'작업 취소'};
 function renderTicket(){
  const active=printActive(),terminal=['complete','failed','cancelled'].includes(job?.state),select=$('directPrinterSelect'),previous=select.value;
