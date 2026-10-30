@@ -16,7 +16,7 @@ function saveJob(j){
  if(j.state==='complete'&&!statistics.prints[j.id]){statistics.prints[j.id]={at:j.completedAt||new Date().toISOString(),...(Counts().pieces(j)>1?{pieces:Counts().pieces(j)}:{}),source:'printer_report'};saveStats();}
  try{const list=[...jobs.values()].filter(x=>ACTIVE.includes(x.state)||x.state==='uncertain'||x===j).slice(-20).map(x=>({...x}));localStorage.setItem(JOBS,JSON.stringify(list));}catch{}
 }
-function restoreJobs(){try{for(const j of JSON.parse(localStorage.getItem(JOBS))||[]){if(!/^[a-f0-9]{24}$/.test(j.id))continue;if(['ready','queued'].includes(j.state)){j.state='cancelled';j.attention='앱을 다시 열어 준비한 파일이 사라졌습니다. 다시 준비해주세요.';}jobs.set(j.id,j);if(ACTIVE.includes(j.state)||j.state==='uncertain')link(j.printerId).active=j;}}catch{}}
+function restoreJobs(){try{for(const j of JSON.parse(localStorage.getItem(JOBS))||[]){if(!/^[a-f0-9]{24}$/.test(j.id))continue;if(['ready','queued'].includes(j.state)){j.state='cancelled';j.attention='앱을 다시 열어 준비한 파일이 사라졌습니다. 다시 준비해주세요.';}else if(j.state==='uploading'){j.state='failed';j.attention=j.error='앱이 닫혀 파일 전송이 중단됐습니다. 다시 준비해주세요.';}jobs.set(j.id,j);if(ACTIVE.includes(j.state)||j.state==='uncertain')link(j.printerId).active=j;}}catch{}}
 function fail(message,status=409){const e=Error(message);e.status=status;return e;}
 const hex=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>b.toString(16).padStart(2,'0')).join('');
 function printer(id){const p=store.printers.find(x=>x.id===id);if(!p)throw fail('등록된 프린터를 찾지 못했습니다.',404);return p;}
@@ -38,7 +38,10 @@ function telemetry(id){
   wifi:ok&&typeof s.wifi_signal==='string'?s.wifi_signal.slice(0,12):null,hms:ok?hms(s,p.serial||''):[],printError:ok&&Number(s.print_error)>0?(Number(s.print_error)>>>0).toString(16).toUpperCase().padStart(8,'0').replace(/^(.{4})/,'$1_'):null,
   developerMode:ok?developerMode(s):null,otherJob:ok&&['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&!(l.active&&J().matchesJob(s,l.active))?String(s.subtask_name||'').slice(0,40):null,canPause:ok&&s.gcode_state==='RUNNING'&&!!l.active&&J().matchesJob(s,l.active),canResume:ok&&s.gcode_state==='PAUSE'&&!!l.active&&J().matchesJob(s,l.active)};
 }
-function busy(id){const l=link(id);return !!(l.active&&!['complete','failed','cancelled'].includes(l.active.state))||['PREPARE','RUNNING','PAUSE'].includes(l.mqtt?.state.gcode_state);}
+// A dropped connection keeps the printer's last report, so "busy" counts only on a fresh report (or an upload this app is
+// doing right now). Otherwise a printer that went offline mid-print stayed busy for good: its IP/code could not be edited,
+// removed or re-paired, and only reinstalling the app (which wipes this storage) let it connect again.
+function busy(id){const l=link(id),j=l.active;if(j?.state==='uploading')return true;return fresh(l)&&(!!(j&&!['complete','failed','cancelled'].includes(j.state))||['PREPARE','RUNNING','PAUSE'].includes(l.mqtt.state.gcode_state));}
 function canStop(id){const l=link(id);return l.active&&fresh(l)&&['sent','accepted','printing','paused'].includes(l.active.state)&&J().matchesJob(l.mqtt.state,l.active);}
 function pairing(){const p=store.pairing;return {id:'this-device',name:store.deviceName||'이 크롬북',printerId:p?.printerId||null,revision:p?.revision||0,pendingJobs:[...jobs.values()].filter(j=>['ready','queued'].includes(j.state)).length};}
 function publicPrinters(){const mine=store.pairing?.printerId;return store.printers.map(p=>{const s=telemetry(p.id);return {...s,paired:mine===p.id,mine:mine===p.id,available:!s.busy||mine===p.id};});}
@@ -62,6 +65,8 @@ async function connect(id){
  }catch(e){l.mqtt?.close();l.error=e.message.startsWith('인증됐지만')?e.message:connectionError(e);throw fail(l.error);}finally{l.connecting=null;}})();
  return l.connecting;
 }
+// A retry with the old IP or code can be in flight (the paired printer is retried every 15 s); end it so new settings apply.
+async function stopConnecting(l){for(let i=0;l.connecting&&i<3;i++){l.mqtt?.close();await l.connecting.catch(()=>{});}}
 function waitForStatus(mqtt,timeout=6000){
  return new Promise((resolve,reject)=>{let done=false;const t=setTimeout(()=>finish(fail('인증됐지만 실시간 상태를 받지 못했습니다. 프린터의 개발자 모드를 확인하고 다시 연결하세요.')),timeout);
   const finish=e=>{if(done)return;done=true;clearTimeout(t);e?reject(e):resolve();};
@@ -72,9 +77,12 @@ function report(id,r){
  const l=link(id),j=l.active;if(!j||!l.mqtt)return;const s=l.mqtt.state;
  if(r.print?.command==='project_file'&&String(r.print.sequence_id)===j.printId&&r.print.result==='fail'){const why=[r.print.reason,r.print.err_code&&'err '+r.print.err_code].filter(Boolean).join(' · ').replace(/[^\x20-\x7e가-힣]/g,'').slice(0,80);j.state='failed';j.attention='이 미니가 시작 요청을 거절했습니다. 본체를 확인하세요.'+(why?' ['+why+']':'');saveJob(j);return;}
  if(!['sent','accepted','printing','paused','uncertain'].includes(j.state))return;
- if(!J().matchesJob(s,j)){if(j.state==='uncertain'||!r.print||s.subtask_id===undefined)return;if(['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&j.seenRunning){j.state='uncertain';j.attention='다른 출력이 시작됐습니다. 이 미니의 본체를 확인하세요.';saveJob(j);}return;}
+ // Two minutes after the start command, a printer that reports itself idle under another (or no) job cannot be running
+ // this one: close it so the printer is free again instead of waiting forever for a match.
+ const settled=Date.now()-(j.sentAt||Date.parse(j.createdAt)||0)>120000;
+ if(!J().matchesJob(s,j)){if(settled&&r.print&&s.gcode_state&&!['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)){j.state='failed';j.attention=j.error='이 앱이 출력 결과를 확인하지 못했어요. 프린터는 지금 쉬고 있어요. 출력물은 본체에서 확인하세요.';saveJob(j);return;}if(j.state==='uncertain'||!r.print||s.subtask_id===undefined)return;if(['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&j.seenRunning){j.state='uncertain';j.attention='다른 출력이 시작됐습니다. 이 미니의 본체를 확인하세요.';saveJob(j);}return;}
  if(['PREPARE','RUNNING'].includes(s.gcode_state))j.seenRunning=true;
- if(s.gcode_state==='FINISH'&&j.seenRunning)j.state='complete';else if(s.gcode_state==='FAILED')j.state='failed';else if(s.gcode_state==='PAUSE')j.state='paused';else if(s.gcode_state==='RUNNING'&&Number(s.layer_num)>0)j.state='printing';else if(['PREPARE','RUNNING'].includes(s.gcode_state))j.state='accepted';
+ if(s.gcode_state==='FINISH'&&(j.seenRunning||settled))j.state='complete';else if(s.gcode_state==='FAILED')j.state='failed';else if(s.gcode_state==='PAUSE')j.state='paused';else if(s.gcode_state==='RUNNING'&&Number(s.layer_num)>0)j.state='printing';else if(['PREPARE','RUNNING'].includes(s.gcode_state))j.state='accepted';
  if(j.state==='complete'&&!j.completedAt)j.completedAt=new Date().toISOString();j.progress=j.state==='complete'?100:Number(s.mc_percent)||0;j.layer=Number(s.layer_num)||0;j.attention=J().attention(s);
  if(j.state==='failed'&&Number(s.print_error)>0)j.attention=(j.attention||'프린터가 출력을 멈췄습니다.')+' [오류 '+Number(s.print_error).toString(16).toUpperCase().padStart(8,'0')+']';saveJob(j);
 }
@@ -117,7 +125,7 @@ function startJob(j,body){
    stage='ready';if(Date.now()-l.mqtt.lastReportAt>5000){l.lastPush=Date.now();await waitForStatus(l.mqtt,10000).catch(()=>{});}
    J().checkReady(l.mqtt);J().checkFilament(l.mqtt.state);stage='start';
    // Firmware reports subtask_id as a signed 32-bit integer; millisecond timestamps overflow.
-   j.printId=String(1+Math.floor(Math.random()*0x7ffffffe));j.startAttempted=true;j.state='sent';saveJob(j);l.lastPush=0;
+   j.printId=String(1+Math.floor(Math.random()*0x7ffffffe));j.startAttempted=true;j.state='sent';j.sentAt=Date.now();saveJob(j);l.lastPush=0;
    await l.mqtt.publish({print:{sequence_id:j.printId,command:'project_file',param:'Metadata/plate_1.gcode',url:'ftp://'+remote,file:remote,md5:'',bed_type:'textured_plate',timelapse:false,bed_leveling:options.bedLeveling,flow_cali:options.flowCalibration,vibration_cali:true,layer_inspect:false,use_ams:false,ams_mapping:[-1],subtask_name:'Click_'+j.id,profile_id:'0',project_id:'0',subtask_id:j.printId,task_id:'0'}});
    setTimeout(()=>{if(j.state==='sent'){j.state='uncertain';j.attention='시작 응답을 확인하지 못했습니다. 이 미니의 본체를 확인하세요.';saveJob(j);}},30000);
   }catch(e){j.state=j.startAttempted?'uncertain':'failed';
@@ -152,7 +160,7 @@ async function discover(body){
 async function saveConnection(body){
  if(!body||typeof body!=='object'||Array.isArray(body))throw fail('프린터 연결 설정을 확인하세요.');
  const id=String(body.printerId||''),existing=store.printers.find(p=>p.id===id);if(!existing&&id!==nextId())throw fail('등록할 프린터 칸을 다시 선택하세요.');
- if(existing&&(busy(id)||link(id).connecting))throw fail('연결 또는 출력 상태 확인 중입니다. 잠시 뒤 다시 시도하세요.');
+ if(existing&&busy(id))throw fail('이 미니가 출력 중이라 연결 설정을 바꿀 수 없어요. 출력이 끝난 뒤 다시 시도하세요.');if(existing)await stopConnecting(link(id));
  if(body.remove===true){if(!existing)throw fail('삭제할 프린터가 없습니다.');link(id).mqtt?.close();links.delete(id);store.printers=store.printers.filter(p=>p.id!==id);if(store.pairing?.printerId===id)store.pairing=null;persist();return {removed:true,printerId:id};}
  const ip=typeof body.ip==='string'?body.ip.trim():'',serial=typeof body.serial==='string'?body.serial.trim():'',entered=typeof body.accessCode==='string'?body.accessCode.trim():'';
  if(!Find().privateIPv4(ip)||!/^[a-zA-Z0-9_-]{5,40}$/.test(serial))throw fail('같은 Wi-Fi의 프린터 IP와 일련번호를 확인하세요.');
@@ -161,7 +169,7 @@ async function saveConnection(body){
  const accessCode=entered||(existing&&serial===existing.serial?existing.accessCode:'');if(!accessCode)throw fail('프린터에 표시된 현재 LAN 액세스 코드를 입력하세요.');
  const name=existing?.name&&existing.serial===serial?existing.name:'A1 mini '+serial.slice(-4),record={id,name,ip,serial,accessCode};
  store.printers=existing?store.printers.map(p=>p.id===id?record:p):[...store.printers,record];persist();
- const l=link(id);l.mqtt?.close();l.mqtt=null;l.device=null;l.error='';
+ const l=link(id);await stopConnecting(l);l.mqtt?.close();l.mqtt=null;l.device=null;l.error='';
  try{await connect(id);}catch(e){throw fail('설정은 저장했지만 연결을 완료하지 못했어요. '+e.message);}
  // One Chromebook ↔ one printer: the first working printer becomes this Chromebook's printer automatically.
  if(!store.pairing?.printerId)pair({printerId:id});
