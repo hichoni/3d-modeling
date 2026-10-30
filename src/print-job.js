@@ -115,9 +115,12 @@ function prepareFiles(body,{studio=false,machine}={}){
  if(studio)for(const layer of analysis.paths)for(const segment of layer.segments)for(let point=0;point<2;point++){const x=segment[point*2]+90,y=segment[point*2+1]+90;if(x<dimensions.min[0]-3||x>dimensions.max[0]+3||y<dimensions.min[1]-3||y>dimensions.max[1]+3)throw Error('경로와 STL의 배치가 다릅니다. 다시 슬라이싱해주세요.');}
  if(analysis.height<dimensions.height-profile.height-.11)throw Error('모델의 위쪽 층이 누락됐습니다. 다시 슬라이싱해주세요.');
  // Re-emit parsed commands: never concatenate untrusted comments, tokens or macros into a machine file.
- const lines=body.gcode.split(/\r?\n/).map(s=>s.split(';')[0].trim().toUpperCase()).filter(Boolean);let layer=0,move=0;
- const clean=[];for(const line of lines){if(/^G[01](?:\s|$)/.test(line)){const m=analysis.moves[move++],target=analysis.paths[layer];if(target&&m.delta>0&&m.distance>.001&&Math.abs(m.z-target.z)<.001){clean.push('; CHANGE_LAYER',`M73 L${++layer}`,`M73 P${Math.floor((layer-1)/analysis.layers*100)}`,`M991 S0 P${layer}`);}}clean.push(line);}
+ const lines=body.gcode.split(/\r?\n/).map(s=>s.split(';')[0].trim().toUpperCase()).filter(Boolean);let layer=0,move=0,spent=0;const marks=[],moveSeconds=m=>m&&m.feed>0?(m.distance||Math.abs(m.delta||0))*60/m.feed:0;
+ const clean=[];for(const line of lines){if(/^G[01](?:\s|$)/.test(line)){const m=analysis.moves[move++],target=analysis.paths[layer];if(target&&m.delta>0&&m.distance>.001&&Math.abs(m.z-target.z)<.001){marks.push(spent);clean.push('; CHANGE_LAYER',`M73 L${++layer}`,{progress:layer},`M991 S0 P${layer}`);}spent+=moveSeconds(m);}clean.push(line);}
  const seconds=Math.max(analysis.seconds,Math.min(studio?604800:3600,Number(body.seconds)||0)),weight=analysis.weightG;
+ // M73 P(percent) R(minutes left), as Bambu Studio writes them: without R the printer screen shows -0h0m.
+ const total=Math.max(1e-6,analysis.moves.reduce((sum,m)=>sum+moveSeconds(m),0));
+ for(let i=0;i<clean.length;i++)if(typeof clean[i]==='object'){const n=clean[i].progress,done=marks[n-1]/total;clean[i]=`M73 P${Math.floor((n-1)/analysis.layers*100)} R${Math.max(0,Math.ceil(seconds*(1-done)/60))}`;}
  let start=machine.start,end=machine.end,lift=3.2;const edge=90-size/2,spread=((dimensions.count||(dimensions.pair?2:1))-1)*PAIR_OFFSET,box=[edge-spread,edge,180-edge+spread,180-edge];
  // Booth: bed mesh over the plate(s) only (the profile's line is the 14 mm one).
  if(!studio)start=start.map(line=>/^G29 A1 /.test(line)?`G29 A1 X${box[0]} Y${edge} I${size+2*spread} J${size}`:line);
