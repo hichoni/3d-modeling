@@ -58,7 +58,7 @@ let host=null,hooks={},view='list',draft='',printers=[],found=[],searched=false,
 function status(p,mine){
  if(p.fresh&&['RUNNING','PREPARE','PAUSE'].includes(p.state))return {tone:'busy',text:(p.state==='PAUSE'?'일시 정지':'출력 중')+(Number.isFinite(Number(p.progress))&&p.state!=='PREPARE'?' '+Number(p.progress)+'%':'')};
  if(p.fresh&&p.developerMode===false)return {tone:'warn',text:'개발자 모드가 꺼져 있어요',why:'프린터 화면 › 설정 › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요.'};
- if(p.fresh)return {tone:'ok',text:mine?'연결됨 · 이 기기에서 사용 중':'연결됨 · 쉬는 중'};
+ if(p.fresh)return {tone:'ok',text:mine?'연결됨 · 이 기기의 프린터':'연결됨 · 쉬는 중'};
  if(p.error)return {tone:'bad',text:'연결 안 됨',why:p.error};
  return {tone:'wait',text:'연결 확인 중…'};
 }
@@ -72,7 +72,7 @@ function listView(){
    h('span',{class:'pp-printer','aria-hidden':'true'}),
    h('div',{class:'pp-main'},h('b',{},p.name||'A1 mini '+tail(p.serial)),h('small',{},'SN 끝 '+tail(p.serial)+' · '+p.ip),h('span',{class:'pp-chip '+s.tone},s.text),s.why?h('p',{class:'pp-why'},s.why):null),
    h('div',{class:'pp-actions'},
-    s.tone==='bad'?h('button',{type:'button',class:'pp-primary',disabled:busy,onclick:()=>reconnect(p)},'다시 연결'):use?h('span',{class:'pp-using'},'✓ 사용 중'):h('button',{type:'button',class:'pp-primary',disabled:busy||p.busy,onclick:()=>usePrinter(p)},'이 프린터 사용하기'),
+    s.tone==='bad'?h('button',{type:'button',class:'pp-primary',disabled:busy,onclick:()=>reconnect(p)},'다시 연결'):use?h('span',{class:'pp-using'},'✓ 이 기기 프린터'):h('button',{type:'button',class:'pp-primary',disabled:busy||p.busy,onclick:()=>usePrinter(p)},'이 프린터 사용하기'),
     h('details',{class:'pp-more'},h('summary',{},'관리'),h('button',{type:'button',onclick:()=>{target={id:p.id,ip:p.ip,serial:p.serial,name:p.name};message=null;draft='';view='code';render();}},'코드 다시 입력'),h('button',{type:'button',class:'danger',onclick:()=>remove(p)},'이 기기에서 지우기'))));});
  return [h('div',{class:'pp-head'},h('h3',{},'내 프린터'),h('small',{},printers.length+'대 등록 · 이 기기에만 저장돼요')),note(),h('div',{class:'pp-list'},cards),
   h('button',{type:'button',class:'pp-add',onclick:()=>startFind()},'+ 새 프린터 추가')];
