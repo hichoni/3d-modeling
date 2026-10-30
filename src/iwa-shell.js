@@ -37,12 +37,13 @@
  const storage={};for(const k of Object.keys(localStorage))if(KEY.test(k))storage[k]=localStorage.getItem(k);
  const frame=document.createElement('iframe');frame.setAttribute('credentialless','');frame.title='Click Studio';
  frame.name=JSON.stringify({clickShell:PROTOCOL,storage});frame.src=REMOTE+PAGES[page][0]+'?click-shell=1'+hash;
- const timer=setTimeout(()=>{if(!ready)fallback('timeout');},15000);
+ // Booth Wi-Fi can be slow; the bundled copy may be older, so wait long enough for the live page before falling back.
+ const timer=setTimeout(()=>{if(!ready)fallback('timeout');},60000);
  // Each page load inside the frame gets a fresh channel; connections from the previous page are closed.
  frame.addEventListener('load',()=>{for(const sid of [...sockets.keys()])void shut(sid);const channel=new MessageChannel();
   channel.port1.onmessage=e=>{const m=e.data||{},reply=(r,t=[])=>{if(m.id)channel.port1.postMessage({...r,id:m.id},t);};handle(m,reply).catch(err=>reply({ok:false,name:err?.name||'NetworkError',error:err?.name==='NotAllowedError'||err?.name==='InvalidAccessError'?'크롬북이 로컬 네트워크 연결을 허용하지 않았습니다. 앱 권한을 확인하세요.':'이 주소의 프린터에 연결하지 못했습니다.'}));};
   try{frame.contentWindow.postMessage({type:'click-shell-port',protocol:PROTOCOL,shellVersion:VERSION},new URL(REMOTE).origin,[channel.port2]);}catch{}
-  setTimeout(()=>{if(!ready){clearTimeout(timer);fallback('no-handshake');}},6000);
+  setTimeout(()=>{if(!ready){clearTimeout(timer);fallback('no-handshake');}},20000);
  });
  document.body.append(frame);
 })();
