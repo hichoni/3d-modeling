@@ -28,15 +28,25 @@ function connectionError(e){if(/^MQTT_AUTH_[45]$/.test(e.code||''))return '액�
 
 // --- Status, as the relay's fleet.state() plus what Bambu Studio's device panel shows. ---
 function hms(s,serial){return (Array.isArray(s.hms)?s.hms:[]).slice(0,8).map(h=>{const a=Number(h.attr)>>>0,c=Number(h.code)>>>0,long=(a.toString(16).padStart(8,'0')+c.toString(16).padStart(8,'0')).toUpperCase();return {code:'HMS_'+long.match(/.{4}/g).join('_'),severity:['','fatal','serious','common','info'][c>>>16]||'info',url:'https://e.bambulab.com/index.php?e='+long+'&d='+encodeURIComponent(serial)+'&s=device_hms&lang=ko'};});}
+// Firmware with command authorization rejects commands from anything but Bambu's own apps unless Developer Mode is on.
+// The printer then shows "MQTT Command verification failed" [0500-0500-0001-0007]; say so here too.
+const VERIFY_HMS='HMS_0500_0500_0001_0007',DEV_OFF='프린터의 개발자 모드가 꺼져 있어 출력 명령을 거절했어요. 프린터 화면 › 설정 › WLAN › LAN Only에서 개발자 모드를 켠 뒤 다시 출력하세요.';
+const commandsRejected=(s,serial)=>hms(s,serial).some(h=>h.code===VERIFY_HMS);
+// This device's address on the route to the printer, from a connected UDP socket (no packet is sent). It shows whether the
+// Chromebook moved to another Wi-Fi: the A1 mini's address stays put.
+async function probeRoute(l,ip){if(l.routing||Date.now()-(l.routeAt||0)<10000||typeof root.UDPSocket!=='function')return;l.routing=true;l.routeAt=Date.now();let socket;
+ try{socket=new root.UDPSocket({remoteAddress:ip,remotePort:2021});const o=await Promise.race([socket.opened,new Promise((_,reject)=>setTimeout(()=>reject(Error('timeout')),3000))]);l.localAddress=/^\d+\.\d+\.\d+\.\d+$/.test(o?.localAddress||'')&&o.localAddress!=='0.0.0.0'?o.localAddress:null;}
+ catch{l.localAddress=null;}finally{l.routing=false;try{await socket?.close();}catch{}}}
 function developerMode(s){if(typeof s.fun!=='string'||!/^[0-9a-fA-F]+$/.test(s.fun))return null;return (BigInt('0x'+s.fun)&0x20000000n)===0n;}
 function telemetry(id){
  const p=store.printers.find(x=>x.id===id)||{id,name:id},l=link(id),s=l.mqtt?.state||{},ok=fresh(l),num=k=>ok&&s[k]!==null&&s[k]!==''&&s[k]!==undefined&&Number.isFinite(Number(s[k]))?Number(s[k]):null,stage=num('stg_cur');
  const light=(Array.isArray(s.lights_report)?s.lights_report:[]).find(x=>x.node==='chamber_light')?.mode;
- return {id,name:p.name,online:!!l.mqtt?.online,fresh:ok,filament:J().filament(s,ok),state:s.gcode_state,progress:s.mc_percent,error:l.error,attention:J().attention(s),busy:busy(id),canStop:!!canStop(id),
+ const rejected=ok&&commandsRejected(s,p.serial||'');
+ return {id,name:p.name,ip:p.ip||null,localAddress:l.localAddress??null,online:!!l.mqtt?.online,fresh:ok,filament:J().filament(s,ok),state:s.gcode_state,progress:s.mc_percent,error:l.error,attention:rejected?DEV_OFF:J().attention(s),busy:busy(id),canStop:!!canStop(id),
   nozzleTemperature:num('nozzle_temper'),nozzleTarget:num('nozzle_target_temper'),bedTemperature:num('bed_temper'),bedTarget:num('bed_target_temper'),layer:num('layer_num'),totalLayers:num('total_layer_num'),stage,
   direct:true,stageLabel:stage!==null&&stage>=0&&stage!==255?STAGES[stage]||'준비 단계 '+stage:'',remainingMinutes:num('mc_remaining_time'),speedLevel:num('spd_lvl'),speedLabel:SPEEDS[num('spd_lvl')]||'',light:light||null,
   wifi:ok&&typeof s.wifi_signal==='string'?s.wifi_signal.slice(0,12):null,hms:ok?hms(s,p.serial||''):[],printError:ok&&Number(s.print_error)>0?(Number(s.print_error)>>>0).toString(16).toUpperCase().padStart(8,'0').replace(/^(.{4})/,'$1_'):null,
-  developerMode:ok?developerMode(s):null,otherJob:ok&&['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&!(l.active&&J().matchesJob(s,l.active))?String(s.subtask_name||'').slice(0,40):null,canPause:ok&&s.gcode_state==='RUNNING'&&!!l.active&&J().matchesJob(s,l.active),canResume:ok&&s.gcode_state==='PAUSE'&&!!l.active&&J().matchesJob(s,l.active)};
+  developerMode:ok?(rejected?false:developerMode(s)):null,otherJob:ok&&['PREPARE','RUNNING','PAUSE'].includes(s.gcode_state)&&!(l.active&&J().matchesJob(s,l.active))?String(s.subtask_name||'').slice(0,40):null,canPause:ok&&s.gcode_state==='RUNNING'&&!!l.active&&J().matchesJob(s,l.active),canResume:ok&&s.gcode_state==='PAUSE'&&!!l.active&&J().matchesJob(s,l.active)};
 }
 // A dropped connection keeps the printer's last report, so "busy" counts only on a fresh report (or an upload this app is
 // doing right now). Otherwise a printer that went offline mid-print stayed busy for good: its IP/code could not be edited,
@@ -75,6 +85,7 @@ function waitForStatus(mqtt,timeout=6000){
 }
 function report(id,r){
  const l=link(id),j=l.active;if(!j||!l.mqtt)return;const s=l.mqtt.state;
+ if(['sent','accepted','uncertain'].includes(j.state)&&commandsRejected(s,store.printers.find(p=>p.id===id)?.serial||'')){j.state='failed';j.attention=j.error=DEV_OFF;saveJob(j);return;}
  if(r.print?.command==='project_file'&&String(r.print.sequence_id)===j.printId&&r.print.result==='fail'){const why=[r.print.reason,r.print.err_code&&'err '+r.print.err_code].filter(Boolean).join(' · ').replace(/[^\x20-\x7e가-힣]/g,'').slice(0,80);j.state='failed';j.attention='이 미니가 시작 요청을 거절했습니다. 본체를 확인하세요.'+(why?' ['+why+']':'');saveJob(j);return;}
  if(!['sent','accepted','printing','paused','uncertain'].includes(j.state))return;
  // Two minutes after the start command, a printer that reports itself idle under another (or no) job cannot be running
@@ -97,7 +108,7 @@ function settleIdle(l){const j=l.active;if(!j||!fresh(l)||!['sent','accepted','p
 function tick(){
  for(const [id,l] of links){
   if(!store.printers.some(p=>p.id===id))continue;
-  settleIdle(l);
+  settleIdle(l);if(id===store.pairing?.printerId){const p=store.printers.find(x=>x.id===id);if(p?.ip)void probeRoute(l,p.ip);}
   if(l.mqtt?.online){const quiet=Date.now()-l.mqtt.lastReportAt>8000,stale=Date.now()-l.lastFull>300000,tracking=!!l.active&&[...ACTIVE,'uncertain'].includes(l.active.state);
    // While a job runs, ask for a full report every 10 s (as the relay does) so subtask/job matching stays current.
    if((quiet&&Date.now()-l.lastPush>5000)||(tracking&&Date.now()-l.lastPush>10000)||stale){l.lastPush=Date.now();if(stale)l.lastFull=Date.now();l.mqtt.refresh().catch(()=>{});}}

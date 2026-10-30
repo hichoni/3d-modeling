@@ -77,3 +77,25 @@ test('a job whose printer went straight back to IDLE after finishing stops showi
  assert.equal((await relay.handle('GET','/api/jobs/'+'a'.repeat(24))).state,'failed');
  assert.equal(busy(),false);
 });
+
+test('a printer rejecting commands (Developer Mode off) says so in the app and fails the job',async()=>{
+ await boot([job({state:'sent',sentAt:Date.now()})]);
+ FakeMqtt.last.report({gcode_state:'IDLE',hms:[{attr:0x05000500,code:0x00010007}]});
+ const j=await relay.handle('GET','/api/jobs/'+'a'.repeat(24));
+ assert.equal(j.state,'failed');
+ assert.match(j.attention,/개발자 모드/);
+ const t=relay.telemetry('mini-01');
+ assert.equal(t.developerMode,false);
+ assert.match(t.attention,/개발자 모드/);
+});
+
+test("the device's own address on the route to the printer is reported",async()=>{
+ globalThis.UDPSocket=class{constructor(o){this.o=o;this.opened=Promise.resolve({localAddress:'192.168.0.44',localPort:50000,remoteAddress:o.remoteAddress,remotePort:o.remotePort});}async close(){}};
+ try{
+  await boot();
+  await new Promise(r=>setTimeout(r,2700));
+  const t=relay.telemetry('mini-01');
+  assert.equal(t.localAddress,'192.168.0.44');
+  assert.equal(t.ip,PRINTER.ip);
+ }finally{delete globalThis.UDPSocket;}
+});

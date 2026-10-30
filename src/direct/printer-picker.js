@@ -49,15 +49,21 @@ const STYLE=`
 .pp-code{flex:1;min-width:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;letter-spacing:.3em;text-align:center}
 .pp-ip input:focus,.pp-code:focus{outline:none;border-color:var(--pp-blue);box-shadow:0 0 0 3px #dbe7ff}
 .pp-count{min-width:48px;color:var(--pp-muted);font-weight:700;font-size:13px;text-align:right}
+.pp-net{display:block;color:#3c7a5e;font-size:12px;margin-top:2px}.pp-net.off{color:#b3412e;font-weight:700}
 @media (max-width:520px){.pp-card{grid-template-columns:40px 1fr}.pp-actions{grid-column:1/-1;justify-items:stretch}.pp-steps li{font-size:12px;padding:7px}}
 `;
 const PREPARE='프린터 화면 › 설정에서 LAN Only와 개발자 모드를 켜고, 이 기기와 같은 Wi-Fi에 연결해요.';
 
 let host=null,hooks={},view='list',draft='',printers=[],found=[],searched=false,searching=false,target=null,busy=false,message=null,manual=false,wasOpen=false;
 
+const net=ip=>String(ip||'').split('.').slice(0,3).join('.');
+// The A1 mini keeps its address; a Chromebook that jumped to another Wi-Fi shows up as a different network here.
+function network(p){if(!p.ip)return null;if(!p.localAddress)return {same:false,text:'이 기기 → 프린터 '+p.ip+' 경로 없음'};return {same:net(p.localAddress)===net(p.ip),text:'이 기기 '+p.localAddress+' → 프린터 '+p.ip};}
 function status(p,mine){
+ const n=network(p);
+ if(!p.fresh&&n&&!n.same)return {tone:'bad',text:'이 기기 Wi-Fi가 프린터와 달라요',why:(p.localAddress?'이 기기 '+p.localAddress+' · 프린터 '+p.ip+'. ':'이 기기에서 프린터 '+p.ip+'로 가는 네트워크가 없어요. ')+'이 기기를 프린터와 같은 Wi-Fi에 다시 연결한 뒤 [다시 연결]을 눌러요.'};
  if(p.fresh&&['RUNNING','PREPARE','PAUSE'].includes(p.state))return {tone:'busy',text:(p.state==='PAUSE'?'일시 정지':'출력 중')+(Number.isFinite(Number(p.progress))&&p.state!=='PREPARE'?' '+Number(p.progress)+'%':'')};
- if(p.fresh&&p.developerMode===false)return {tone:'warn',text:'개발자 모드가 꺼져 있어요',why:'프린터 화면 › 설정 › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요.'};
+ if(p.fresh&&p.developerMode===false)return {tone:'warn',text:'개발자 모드가 꺼져 있어요',why:'프린터 화면 › 설정 › WLAN › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요. 꺼져 있으면 프린터가 출력 명령을 거절해요.'};
  if(p.fresh)return {tone:'ok',text:mine?'연결됨 · 이 기기의 프린터':'연결됨 · 쉬는 중'};
  if(p.error)return {tone:'bad',text:'연결 안 됨',why:p.error};
  return {tone:'wait',text:'연결 확인 중…'};
@@ -70,16 +76,16 @@ function listView(){
  const cards=printers.map(p=>{const s=status(p,p.id===mine),use=p.id===mine;
   return h('div',{class:'pp-card'+(use?' mine':''),'data-printer':p.id},
    h('span',{class:'pp-printer','aria-hidden':'true'}),
-   h('div',{class:'pp-main'},h('b',{},p.name||'A1 mini '+tail(p.serial)),h('small',{},'SN 끝 '+tail(p.serial)+' · '+p.ip),h('span',{class:'pp-chip '+s.tone},s.text),s.why?h('p',{class:'pp-why'},s.why):null),
+   h('div',{class:'pp-main'},h('b',{},p.name||'A1 mini '+tail(p.serial)),h('small',{},'SN 끝 '+tail(p.serial)+' · '+p.ip),network(p)&&use?h('small',{class:'pp-net'+(network(p).same?'':' off')},network(p).text):null,h('span',{class:'pp-chip '+s.tone},s.text),s.why?h('p',{class:'pp-why'},s.why):null),
    h('div',{class:'pp-actions'},
-    s.tone==='bad'?h('button',{type:'button',class:'pp-primary',disabled:busy,onclick:()=>reconnect(p)},'다시 연결'):use?h('span',{class:'pp-using'},'✓ 이 기기 프린터'):h('button',{type:'button',class:'pp-primary',disabled:busy||p.busy,onclick:()=>usePrinter(p)},'이 프린터 사용하기'),
+    s.tone==='bad'||s.tone==='wait'?h('button',{type:'button',class:'pp-primary',disabled:busy,onclick:()=>reconnect(p)},'다시 연결'):use?h('span',{class:'pp-using'},'✓ 이 기기 프린터'):h('button',{type:'button',class:'pp-primary',disabled:busy||p.busy,onclick:()=>usePrinter(p)},'이 프린터 사용하기'),
     h('details',{class:'pp-more'},h('summary',{},'관리'),h('button',{type:'button',onclick:()=>{target={id:p.id,ip:p.ip,serial:p.serial,name:p.name};message=null;draft='';view='code';render();}},'코드 다시 입력'),h('button',{type:'button',class:'danger',onclick:()=>remove(p)},'이 기기에서 지우기'))));});
  return [h('div',{class:'pp-head'},h('h3',{},'내 프린터'),h('small',{},printers.length+'대 등록 · 이 기기에만 저장돼요')),note(),h('div',{class:'pp-list'},cards),
   h('button',{type:'button',class:'pp-add',onclick:()=>startFind()},'+ 새 프린터 추가')];
 }
 function findView(){
  const known=new Set(printers.map(p=>p.serial));
- const results=found.map(p=>h('button',{type:'button',class:'pp-found','data-serial':p.serial,onclick:()=>{target={id:printers.find(x=>x.serial===p.serial)?.id,ip:p.ip,serial:p.serial,name:p.name};message=null;draft='';view='code';render();}},
+ const results=found.map(p=>h('button',{type:'button',class:'pp-found','data-serial':p.serial,onclick:()=>{const saved=printers.find(x=>x.serial===p.serial);target={id:saved?.id,ip:p.ip,serial:p.serial,name:p.name,saved:!!saved?.hasAccessCode};message=null;draft='';if(target.saved)void save('');else{view='code';render();}}},
   h('span',{class:'pp-printer','aria-hidden':'true'}),h('span',{class:'pp-main'},h('b',{},(p.name||'A1 mini')+' · SN 끝 '+tail(p.serial)),h('small',{},p.ip+(known.has(p.serial)?' · 이미 등록됨':'')),p.lanOnly===false?h('span',{class:'pp-chip warn'},'LAN Only를 켜야 해요'):null),h('i',{'aria-hidden':'true'},'›')));
  const empty=searched&&!searching&&!found.length;
  return [printers.length?h('button',{type:'button',class:'pp-back',onclick:()=>{view='list';message=null;render();}},'← 내 프린터'):null,stepper(2),
@@ -93,15 +99,15 @@ function findView(){
   :searching?null:h('button',{type:'button',class:'pp-link',onclick:()=>{manual=true;render();$('ppIp')?.focus();}},'목록에 없나요? IP로 찾기')];
 }
 function codeView(){
- const fix=!!target.id&&printers.some(p=>p.id===target.id&&p.serial===target.serial);
- const input=h('input',{id:'ppCode',name:'code',class:'pp-code',maxlength:'8',autocomplete:'off',autocapitalize:'off',spellcheck:'false',inputmode:'text','aria-describedby':'ppCodeHelp',placeholder:'••••••••',value:draft||false,disabled:busy});
+ const fix=!!target.id&&printers.some(p=>p.id===target.id&&p.serial===target.serial),keep=fix&&printers.some(p=>p.id===target.id&&p.hasAccessCode);
+ const input=h('input',{id:'ppCode',name:'code',class:'pp-code',maxlength:'8',autocomplete:'off',autocapitalize:'off',spellcheck:'false',inputmode:'text','aria-describedby':'ppCodeHelp',placeholder:keep?'저장된 코드 사용':'••••••••',value:draft||false,disabled:busy});
  const count=h('span',{class:'pp-count'},'0 / 8'),submit=h('button',{type:'submit',class:'pp-primary pp-wide',disabled:true},busy?'연결하는 중…':'연결하기');
- const sync=()=>{input.value=input.value.replace(/[^a-zA-Z0-9]/g,'').slice(0,8);draft=input.value;count.textContent=input.value.length+' / 8';submit.disabled=busy||input.value.length!==8;};input.addEventListener('input',sync);sync();
+ const sync=()=>{input.value=input.value.replace(/[^a-zA-Z0-9]/g,'').slice(0,8);draft=input.value;count.textContent=input.value.length+' / 8';submit.disabled=busy||!(input.value.length===8||keep&&!input.value);submit.textContent=busy?'연결하는 중…':keep&&!input.value?'저장된 코드로 연결하기':'연결하기';};input.addEventListener('input',sync);sync();
  return [h('button',{type:'button',class:'pp-back',onclick:()=>{view=fix?'list':'find';message=null;render();}},fix?'← 내 프린터':'← 다른 프린터 고르기'),fix?null:stepper(3),
   h('div',{class:'pp-target'},h('span',{class:'pp-printer','aria-hidden':'true'}),h('span',{class:'pp-main'},h('b',{},(target.name||'A1 mini')+' · SN 끝 '+tail(target.serial)),h('small',{},target.ip))),
   h('form',{class:'pp-code-form',onsubmit:e=>{e.preventDefault();save(input.value);}},
    h('label',{for:'ppCode'},'프린터 액세스 코드 8자리'),h('div',{class:'pp-code-row'},input,count),
-   h('small',{id:'ppCodeHelp'},'프린터 화면 › 설정 › LAN Only의 현재 8자리예요. 대문자·소문자를 본체에 보이는 그대로 입력해요.'),
+   h('small',{id:'ppCodeHelp'},(keep?'비워 두면 저장된 코드로 연결해요. 프린터에서 코드가 바뀌었을 때만 새로 입력해요. ':'')+'프린터 화면 › 설정 › LAN Only의 현재 8자리예요. 대문자·소문자를 본체에 보이는 그대로 입력해요.'),
    busy?h('p',{class:'pp-searching',role:'status'},h('span',{class:'pp-spin','aria-hidden':'true'}),'프린터와 연결하고 있어요… 보통 5~15초 걸려요.'):null,note(),submit)];
 }
 function render(){
@@ -128,7 +134,7 @@ async function save(code){
   await load();await changed();busy=false;
   if(result.paired){message={tone:'ok',text:'✓ 연결됐어요! 이제 이 프린터로 출력해요.'};view='list';render();setTimeout(()=>hooks.onDone?.('연결됐어요! 이제 이 프린터로 출력해요.'),900);}
   else{message={tone:'ok',text:'✓ 연결됐어요. [이 프린터 사용하기]를 누르면 이 프린터로 출력해요.'};view='list';render();}}
- catch(e){busy=false;const auth=/액세스 코드 인증이 거절/.test(e.message);message={tone:'bad',text:auth?'프린터는 응답했지만 로그인을 거절했어요.':e.message,tip:hint(e.message)};render();}}
+ catch(e){busy=false;const auth=/액세스 코드 인증이 거절/.test(e.message);message={tone:'bad',text:auth?(code?'프린터는 응답했지만 로그인을 거절했어요.':'저장된 코드로는 로그인이 안 돼요. 프린터 화면의 현재 코드를 입력해요.'):e.message,tip:hint(e.message)};if(!code)view='code';render();}}
 async function usePrinter(p){busy=true;message=null;render();
  try{await call('/api/pair',{printerId:p.id});await load();await changed();busy=false;message={tone:'ok',text:'✓ '+(p.name||'A1 mini')+'로 출력해요.'};render();setTimeout(()=>hooks.onDone?.('이제 '+(p.name||'이 A1 mini')+'로 출력해요.'),700);}
  catch(e){busy=false;message={tone:'bad',text:e.message};render();}}
