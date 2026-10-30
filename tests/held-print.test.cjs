@@ -82,3 +82,13 @@ test('a single plate edited in a later key still reports its height',()=>{
  assert.equal(f.run('printCount()'),1);
  assert.equal(f.run('printHeight()'),2.3);
 });
+
+test('출력 예약 keeps reservations in order, stops at the limit and survives a reload',()=>{
+ const f=fixture();
+ f.run(`__store=new Map();localStorage={setItem:(k,v)=>__store.set(k,v),getItem:k=>__store.has(k)?__store.get(k):null};current={totalH:2.3,parts:{plate:[],relief:[]}};built=revision;productionPrinter=()=>null;productionTelemetry=()=>({});restoreDesign=d=>({...d});queueMax=3;printQueue=[];`);
+ for(const name of ['하늘','별','달','해'])f.run(`S.text=${JSON.stringify(name)};reserve();`);
+ assert.deepEqual(JSON.parse(f.run('JSON.stringify(printQueue.map(x=>x.label))')),['하늘','별','달'],'the fourth is refused, nothing is pushed out');
+ assert.equal(f.calls.filter(c=>c==='reset').length,3);
+ f.run('printQueue=[];loadQueue();');
+ assert.deepEqual(JSON.parse(f.run('JSON.stringify(printQueue.map(x=>x.work.S.text))')),['하늘','별','달']);
+});
