@@ -64,3 +64,21 @@ test('only a running print can be handed over, and a reload resumes the held pri
  assert.equal(f.run('heldJob.id'),'j2');
  assert.match(f.get('heldJob').textContent,/「하늘」 출력 중 12%/);
 });
+
+test('the whole keychain set is saved and restored after a reload',()=>{
+ const f=fixture();
+ f.run(`restoreDesign=d=>({...d});__store=new Map();localStorage={setItem:(k,v)=>__store.set(k,v),getItem:k=>__store.has(k)?__store.get(k):null};`);
+ f.run(`fit='case3';kit='new';pairSlot=2;pairSaved[0]={design:{...S,text:'하늘'}};pairSaved[1]={design:{...S,text:'별'}};saveWork();`);
+ const saved=JSON.parse(f.run(`__store.get('click-work-v1')`));
+ assert.equal(saved.fit,'case3');assert.equal(saved.pairSlot,2);assert.deepEqual(saved.slots.map(d=>d&&d.text),['하늘','별',null]);
+ f.run(`fit='none';pairSlot=0;pairSaved.fill(null);loadWork();`);
+ assert.equal(f.run('fit'),'case3');assert.equal(f.run('pairSlot'),2);
+ assert.deepEqual(f.run('JSON.stringify(restoringSlots.map(d=>d&&d.text))'),JSON.stringify(['하늘','별',null]));
+});
+
+test('a single plate edited in a later key still reports its height',()=>{
+ const f=fixture();
+ f.run(`fit='case3';pairSlot=2;pairSaved.fill(null);current={totalH:2.3,parts:{plate:[],relief:[]}};`);
+ assert.equal(f.run('printCount()'),1);
+ assert.equal(f.run('printHeight()'),2.3);
+});

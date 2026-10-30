@@ -53,9 +53,9 @@ function sync(){
 }
 function scheduleBuild(run,delay){clearTimeout(buildTimer);cancelAnimationFrame(buildFrame);buildFrame=0;const paint=()=>{buildFrame=requestAnimationFrame(()=>{buildFrame=0;buildTimer=setTimeout(run,0);});};if(delay)buildTimer=setTimeout(paint,delay);else paint();}
 function change(interact=true,{delay=0,group=null,history=true}={}){if(interact&&printActive()){toast('출력이 끝난 뒤 디자인을 바꿔주세요.');return;}if(interact){if(history)recordDesignEdit(group);begin();try{sessionStorage.removeItem('click-current-job');}catch{}}revision++;clearBrowserSlice();layerSelection=null;built=-1;finishedAt=null;job=null;clearInterval(jobTimer);clearInterval(layerTimer);$('playBtn').textContent='▶';$('busy').textContent='상상을 입체로 만드는 중…';$('busy').hidden=false;sync();const mine=revision;scheduleBuild(async()=>{
- try{if(!contentOK())throw Error(throughTextIssue()||'글자를 입력하면 입체가 나타나요.');const ok=await ensureFont(fontById(S.font),S.content==='icon'?S.tag||'A':S.text);if(mine!==revision)return;if(!ok&&S.content!=='icon')throw Error('글꼴을 준비하지 못했어요. 페이지를 다시 열어주세요.');const next=buildGeometries();if(!next.parts.relief.length&&!next.holes)throw Error('이 모양은 만들 수 없어요. 글자나 그림을 바꿔주세요.');const old=current;current=next;built=mine;showModel();if(next.throughLost){$('warnings').textContent='가운데 작은 구멍 '+next.throughLost+'개는 0.4mm 노즐로 남기기 어려워 메워졌어요. 획이 단순한 글자나 볼록·오목을 추천해요.';$('warnings').hidden=false;}if(old)old.parts.plate.concat(old.parts.relief).forEach(g=>g.dispose());try{localStorage.setItem('click-design-v2',JSON.stringify(S));}catch{}
+ try{if(!contentOK())throw Error(throughTextIssue()||'글자를 입력하면 입체가 나타나요.');const ok=await ensureFont(fontById(S.font),S.content==='icon'?S.tag||'A':S.text);if(mine!==revision)return;if(!ok&&S.content!=='icon')throw Error('글꼴을 준비하지 못했어요. 페이지를 다시 열어주세요.');const next=buildGeometries();if(!next.parts.relief.length&&!next.holes)throw Error('이 모양은 만들 수 없어요. 글자나 그림을 바꿔주세요.');const old=current;current=next;built=mine;showModel();if(next.throughLost){$('warnings').textContent='가운데 작은 구멍 '+next.throughLost+'개는 0.4mm 노즐로 남기기 어려워 메워졌어요. 획이 단순한 글자나 볼록·오목을 추천해요.';$('warnings').hidden=false;}if(old)old.parts.plate.concat(old.parts.relief).forEach(g=>g.dispose());try{localStorage.setItem('click-design-v2',JSON.stringify(S));}catch{}saveWork();
  }catch(e){if(mine===revision){$('warnings').hidden=false;$('warnings').textContent=e.message;}}
- if(mine===revision){syncWorkbench();$('busy').hidden=true;$('nextBtn').disabled=!ready();renderSlice();if(printActive()&&ready()&&step!==2)setStep(2);if(step===1&&ready())void sliceInBrowser();const slot=pendingPairSlot;pendingPairSlot=null;if(slot!==null&&ready()&&step===0&&slotted(fitMode())&&slot<caseKeys(fitMode()))choosePairSlot(slot);}
+ if(mine===revision){if(restoringSlots&&built===mine)void restoreSlots();syncWorkbench();$('busy').hidden=true;$('nextBtn').disabled=!ready();renderSlice();if(printActive()&&ready()&&step!==2)setStep(2);if(step===1&&ready())void sliceInBrowser();const slot=pendingPairSlot;pendingPairSlot=null;if(slot!==null&&ready()&&step===0&&slotted(fitMode())&&slot<caseKeys(fitMode()))choosePairSlot(slot);}
  },delay);}
 function init3D(){try{
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;renderer.domElement.setAttribute('aria-label','드래그해서 회전하는 14mm 키캡 모델');$('stage').append(renderer.domElement);
@@ -116,24 +116,38 @@ function keycapColor(color){const c=new THREE.Color(color);return .2126*c.r+.715
 // The plate being edited always sits in one of the case's keys: moving to fewer keys brings it into the last one.
 function fitSlots(){const n=caseKeys(fit);if(slotted(fit)&&pairSlot>=n){pairSaved[pairSlot]=pairSaved[n-1];[editHistories[pairSlot],editHistories[n-1]]=[editHistories[n-1],editHistories[pairSlot]];pairSaved[n-1]=null;pairSlot=n-1;}}
 function chooseFit(mode){if(printActive())return;pendingPairSlot=null;const before=printCount();if(mode==='case3')kit='new';fit=mode;fitSlots();const n=caseKeys(mode),first=slotted(mode)&&Array.from({length:n},(_,i)=>i).every(i=>i===pairSlot||!pairSaved[i]);
- if(printCount()!==before)change(false);syncWorkbench();showModel();resetCamera();
+ if(printCount()!==before)change(false);syncWorkbench();showModel();resetCamera();saveWork();
  if(first)toast('칸을 눌러 '+n+'칸에 다른 판을 만들어요. '+n+'칸을 다 채우면 한 번에 출력해요.');else if(printCount()>1&&printCount()!==before)toast(printCount()+'판을 한 번에 출력해요. 판만·키캡·1구를 고르면 지금 판만 출력해요.');}
-function chooseKit(next){if(printActive()||kit===next)return;const before=printCount();kit=next;if(next==='old'&&fit==='case3'){fit='case2';fitSlots();toast('기존 키링은 2구까지예요.');}if(printCount()!==before)change(false);syncWorkbench();showModel();resetCamera();}
+function chooseKit(next){if(printActive()||kit===next)return;const before=printCount();kit=next;if(next==='old'&&fit==='case3'){fit='case2';fitSlots();toast('기존 키링은 2구까지예요.');}if(printCount()!==before)change(false);syncWorkbench();showModel();resetCamera();saveWork();}
 // 2구·3구: each key holds its own plate. The plate being edited sits in pairSlot; the other keys show the plates left
 // there when the student switched away (a design and a copy of its geometry), or an empty keycap until then.
 let pairSlot=0;const pairSaved=[null,null,null];
+// The whole keychain set survives a reload or an app restart: S is saved as before ('click-design-v2'), and the keychain
+// mode, kit, edited key and the other keys' designs here. Their meshes are rebuilt from the designs after the first build.
+function saveWork(){try{localStorage.setItem('click-work-v1',JSON.stringify({fit,kit,pairSlot,slots:pairSaved.map(p=>p?.design||null)}));}catch{}}
+let restoringSlots=null;
+function loadWork(){try{const w=JSON.parse(localStorage.getItem('click-work-v1'));if(!w)return;if(['none','keycap','case1','case2','case3'].includes(w.fit))fit=w.fit;if(['new','old'].includes(w.kit))kit=w.kit;if(kit==='old'&&fit==='case3')fit='case2';
+ if(Number.isInteger(w.pairSlot)&&w.pairSlot>=0&&w.pairSlot<caseKeys(fit))pairSlot=w.pairSlot;restoringSlots=(Array.isArray(w.slots)?w.slots:[]).slice(0,3).map((d,i)=>d&&i!==pairSlot&&i<caseKeys(fit)?restoreDesign(d):null);}catch{}}
+async function restoreSlots(){const list=restoringSlots;restoringSlots=null;if(!list?.some(Boolean))return;let added=false;
+ for(const [i,design] of list.entries()){if(!design||pairSaved[i]||i===pairSlot)continue;try{
+  if(!await ensureFont(fontById(design.font),design.content==='icon'?design.tag||'A':design.text)&&design.content!=='icon')continue;if(pairSaved[i]||i===pairSlot)continue;
+  // Swap S only around the synchronous build so no other code sees the borrowed design.
+  const keep={...S};let g;try{Object.assign(S,design);g=buildGeometries();}finally{Object.assign(S,keep);}if(!g?.parts?.relief?.length&&!g?.holes)continue;
+  const clippingPlanes=R?[R.clip]:[],plate=new THREE.MeshStandardMaterial({roughness:.42,clippingPlanes}),relief=new THREE.MeshStandardMaterial({roughness:.48,clippingPlanes});plate.color.set(design.color).convertSRGBToLinear();relief.color.set(design.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
+  pairSaved[i]={design:{...design},totalH:g.totalH,parts:g.parts,materials:{plate,relief}};added=true;}catch{}}
+ if(!added)return;pairCache=null;if(!job&&!printActive())change(false);else{showModel();syncWorkbench();}}
 function dropPairSaved(i){const p=pairSaved[i];if(!p)return;p.parts.plate.concat(p.parts.relief).forEach(g=>g.dispose());p.materials.plate.dispose();p.materials.relief.dispose();pairSaved[i]=null;}
 function choosePairSlot(i){if(printActive()){toast('출력이 끝난 뒤 다른 칸을 만들어요.');return;}if(!Number.isInteger(i)||i<0||i>=caseKeys(fit))return;if(i===pairSlot){pendingPairSlot=null;return;}if(!current||built!==revision){pendingPairSlot=i;$('busy').textContent='모양을 완성한 뒤 '+(SLOT_NAMES[caseKeys(fit)]?.[i]||'선택한')+' 칸으로 옮겨요…';return;}
  const clone=list=>list.map(g=>g.clone()),clippingPlanes=R?[R.clip]:[],plate=new THREE.MeshStandardMaterial({roughness:.42,clippingPlanes}),relief=new THREE.MeshStandardMaterial({roughness:.48,clippingPlanes});plate.color.set(S.color).convertSRGBToLinear();relief.color.set(S.color).offsetHSL(0,-.03,.03).convertSRGBToLinear();
  const leaving={design:{...S},totalH:current.totalH,parts:{plate:clone(current.parts.plate),relief:clone(current.parts.relief)},materials:{plate,relief}},target=pairSaved[i],n=caseKeys(fit);
  activeHistory().breakGroup();dropPairSaved(pairSlot);pairSaved[pairSlot]=leaving;pairSlot=i;if(target){Object.assign(S,target.design);dropPairSaved(i);}
- activeHistory();change(true,{history:false});showModel();toast((SLOT_NAMES[n]?.[i]||'')+' 칸 판을 '+(target?'다시 고쳐요. '+n+'판은 한 번에 출력해요.':'만들어요. 다 만들면 '+n+'판을 한 번에 출력해요.'));}
+ activeHistory();change(true,{history:false});showModel();saveWork();toast((SLOT_NAMES[n]?.[i]||'')+' 칸 판을 '+(target?'다시 고쳐요. '+n+'판은 한 번에 출력해요.':'만들어요. 다 만들면 '+n+'판을 한 번에 출력해요.'));}
 // With every key filled in the 2구/3구 view, the print is the set: the plates in a row 2 x BOOTH_PAIR_OFFSET apart,
 // left key first (src/toolpaths.js, src/print-job.js check the same layout). Built once per design revision.
 function printCount(){const n=caseKeys(fit);if(!(fit==='case2'||fit==='case3')||S.kind!=='keycap'||!current||pairSlot>=n)return 1;
  for(let i=0;i<n;i++)if(i!==pairSlot&&pairSaved[i]?.design.kind!=='keycap')return 1;return n;}
 function printPair(){return printCount()>1;}
-function setSlots(){const n=printCount();return Array.from({length:n},(_,i)=>i===pairSlot?{design:S,totalH:current.totalH,parts:current.parts}:pairSaved[i]);}
+function setSlots(){const n=printCount();if(n===1)return [{design:S,totalH:current.totalH,parts:current.parts}];return Array.from({length:n},(_,i)=>i===pairSlot?{design:S,totalH:current.totalH,parts:current.parts}:pairSaved[i]);}
 function printHeight(){return Math.max(...setSlots().map(p=>p.totalH));}
 let pairCache=null;
 function pairParts(){const n=printCount();if(pairCache?.revision===revision&&pairCache.current===current&&pairCache.slot===pairSlot&&pairCache.n===n)return pairCache.parts;pairCache?.parts.plate.forEach(g=>g.dispose());
@@ -273,7 +287,7 @@ function bind(){
  $('stopPrintBtn').onclick=async()=>{try{await api('/api/stop',{printerId:$('operatorPrinterSelect').value},true);$('operatorMessage').textContent='중지 명령을 전송했습니다. 본체 상태를 확인하세요.';}catch(e){$('operatorMessage').textContent=e.message;}};
  setInterval(()=>{if($('operatorDialog').open&&operatorToken)operatorRefresh();},3000);
 }
-try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}
+try{const saved=JSON.parse(localStorage.getItem('click-design-v2'));if(saved)Object.assign(S,restoreDesign(saved));}catch{}loadWork();
 const workshopStats=new WorkshopStatistics();HubUpdate.watch(()=>syncConnection());
 bind();bindWorkbench();bindProductionWorkbench();bindBoothConnection();bindPairing();init3D();change(false);discoverLocal();setInterval(tick,1000);tick();
 coachSay(COACH[0]);$('coachToggle').onclick=()=>{if($('coachTip').classList.contains('is-collapsed'))coachSay($('coachText').dataset.full||COACH[step]||COACH[0],{replay:true});else coachHide();};
