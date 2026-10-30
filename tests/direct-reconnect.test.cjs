@@ -67,3 +67,13 @@ test('an upload interrupted by closing the app is not treated as still running',
  assert.equal(j.state,'failed');
  assert.equal(busy(),false);
 });
+
+test('a job whose printer went straight back to IDLE after finishing stops showing the printer as busy',async()=>{
+ await boot([job({state:'printing',seenRunning:true,progress:96})]);
+ FakeMqtt.last.report({gcode_state:'IDLE',subtask_id:'111'});
+ assert.equal(busy(),true,'the same subtask still matches, so the report alone does not close it');
+ await new Promise(r=>setTimeout(r,2700));
+ FakeMqtt.last.lastReportAt=Date.now();
+ assert.equal((await relay.handle('GET','/api/jobs/'+'a'.repeat(24))).state,'failed');
+ assert.equal(busy(),false);
+});
