@@ -10,10 +10,11 @@ const NOTIFY='NOTIFY * HTTP/1.1\r\nHost: 239.255.255.250:1990\r\nLocation: 192.1
 
 test('SSDP NOTIFY parsing keeps only private, well-formed Bambu announcements',()=>{
  const p=DirectDiscovery.parseNotify(NOTIFY,'192.168.0.37');
- assert.deepEqual({...p},{ip:'192.168.0.37',serial:'0309DA000000001',model:'A1 mini',supported:true,name:'Mini 01',lanOnly:true,bound:false,firmware:'01.07.00.00',source:'ssdp'});
+ assert.deepEqual({...p},{ip:'192.168.0.37',serial:'0309DA000000001',model:'A1 mini',modelId:'a1-mini',supported:true,printable:true,name:'Mini 01',lanOnly:true,bound:false,firmware:'01.07.00.00',source:'ssdp'});
  assert.equal(DirectDiscovery.parseNotify(NOTIFY.replace('Location: 192.168.0.37','Location: 8.8.8.8'),'8.8.4.4'),null);
  assert.equal(DirectDiscovery.parseNotify(NOTIFY.replace('USN: 0309DA000000001','USN: ../../x'),'192.168.0.37'),null);
  assert.equal(DirectDiscovery.parseNotify(NOTIFY.replace('N1','C12'),'192.168.0.37').supported,false);
+ for(const [code,name] of [['N2S','A1'],['BL-P001','X1C'],['3DPrinter-X1-Carbon','X1C'],['N7','P2S'],['N6','X2D']]){const q=DirectDiscovery.parseNotify(NOTIFY.replace('N1',code),'192.168.0.37');assert.equal(q.model,name);assert.equal(q.supported,true);assert.equal(q.printable,false);}
  assert.equal(DirectDiscovery.parseNotify(NOTIFY.replace('DevConnect.bambu.com: lan','DevConnect.bambu.com: cloud'),'192.168.0.37').lanOnly,false);
 });
 
@@ -36,7 +37,7 @@ for(const port of [2021,1990])test('SSDP listener receives and deduplicates anno
  }
  // Keep the test transport out of the relay's global Direct Sockets implementation.
  const discovery=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../src/direct/discovery.js'),'utf8')+'\nDirectDiscovery;',
-  {UDPSocket:IsolatedUDPSocket,TextDecoder,TextEncoder,setTimeout,clearTimeout});
+  {UDPSocket:IsolatedUDPSocket,TextDecoder,TextEncoder,setTimeout,clearTimeout,PrinterModels:require('../src/printer-models.js')});
  t.after(async()=>{await Promise.all(sockets.map(s=>s.close()));await Promise.all(sockets.map(s=>s.closed));});
  const pending=discovery.listen({timeoutMs:500});
  await Promise.all(sockets.map(s=>s.opened));

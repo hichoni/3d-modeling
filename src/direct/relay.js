@@ -3,6 +3,12 @@
 // One Chromebook ↔ one A1 mini: credentials stay in this app's isolated storage and never leave the device.
 (function(root){
 const STORE='click-direct-v1',JOBS='click-direct-jobs-v1',STATS='click-direct-statistics-v1',MAX_PRINTERS=8,ACTIVE=['uploading','sent','accepted','printing','paused'];
+const PM=()=>root.PrinterModels||(typeof require==='function'?require('../printer-models.js'):null);
+// A printer registered before models were stored was an A1 mini: discovery only listed those.
+const modelOf=p=>PM().byId(p?.model)||PM().byId('a1-mini');
+// The reviewed machine wrapper per model. Enabling another model means adding its wrapper here (with bed, modelId and
+// printerModel; see docs/PRINTER_MODELS.md) and marking it 'verified' in src/printer-models.js.
+const machineFor=p=>{const m=({'a1-mini':root.A1_MINI_MACHINE})[modelOf(p).id];if(!m)throw fail(PM().lockedReason(modelOf(p)));return m;};
 const J=()=>root.PrintJob,Link=()=>root.DirectPrinterLink,Find=()=>root.DirectDiscovery,Counts=()=>root.WorkshopCounts||(typeof WorkshopCounts!=='undefined'?WorkshopCounts:typeof require==='function'?require('../statistics-core.js'):null);
 const STAGES={0:'출력 중',1:'자동 베드 레벨링',2:'베드 예열',3:'진동 보정',4:'필라멘트 교체',5:'일시 정지(M400)',6:'필라멘트 소진으로 정지',7:'노즐 가열',8:'동적 유량 보정',9:'베드 표면 스캔',10:'첫 층 검사',11:'빌드 플레이트 확인',13:'툴헤드 원점 복귀',14:'노즐 끝 청소',15:'압출기 온도 확인',16:'사용자 일시 정지',20:'노즐 온도 이상으로 정지',21:'베드 온도 이상으로 정지',22:'필라멘트 빼는 중',23:'스텝 손실로 정지',24:'필라멘트 넣는 중',25:'모터 소음 보정',35:'노즐 막힘으로 정지',47:'자동 베드 레벨링 1단계',48:'자동 베드 레벨링 2단계',50:'베드 온도 조정',51:'보정 선 출력',54:'베드 목표 온도 대기',69:'노즐 식히는 중',76:'출력 전 예비 압출'};
 const SPEEDS={1:'조용히',2:'표준',3:'스포츠',4:'최고 속도'};
@@ -41,8 +47,8 @@ function developerMode(s){if(typeof s.fun!=='string'||!/^[0-9a-fA-F]+$/.test(s.f
 function telemetry(id){
  const p=store.printers.find(x=>x.id===id)||{id,name:id},l=link(id),s=l.mqtt?.state||{},ok=fresh(l),num=k=>ok&&s[k]!==null&&s[k]!==''&&s[k]!==undefined&&Number.isFinite(Number(s[k]))?Number(s[k]):null,stage=num('stg_cur');
  const light=(Array.isArray(s.lights_report)?s.lights_report:[]).find(x=>x.node==='chamber_light')?.mode;
- const rejected=ok&&commandsRejected(s,p.serial||'');
- return {id,name:p.name,ip:p.ip||null,localAddress:l.localAddress??null,online:!!l.mqtt?.online,fresh:ok,filament:J().filament(s,ok),state:s.gcode_state,progress:s.mc_percent,error:l.error,attention:rejected?DEV_OFF:J().attention(s),busy:busy(id),canStop:!!canStop(id),
+ const rejected=ok&&commandsRejected(s,p.serial||''),model=modelOf(p);
+ return {id,name:p.name,model:model.name,modelId:model.id,printable:PM().printable(model),ip:p.ip||null,localAddress:l.localAddress??null,online:!!l.mqtt?.online,fresh:ok,filament:J().filament(s,ok),state:s.gcode_state,progress:s.mc_percent,error:l.error,attention:rejected?DEV_OFF:J().attention(s),busy:busy(id),canStop:!!canStop(id),
   nozzleTemperature:num('nozzle_temper'),nozzleTarget:num('nozzle_target_temper'),bedTemperature:num('bed_temper'),bedTarget:num('bed_target_temper'),layer:num('layer_num'),totalLayers:num('total_layer_num'),stage,
   direct:true,stageLabel:stage!==null&&stage>=0&&stage!==255?STAGES[stage]||'준비 단계 '+stage:'',remainingMinutes:num('mc_remaining_time'),speedLevel:num('spd_lvl'),speedLabel:SPEEDS[num('spd_lvl')]||'',light:light||null,
   wifi:ok&&typeof s.wifi_signal==='string'?s.wifi_signal.slice(0,12):null,hms:ok?hms(s,p.serial||''):[],printError:ok&&Number(s.print_error)>0?(Number(s.print_error)>>>0).toString(16).toUpperCase().padStart(8,'0').replace(/^(.{4})/,'$1_'):null,
@@ -119,9 +125,9 @@ function tick(){
 // --- Jobs (direct-print.cjs + fleet.start) ---
 function ownJob(j){if(!j)throw fail('이 기기의 작업을 찾을 수 없습니다.',404);if(j.printerId!==store.pairing?.printerId||j.pairingRevision!==store.pairing?.revision)throw fail('프린터 선택이 바뀌었습니다. 작품을 다시 준비해주세요.');}
 async function createJob(body,studio){
- const pair=store.pairing;if(!pair?.printerId)throw fail('먼저 이 크롬북과 사용할 A1 mini를 연결해주세요.');const p=printer(pair.printerId);
+ const pair=store.pairing;if(!pair?.printerId)throw fail('먼저 이 크롬북과 사용할 A1 mini를 연결해주세요.');const p=printer(pair.printerId);if(!PM().printable(modelOf(p)))throw fail(PM().lockedReason(modelOf(p)));
  if(jobs.size>=60)for(const [id,j] of jobs)if(!ACTIVE.includes(j.state)&&j.state!=='uncertain'){jobs.delete(id);files.delete(id);if(jobs.size<50)break;}
- const result=await J().prepareJob(body,{studio,machine:root.A1_MINI_MACHINE});
+ const result=await J().prepareJob(body,{studio,machine:machineFor(p)});
  if(store.pairing?.printerId!==pair.printerId||store.pairing.revision!==pair.revision)throw fail('매칭이 변경됐습니다. 새 미니를 확인하고 다시 준비해주세요.');
  const id=hex(12),name=String(body.name||'나의 작품').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9 ]/g,'').slice(0,16)||'나의 작품';
  for(const old of jobs.values())if(['ready','queued'].includes(old.state)&&!old.startAttempted){old.state='cancelled';files.delete(old.id);}
@@ -186,7 +192,8 @@ async function saveConnection(body){
  if(store.printers.some(p=>p.id!==id&&(p.ip===ip||p.serial===serial)))throw fail('이미 다른 칸에 등록된 프린터입니다.');
  if(entered&&!/^[a-zA-Z0-9]{8}$/.test(entered))throw fail('프린터에 표시된 LAN 액세스 코드 8자리를 입력하세요.');
  const accessCode=entered||(existing&&serial===existing.serial?existing.accessCode:'');if(!accessCode)throw fail('프린터에 표시된 현재 LAN 액세스 코드를 입력하세요.');
- const name=existing?.name&&existing.serial===serial?existing.name:'A1 mini '+serial.slice(-4),record={id,name,ip,serial,accessCode};
+ const known=PM().byId(body.model),model=known?.id||(existing?.serial===serial?existing.model:null)||(serial.startsWith('030')?'a1-mini':null);
+ const name=existing?.name&&existing.serial===serial?existing.name:(PM().byId(model)?.name||'Bambu Lab')+' '+serial.slice(-4),record={id,name,ip,serial,accessCode,...(model?{model}:{})};
  store.printers=existing?store.printers.map(p=>p.id===id?record:p):[...store.printers,record];persist();
  const l=link(id);await stopConnecting(l);l.mqtt?.close();l.mqtt=null;l.device=null;l.error='';
  try{await connect(id);}catch(e){throw fail('설정은 저장했지만 연결을 완료하지 못했어요. '+e.message);}
