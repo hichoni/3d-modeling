@@ -64,6 +64,7 @@ function status(p,mine){
  if(!p.fresh&&n&&!n.same)return {tone:'bad',text:'이 기기 Wi-Fi가 프린터와 달라요',why:(p.localAddress?'이 기기 '+p.localAddress+' · 프린터 '+p.ip+'. ':'이 기기에서 프린터 '+p.ip+'로 가는 네트워크가 없어요. ')+'이 기기를 프린터와 같은 Wi-Fi에 다시 연결한 뒤 [다시 연결]을 눌러요.'};
  if(p.fresh&&['RUNNING','PREPARE','PAUSE'].includes(p.state))return {tone:'busy',text:(p.state==='PAUSE'?'일시 정지':'출력 중')+(Number.isFinite(Number(p.progress))&&p.state!=='PREPARE'?' '+Number(p.progress)+'%':'')};
  if(p.fresh&&p.developerMode===false)return {tone:'warn',text:'개발자 모드가 꺼져 있어요',why:'프린터 화면 › 설정 › WLAN › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요. 꺼져 있으면 프린터가 출력 명령을 거절해요.'};
+ if(p.fresh&&p.printable===false)return {tone:'warn',text:'연결됨 · '+(p.model||'')+' 출력은 검증 전',why:(p.model||'이 기종')+'은(는) 연결과 상태 확인만 돼요. 출력 설정을 실제로 검증한 뒤 열어요. 지금 출력은 A1 mini로 해요.'};
  if(p.fresh)return {tone:'ok',text:mine?'연결됨 · 이 기기의 프린터':'연결됨 · 쉬는 중'};
  if(p.error)return {tone:'bad',text:'연결 안 됨',why:p.error};
  return {tone:'wait',text:'연결 확인 중…'};
@@ -76,7 +77,7 @@ function listView(){
  const cards=printers.map(p=>{const s=status(p,p.id===mine),use=p.id===mine;
   return h('div',{class:'pp-card'+(use?' mine':''),'data-printer':p.id},
    h('span',{class:'pp-printer','aria-hidden':'true'}),
-   h('div',{class:'pp-main'},h('b',{},p.name||'A1 mini '+tail(p.serial)),h('small',{},'SN 끝 '+tail(p.serial)+' · '+p.ip),network(p)&&use?h('small',{class:'pp-net'+(network(p).same?'':' off')},network(p).text):null,h('span',{class:'pp-chip '+s.tone},s.text),s.why?h('p',{class:'pp-why'},s.why):null),
+   h('div',{class:'pp-main'},h('b',{},p.name||'A1 mini '+tail(p.serial)),h('small',{},(p.model?p.model+' · ':'')+'SN 끝 '+tail(p.serial)+' · '+p.ip),network(p)&&use?h('small',{class:'pp-net'+(network(p).same?'':' off')},network(p).text):null,h('span',{class:'pp-chip '+s.tone},s.text),s.why?h('p',{class:'pp-why'},s.why):null),
    h('div',{class:'pp-actions'},
     s.tone==='bad'||s.tone==='wait'?h('button',{type:'button',class:'pp-primary',disabled:busy,onclick:()=>reconnect(p)},'다시 연결'):use?h('span',{class:'pp-using'},'✓ 이 기기 프린터'):h('button',{type:'button',class:'pp-primary',disabled:busy||p.busy,onclick:()=>usePrinter(p)},'이 프린터 사용하기'),
     h('details',{class:'pp-more'},h('summary',{},'관리'),h('button',{type:'button',onclick:()=>{target={id:p.id,ip:p.ip,serial:p.serial,name:p.name};message=null;draft='';view='code';render();}},'코드 다시 입력'),h('button',{type:'button',class:'danger',onclick:()=>remove(p)},'이 기기에서 지우기'))));});
@@ -85,8 +86,8 @@ function listView(){
 }
 function findView(){
  const known=new Set(printers.map(p=>p.serial));
- const results=found.map(p=>h('button',{type:'button',class:'pp-found','data-serial':p.serial,onclick:()=>{const saved=printers.find(x=>x.serial===p.serial);target={id:saved?.id,ip:p.ip,serial:p.serial,name:p.name,saved:!!saved?.hasAccessCode};message=null;draft='';if(target.saved)void save('');else{view='code';render();}}},
-  h('span',{class:'pp-printer','aria-hidden':'true'}),h('span',{class:'pp-main'},h('b',{},(p.name||'A1 mini')+' · SN 끝 '+tail(p.serial)),h('small',{},p.ip+(known.has(p.serial)?' · 이미 등록됨':'')),p.lanOnly===false?h('span',{class:'pp-chip warn'},'LAN Only를 켜야 해요'):null),h('i',{'aria-hidden':'true'},'›')));
+ const results=found.map(p=>h('button',{type:'button',class:'pp-found','data-serial':p.serial,onclick:()=>{const saved=printers.find(x=>x.serial===p.serial);target={id:saved?.id,ip:p.ip,serial:p.serial,name:p.name,model:p.modelId,saved:!!saved?.hasAccessCode};message=null;draft='';if(target.saved)void save('');else{view='code';render();}}},
+  h('span',{class:'pp-printer','aria-hidden':'true'}),h('span',{class:'pp-main'},h('b',{},(p.name||'A1 mini')+' · SN 끝 '+tail(p.serial)),h('small',{},(p.model||'')+' · '+p.ip+(known.has(p.serial)?' · 이미 등록됨':'')),p.lanOnly===false?h('span',{class:'pp-chip warn'},'LAN Only를 켜야 해요'):p.printable===false?h('span',{class:'pp-chip warn'},'연결·상태 확인만 · 출력은 검증 전'):null),h('i',{'aria-hidden':'true'},'›')));
  const empty=searched&&!searching&&!found.length;
  return [printers.length?h('button',{type:'button',class:'pp-back',onclick:()=>{view='list';message=null;render();}},'← 내 프린터'):null,stepper(2),
   h('div',{class:'pp-prepare'},h('b',{},'먼저 확인해요'),h('span',{},PREPARE)),
@@ -120,17 +121,17 @@ async function load(){try{const data=await call('/api/connection-settings');prin
 async function changed(){try{await hooks.onChange?.();}catch{}}
 
 async function startFind(){view='find';found=[];searched=false;searching=true;manual=false;message=null;render();
- try{const r=await call('/api/discover-printers',{});found=r.printers||[];if(!found.length&&r.others?.length)message={tone:'warn',text:'A1 mini가 아닌 프린터 '+r.others.length+'대는 지원하지 않아요.'};}
+ try{const r=await call('/api/discover-printers',{});found=r.printers||[];if(!found.length&&r.others?.length)message={tone:'warn',text:'지원 목록(A1 mini · A1 · X1C · P2S · X2D)에 없는 프린터 '+r.others.length+'대는 표시하지 않아요.'};}
  catch(e){message={tone:'bad',text:e.message};}finally{searching=false;searched=true;if(view==='find')render();}}
 async function probe(ip){ip=String(ip||'').trim();if(!ip)return;busy=true;message={tone:'wait',text:'이 주소의 프린터를 확인하고 있어요…'};render();
- try{const r=await call('/api/discover-printers',{mode:'probe',ip}),p=r.printers[0];if(!p?.supported&&p?.supported!==undefined)throw Error('Bambu Lab 프린터지만 A1 mini가 아니에요.');
-  target={id:printers.find(x=>x.serial===p.serial)?.id,ip,serial:p.serial,name:p.name};message=null;view='code';}
+ try{const r=await call('/api/discover-printers',{mode:'probe',ip}),p=r.printers[0];if(!p?.supported&&p?.supported!==undefined)throw Error('Bambu Lab 프린터지만 아직 지원 목록(A1 mini · A1 · X1C · P2S · X2D)에 없는 기종이에요.');
+  target={id:printers.find(x=>x.serial===p.serial)?.id,ip,serial:p.serial,name:p.name,model:p.modelId};message=null;view='code';}
  catch(e){message={tone:'bad',text:e.message,tip:'IP를 다시 확인하고, 프린터와 이 기기가 같은 Wi-Fi인지 봐요.'};}finally{busy=false;render();}}
 function hint(text){return /코드|인증|access|code|auth|password|401|403/i.test(text)?'선택한 프린터의 현재 코드와 LAN Only · 개발자 모드를 확인해요. 모두 맞아도 프린터가 일시적으로 로그인을 거절할 수 있어요. 잠시 뒤 다시 연결해요.':'프린터 전원 · 같은 Wi-Fi · LAN Only와 개발자 모드가 켜졌는지 확인하고 다시 시도해요.';}
 async function save(code){
  busy=true;message=null;render();
  try{let id=target.id;if(!id){const data=await call('/api/connection-settings');id=data.printers.find(p=>p.serial===target.serial)?.id||data.printers.find(p=>p.blank)?.id;if(!id)throw Error('이 기기에는 프린터를 8대까지 등록할 수 있어요. 안 쓰는 프린터를 지운 뒤 추가해요.');}
-  const result=await call('/api/connection-settings',{printerId:id,ip:target.ip,serial:target.serial,accessCode:code});
+  const result=await call('/api/connection-settings',{printerId:id,ip:target.ip,serial:target.serial,accessCode:code,...(target.model?{model:target.model}:{})});
   await load();await changed();busy=false;
   if(result.paired){message={tone:'ok',text:'✓ 연결됐어요! 이제 이 프린터로 출력해요.'};view='list';render();setTimeout(()=>hooks.onDone?.('연결됐어요! 이제 이 프린터로 출력해요.'),900);}
   else{message={tone:'ok',text:'✓ 연결됐어요. [이 프린터 사용하기]를 누르면 이 프린터로 출력해요.'};view='list';render();}}

@@ -1,16 +1,19 @@
-// Find A1 minis on the Chromebook's Wi-Fi without a relay.
+// Find Bambu Lab printers (src/printer-models.js) on the Chromebook's Wi-Fi without a relay.
 // 1) SSDP: the printer announces itself (NOTIFY to UDP 2021, ~every 5 s), as Bambu Studio listens for.
 // 2) Fallback when the Wi-Fi drops broadcasts: TLS-probe port 8883 and read the serial from the Bambu-signed certificate.
 (function(root){
 const dec=new TextDecoder(),enc=new TextEncoder();
 const QUERY=enc.encode('M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1990\r\nMAN: "ssdp:discover"\r\nMX: 2\r\nST: urn:bambulab-com:device:3dprinter:1\r\n\r\n');
-const MODELS={N1:'A1 mini',N2S:'A1',C11:'P1P',C12:'P1S',BL:'X1C','3DPrinter-X1-Carbon':'X1C'};
+const PM=()=>root.PrinterModels||(typeof require==='function'?require('../printer-models.js'):null);
+const OTHER={C11:'P1P',C12:'P1S',C13:'X1E','O1D':'H2D'};
+// A known model is listed and can be connected; only a verified one prints (PrinterModels.printable).
+function describe(code){const m=PM()?.fromCode(code);return m?{model:m.name,modelId:m.id,supported:true,printable:PM().printable(m)}:{model:OTHER[code]||code,modelId:null,supported:false,printable:false};}
 function privateIPv4(ip){const p=String(ip).split('.');return p.length===4&&p.every(x=>/^\d{1,3}$/.test(x)&&+x<=255)&&/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip);}
 function parseNotify(text,remote){
  if(text.length>8192)return null;const h={};for(const line of text.split(/\r?\n/)){const i=line.indexOf(':');if(i>0)h[line.slice(0,i).trim().toLowerCase()]=line.slice(i+1).trim();}
  const serial=h.usn||'',ip=api.privateIPv4(h.location)?h.location:remote,model=h['devmodel.bambu.com']||'';
  if(!/^[A-Za-z0-9]{6,40}$/.test(serial)||!api.privateIPv4(ip)||!model)return null;
- return {ip,serial,model:MODELS[model]||model,supported:model==='N1',name:String(h['devname.bambu.com']||'').replace(/[\x00-\x1f]/g,'').slice(0,40),lanOnly:h['devconnect.bambu.com']==='lan',bound:h['devbind.bambu.com']==='occupied',firmware:h['devversion.bambu.com']||'',source:'ssdp'};
+ return {ip,serial,...describe(model),name:String(h['devname.bambu.com']||'').replace(/[\x00-\x1f]/g,'').slice(0,40),lanOnly:h['devconnect.bambu.com']==='lan',bound:h['devbind.bambu.com']==='occupied',firmware:h['devversion.bambu.com']||'',source:'ssdp'};
 }
 async function listen({timeoutMs=6000,signal}={}){
  const found=new Map(),sockets=[];
@@ -33,7 +36,9 @@ async function probe(ip,{ca,timeout=4000}={}){
  try{const conn=await Promise.race([root.DirectTLS.connect(transport,{ca:root.DirectTLS.parsePem(ca)}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('프린터의 보안 연결 응답이 없습니다.')),timeout);})]);
   const serial=conn.peerCertificate.subjectNames['2.5.4.3']||'';await conn.close();
   if(!/^[A-Za-z0-9]{6,40}$/.test(serial))throw Error('Bambu Lab 프린터 일련번호를 읽지 못했습니다.');
-  return {ip,serial,model:serial.startsWith('030')?'A1 mini':'Bambu Lab',supported:serial.startsWith('030'),lanOnly:true,source:'probe'};
+  // The certificate carries no model; the serial prefix tells the ones we know apart (A1 mini 030, A1 039, X1C 00M).
+  const code={'030':'N1','039':'N2S','00M':'BL-P001'}[serial.slice(0,3)];
+  return {ip,serial,...(code?describe(code):{model:'Bambu Lab (기종 확인 전)',modelId:null,supported:true,printable:false}),lanOnly:true,source:'probe'};
  }finally{clearTimeout(timer);try{await transport.close();}catch{}}
 }
 // The Chromebook's own Wi-Fi address, from a connected UDP socket (no packet is sent).

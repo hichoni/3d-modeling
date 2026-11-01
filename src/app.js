@@ -230,7 +230,7 @@ function printThumbnails(){if(!R)return {};try{R.renderer.render(R.scene,R.camer
 // Developer Mode off, or this device on another network than the printer: the two field problems that otherwise only
 // show on the printer's own screen. The A1 mini keeps its address, so a different network means this device moved.
 const sameNet=(a,b)=>!!a&&!!b&&String(a).split('.').slice(0,3).join('.')===String(b).split('.').slice(0,3).join('.');
-function printerHint(printer,telemetry){if(!printer?.direct)return '';if(telemetry?.fresh&&telemetry.developerMode===false)return '프린터의 개발자 모드가 꺼져 있어요. 프린터 화면 › 설정 › WLAN › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요.';
+function printerHint(printer,telemetry){if(!printer?.direct)return '';if(printer.printable===false)return (printer.model||'이 프린터')+'은(는) 연결과 상태 확인만 돼요. 이 기종의 출력 설정은 실제 출력 검증 전이라, 지금은 A1 mini로 출력해요.';if(telemetry?.fresh&&telemetry.developerMode===false)return '프린터의 개발자 모드가 꺼져 있어요. 프린터 화면 › 설정 › WLAN › LAN Only에서 개발자 모드를 켜야 출력할 수 있어요.';
  if(telemetry?.fresh||!printer.ip)return '';return printer.localAddress?sameNet(printer.localAddress,printer.ip)?'':'이 기기('+printer.localAddress+')와 프린터('+printer.ip+')의 네트워크가 달라요. 이 기기의 Wi-Fi가 바뀌었는지 확인하고 프린터와 같은 Wi-Fi에 다시 연결해요.':'이 기기에서 프린터('+printer.ip+')로 가는 네트워크가 없어요. 이 기기의 Wi-Fi 연결을 확인해요.';}
 function renderNetwork(printer){let el=$('networkLine');if(!el){el=document.createElement('small');el.id='networkLine';el.className='network-line';$('directPrinterSelect')?.closest('label')?.after(el);}
  const show=!!printer?.direct&&!!printer.ip;el.hidden=!show;if(!show)return;const ok=sameNet(printer.localAddress,printer.ip);el.classList.toggle('off',!ok);
@@ -248,7 +248,7 @@ function renderTicket(){
  // On the plain website (no app, no booth PC) the card shows how this device can print instead.
  const guide=!local&&!directMode();$('printCard').classList.toggle('is-guide',guide);$('platformPrint').hidden=!guide;$('platformDetails').hidden=!guide;$('preparationDetails').hidden=!local;
  if(guide&&!$('platformPrint').dataset.platform){ClickPlatform.render($('platformPrint'),{onStl:()=>$('stlBtn').click()});const booth=document.createElement('button');booth.type='button';booth.className='text-btn platform-booth';booth.textContent='부스 출력 PC에 연결하기';booth.onclick=()=>$('boothBtn').click();$('platformPrint').append(booth);}
- $('retryPrintBtn').hidden=!terminal;$('queueBtn').hidden=false;$('queueBtn').disabled=active||terminal||heldActive()||telemetry.developerMode===false||materialBlocked||browserSliceBusy||['slice_wait','slicing'].includes(job?.state)||!!local&&(!printer||printer.busy||!printer.online||!telemetry.fresh||printer.paired&&!printer.mine);
+ $('retryPrintBtn').hidden=!terminal;$('queueBtn').hidden=false;$('queueBtn').disabled=active||terminal||heldActive()||telemetry.developerMode===false||printer?.printable===false||materialBlocked||browserSliceBusy||['slice_wait','slicing'].includes(job?.state)||!!local&&(!printer||printer.busy||!printer.online||!telemetry.fresh||printer.paired&&!printer.mine);
  $('queueBtn').textContent=queueBusy?'출력 파일 준비 중…':terminal?job.state==='complete'?'출력 완료 ✓':'작업 종료':active?'출력 진행 중…':heldActive()?'앞 작품 출력 중…':!local?'프린터 연결':'▶ 바로 출력';
  $('resultCopy').textContent=job?.state==='complete'?'출력이 끝났어요. 충분히 식힌 뒤 받침에 끼워요.':active?'실제 출력 상태는 오른쪽에 표시돼요. 이 작품은 화면 속 미리보기예요.':!local?'디자인은 준비됐어요. 프린터를 연결하면 실제로 만들 수 있어요.':'위의 프린터 이름과 베드·외부 PLA를 확인한 뒤 출력해요.';if(guide)$('printDetail').textContent='프린터 연결을 누르거나 아래의 기기별 연결 방법을 확인해주세요.';
  $('ownStopBtn').hidden=job?.mode!=='direct'||!telemetry.fresh||!telemetry.canStop;
